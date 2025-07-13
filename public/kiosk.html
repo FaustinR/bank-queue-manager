@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Queue - Customer Kiosk</title>
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f8ff; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c5aa0; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row .form-group { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #2c5aa0; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; }
+        button:hover { background: #1e3d6f; }
+        .receipt { background: #f9f9f9; padding: 20px; border-radius: 5px; margin-top: 20px; display: none; }
+        .receipt h3 { color: #2c5aa0; margin-top: 0; }
+        .queue-info { background: #e8f4fd; padding: 15px; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Our Bank</h1>
+        <p style="text-align: center; color: #666;">Please fill in your information to get your queue number</p>
+        
+        <form id="ticketForm">
+            <div class="form-group">
+                <label for="customerName">Your Name:</label>
+                <input type="text" id="customerName" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="service">Service Needed:</label>
+                    <select id="service" required>
+                        <option value="">Select a service</option>
+                        <option value="Account Opening">Account Opening</option>
+                        <option value="Loan Application">Loan Application</option>
+                        <option value="Money Transfer">Money Transfer</option>
+                        <option value="Card Services">Card Services</option>
+                        <option value="General Inquiry">General Inquiry</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="language">Preferred Language:</label>
+                    <select id="language" required>
+                        <option value="">Select language</option>
+                        <option value="English">English</option>
+                        <option value="French">French</option>
+                        <option value="Kinyarwanda">Kinyarwanda</option>
+                        <option value="Swahili">Swahili</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit">Get Queue Number</button>
+        </form>
+        
+        <div id="receipt" class="receipt">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="/images/favicon.jpeg" alt="Bank Logo" style="width: 60px; height: 60px; margin-bottom: 10px;">
+                <h2 style="color: #2c5aa0; margin: 0;">Welcome to Our Bank</h2>
+                <p style="margin: 5px 0; color: #666;">Your trusted financial partner</p>
+            </div>
+            <hr style="border: 1px solid #ddd; margin: 15px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                    <h3>Your Queue Ticket</h3>
+                    <p><strong>Name:</strong> <span id="receiptName"></span></p>
+                    <p><strong>Service:</strong> <span id="receiptService"></span></p>
+                    <p><strong>Language:</strong> <span id="receiptLanguage"></span></p>
+                    <p><strong>Queue Number:</strong> <span id="receiptNumber"></span></p>
+                    <p><strong>Time:</strong> <span id="receiptTime"></span></p>
+                </div>
+                <div style="margin-left: 20px;">
+                    <div id="qrcode" style="text-align: center;"></div>
+                    <p style="font-size: 10px; text-align: center; margin-top: 5px;">Scan for details</p>
+                </div>
+            </div>
+            <hr style="border: 1px solid #ddd; margin: 15px 0;">
+            <p style="color: #2c5aa0; font-weight: bold;">Please wait for your number to be called on the display screen.</p>
+            <p style="font-size: 12px; color: #888; text-align: center;">Thank you for choosing our bank!</p>
+        </div>
+        
+        <div class="queue-info">
+            <p><strong>Current Queue Status:</strong> <span id="queueCount">0</span> people waiting</p>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        
+        document.getElementById('ticketForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const customerName = document.getElementById('customerName').value;
+            const service = document.getElementById('service').value;
+            const language = document.getElementById('language').value;
+            
+            console.log('Form data being sent:', { customerName, service, language }); // Debug log
+            
+            try {
+                const response = await fetch('/api/ticket', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerName, service, language })
+                });
+                
+                const ticket = await response.json();
+                
+                // Show receipt
+                document.getElementById('receiptName').textContent = ticket.customerName;
+                document.getElementById('receiptService').textContent = ticket.service;
+                document.getElementById('receiptLanguage').textContent = ticket.language || 'Not specified';
+                document.getElementById('receiptNumber').textContent = ticket.number;
+                document.getElementById('receiptTime').textContent = new Date(ticket.timestamp).toLocaleTimeString();
+                
+                console.log('Ticket data:', ticket); // Debug log
+                
+                // Generate QR code that redirects to ticket page
+                const ticketUrl = `${window.location.origin}/ticket?name=${encodeURIComponent(ticket.customerName)}&service=${encodeURIComponent(ticket.service)}&language=${encodeURIComponent(ticket.language)}&number=${ticket.number}&time=${encodeURIComponent(new Date(ticket.timestamp).toLocaleTimeString())}&counter=${ticket.counterId}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(ticketUrl)}`;
+                
+                const qrImg = document.createElement('img');
+                qrImg.src = qrUrl;
+                qrImg.alt = 'QR Code';
+                qrImg.style.width = '120px';
+                qrImg.style.height = '120px';
+                qrImg.style.border = '1px solid #ddd';
+                
+                qrImg.onerror = function() {
+                    document.getElementById('qrcode').innerHTML = '<div style="width: 100px; height: 100px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 10px;">QR Code<br>Unavailable</div>';
+                };
+                
+                document.getElementById('qrcode').innerHTML = '';
+                document.getElementById('qrcode').appendChild(qrImg);
+                
+                document.getElementById('receipt').style.display = 'block';
+                
+                // Reset form
+                document.getElementById('ticketForm').reset();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error getting ticket. Please try again.');
+            }
+        });
+        
+        socket.on('queueUpdate', (data) => {
+            const totalWaiting = Object.values(data.queues).reduce((sum, queue) => sum + queue.length, 0);
+            document.getElementById('queueCount').textContent = totalWaiting;
+        });
+    </script>
+</body>
+</html>

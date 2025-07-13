@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Queue Ticket</title>
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f8ff; }
+        .ticket { max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .logo { width: 80px; height: 80px; margin-bottom: 15px; }
+        h1 { color: #2c5aa0; margin: 0; font-size: 24px; }
+        .tagline { margin: 5px 0; color: #666; font-size: 14px; }
+        hr { border: 1px solid #ddd; margin: 20px 0; }
+        .info { margin-bottom: 15px; }
+        .label { font-weight: bold; color: #333; }
+        .value { color: #2c5aa0; font-weight: bold; }
+        .number { font-size: 48px; color: #2c5aa0; text-align: center; margin: 20px 0; }
+        .message { color: #2c5aa0; font-weight: bold; text-align: center; margin: 20px 0; }
+        .footer { font-size: 12px; color: #888; text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="header">
+            <img src="/images/favicon.jpeg" alt="Bank Logo" class="logo">
+            <h1>Welcome to Our Bank</h1>
+            <p class="tagline">Your trusted financial partner</p>
+        </div>
+        
+        <hr>
+        
+        <div class="info">
+            <span class="label">Name:</span> <span class="value" id="customerName">-</span>
+        </div>
+        
+        <div class="info">
+            <span class="label">Service:</span> <span class="value" id="service">-</span>
+        </div>
+        
+        <div class="info">
+            <span class="label">Language:</span> <span class="value" id="language">-</span>
+        </div>
+        
+        <div class="info">
+            <span class="label">Time:</span> <span class="value" id="time">-</span>
+        </div>
+        
+        <div class="info">
+            <span class="label">Counter:</span> <span class="value" id="counter">-</span>
+        </div>
+        
+        <div class="number" id="queueNumber">-</div>
+        
+        <hr>
+        
+        <p class="message">Please wait for your number to be called on the display screen.</p>
+        
+        <p class="footer">Thank you for choosing our bank!</p>
+    </div>
+
+    <script>
+        // Get ticket data from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        document.getElementById('customerName').textContent = urlParams.get('name') || '-';
+        document.getElementById('service').textContent = urlParams.get('service') || '-';
+        document.getElementById('language').textContent = urlParams.get('language') || '-';
+        document.getElementById('queueNumber').textContent = urlParams.get('number') || '-';
+        document.getElementById('time').textContent = urlParams.get('time') || '-';
+        document.getElementById('counter').textContent = urlParams.get('counter') || '-';
+        
+        // Update page title
+        document.title = `Queue Ticket #${urlParams.get('number') || ''}`;
+    </script>
+</body>
+</html>

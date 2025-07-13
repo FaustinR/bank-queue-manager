@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counter Management</title>
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c5aa0; text-align: center; }
+        .counter-info { background: #e8f4fd; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .current-customer { background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        button { padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-primary { background: #2c5aa0; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-primary:hover { background: #1e3d6f; }
+        .btn-success:hover { background: #1e7e34; }
+        button:disabled { background: #ccc; color: #666; cursor: not-allowed; }
+        button:disabled:hover { background: #ccc; }
+        .queue-preview { background: #f8f9fa; padding: 15px; border-radius: 5px; }
+        .queue-item { padding: 8px; border-bottom: 1px solid #ddd; }
+        .queue-item:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="counterTitle">Counter Management</h1>
+        
+        <div class="counter-info">
+            <h3 id="counterName">Loading...</h3>
+            <p><strong>Status:</strong> <span id="counterStatus">Available</span></p>
+        </div>
+        
+        <div id="currentCustomer" class="current-customer" style="display: none;">
+            <h4>Currently Serving:</h4>
+            <p><strong>Name:</strong> <span id="customerName"></span></p>
+            <p><strong>Service:</strong> <span id="customerService"></span></p>
+            <p><strong>Number:</strong> <span id="customerNumber"></span></p>
+        </div>
+        
+        <div class="actions">
+            <button id="nextBtn" class="btn-primary">Call Next Customer</button>
+            <button id="completeBtn" class="btn-success" style="display: none;">Complete Service</button>
+        </div>
+        
+        <div class="queue-preview">
+            <h4>Upcoming Customers:</h4>
+            <div id="queuePreview">
+                <p>No customers waiting</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const counterId = window.location.pathname.split('/').pop();
+        
+        document.getElementById('counterTitle').textContent = `Counter ${counterId} Management`;
+        
+        function updateCounter(data) {
+            const { queues, counters } = data;
+            const counter = counters[counterId];
+            const queue = queues[counterId] || [];
+            
+            if (counter) {
+                document.getElementById('counterName').textContent = counter.name;
+                document.getElementById('counterStatus').textContent = counter.status;
+                
+                if (counter.current) {
+                    document.getElementById('customerName').textContent = counter.current.customerName;
+                    document.getElementById('customerService').textContent = counter.current.service;
+                    document.getElementById('customerNumber').textContent = counter.current.number;
+                    document.getElementById('currentCustomer').style.display = 'block';
+                    document.getElementById('nextBtn').style.display = 'none';
+                    document.getElementById('completeBtn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('currentCustomer').style.display = 'none';
+                    document.getElementById('nextBtn').style.display = 'inline-block';
+                    document.getElementById('completeBtn').style.display = 'none';
+                    
+                    // Enable/disable next button based on queue length
+                    document.getElementById('nextBtn').disabled = queue.length === 0;
+                }
+            }
+            
+            // Update queue preview for this specific service
+            const queueDiv = document.getElementById('queuePreview');
+            if (queue.length === 0) {
+                queueDiv.innerHTML = '<p>No customers waiting for this service</p>';
+            } else {
+                queueDiv.innerHTML = queue.slice(0, 5).map(customer => `
+                    <div class="queue-item">
+                        #${customer.number} - ${customer.customerName}
+                    </div>
+                `).join('');
+            }
+        }
+        
+        document.getElementById('nextBtn').addEventListener('click', async () => {
+            try {
+                await fetch(`/api/counter/${counterId}/next`, {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Error calling next customer:', error);
+            }
+        });
+        
+        document.getElementById('completeBtn').addEventListener('click', async () => {
+            try {
+                await fetch(`/api/counter/${counterId}/complete`, {
+                    method: 'POST'
+                });
+            } catch (error) {
+                alert('Error completing service');
+            }
+        });
+        
+        socket.on('queueUpdate', updateCounter);
+    </script>
+</body>
+</html>
