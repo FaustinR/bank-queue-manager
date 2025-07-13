@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bank Queue - Customer Kiosk</title>
     <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+    <link rel="stylesheet" href="/css/custom-select.css">
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f8ff; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -42,6 +43,7 @@
                         <option value="Money Transfer">Money Transfer</option>
                         <option value="Card Services">Card Services</option>
                         <option value="General Inquiry">General Inquiry</option>
+                        <option value="Other">Other (specify)</option>
                     </select>
                 </div>
                 
@@ -49,12 +51,18 @@
                     <label for="language">Preferred Language:</label>
                     <select id="language" required>
                         <option value="">Select language</option>
-                        <option value="English">English</option>
-                        <option value="French">French</option>
-                        <option value="Kinyarwanda">Kinyarwanda</option>
-                        <option value="Swahili">Swahili</option>
+                        <option value="English" data-flag="england.png">English</option>
+                        <option value="French" data-flag="france.png">French</option>
+                        <option value="Kinyarwanda" data-flag="rwanda.png">Kinyarwanda</option>
+                        <option value="Swahili" data-flag="swahili.png">Swahili</option>
                     </select>
                 </div>
+            </div>
+            
+            <div class="form-group" id="otherServiceGroup" style="display: none;">
+                <label for="otherService">Specify your inquiry:</label>
+                <input type="text" id="otherService" maxlength="50" placeholder="Enter your inquiry (max 50 characters)">
+                <small style="color: #666;">Required when 'Other' is selected</small>
             </div>
             
             <button type="submit">Get Queue Number</button>
@@ -92,6 +100,7 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/custom-select.js"></script>
     <script>
         // Connect to Socket.IO with error handling
         let socket;
@@ -109,22 +118,60 @@
             socket.on('connect', () => {
                 console.log('Socket.IO connected successfully');
             });
+        } catch (error) {
+            console.error('Socket.IO initialization error:', error);
+        }
+        
+        // Show/hide other service field based on selection
+        document.getElementById('service').addEventListener('change', function() {
+            const otherServiceGroup = document.getElementById('otherServiceGroup');
+            otherServiceGroup.style.display = this.value === 'Other' ? 'block' : 'none';
+            
+            // Make the other service field required only when 'Other' is selected
+            const otherServiceField = document.getElementById('otherService');
+            otherServiceField.required = this.value === 'Other';
+        });
         
         document.getElementById('ticketForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const customerName = document.getElementById('customerName').value;
-            const service = document.getElementById('service').value;
+            let service = document.getElementById('service').value;
             const language = document.getElementById('language').value;
+            
+            // Validate that otherService is filled when 'Other' is selected
+            if (service === 'Other') {
+                const otherService = document.getElementById('otherService').value.trim();
+                if (!otherService) {
+                    alert('Please specify your inquiry when selecting "Other"');
+                    document.getElementById('otherService').focus();
+                    return;
+                }
+            }
+            
+            // If 'Other' is selected, use the custom text instead
+            if (service === 'Other') {
+                const otherService = document.getElementById('otherService').value;
+                if (otherService.trim()) {
+                    service = 'Other: ' + otherService.trim();
+                    console.log('Using custom service:', service);
+                } else {
+                    service = 'General Inquiry'; // Fallback if no custom text is provided
+                    console.log('No custom text provided, using General Inquiry');
+                }
+            }
             
             console.log('Form data being sent:', { customerName, service, language }); // Debug log
             
             try {
+                const requestBody = { customerName, service, language };
                 console.log('Sending request to:', window.location.origin + '/api/ticket');
+                console.log('Request body:', JSON.stringify(requestBody));
+                
                 const response = await fetch('/api/ticket', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerName, service, language })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 if (!response.ok) {
@@ -166,6 +213,9 @@
                 
                 // Reset form
                 document.getElementById('ticketForm').reset();
+                
+                // Ensure the otherServiceGroup is hidden after form reset
+                document.getElementById('otherServiceGroup').style.display = 'none';
                 
             } catch (error) {
                 console.error('Error getting ticket:', error);

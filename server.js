@@ -23,6 +23,7 @@ const services = {
   'Money Transfer': 3,
   'Card Services': 4,
   'General Inquiry': 5
+  // Other custom services will be handled dynamically
 };
 
 // Queue management - separate queue for each service
@@ -64,23 +65,29 @@ app.post('/api/ticket', (req, res) => {
   try {
     const { customerName, service, language } = req.body;
     console.log('Received request body:', req.body); // Debug log
+    console.log('Service type:', typeof service, 'Service value:', service);
     
     if (!customerName || !service || !language) {
       console.log('Missing required fields:', { customerName, service, language });
       return res.status(400).json({ error: 'Name, service, and language are required' });
     }
     
-    const counterId = services[service];
+    // Get counter ID for the service, or use General Inquiry counter (5) for custom services
+    let counterId = services[service];
+    let serviceToUse = service;
     
+    // Handle custom services
     if (!counterId) {
-      return res.status(400).json({ error: 'Invalid service selected' });
+      // Always assign custom services to General Inquiry counter
+      counterId = 5;
+      console.log('Custom service detected, assigning to General Inquiry counter:', service);
     }
     
     const ticket = {
       id: uuidv4(),
       number: queues[counterId].length + 1,
       customerName,
-      service,
+      service: serviceToUse,
       language,
       counterId,
       timestamp: new Date(),
