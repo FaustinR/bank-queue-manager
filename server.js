@@ -125,7 +125,11 @@ app.post('/api/counter/:id/next', (req, res) => {
     counters[counterId].status = 'serving';
     
     io.emit('queueUpdate', { queues, counters });
-    io.emit('customerCalled', { customer: nextCustomer, counter: counterId });
+    io.emit('customerCalled', { 
+      customer: nextCustomer, 
+      counter: counterId,
+      counterName: counters[counterId].name
+    });
     
     res.json({ success: true, customer: nextCustomer });
   } else {

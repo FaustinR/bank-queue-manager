@@ -38,6 +38,7 @@
             <p><strong>Name:</strong> <span id="customerName"></span></p>
             <p><strong>Service:</strong> <span id="customerService"></span></p>
             <p><strong>Number:</strong> <span id="customerNumber"></span></p>
+            <p><strong>Language:</strong> <span id="customerLanguage"></span></p>
         </div>
         
         <div class="actions">
@@ -55,6 +56,25 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Function to format timestamp
+        function formatTime(timestamp) {
+            if (!timestamp) return 'N/A';
+            
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Function to get flag HTML for a language
+        function getFlagForLanguage(language) {
+            const flagMap = {
+                'English': '<img src="/images/england.png" alt="England flag" style="width: 20px; height: 15px; margin-right: 5px; vertical-align: middle;">',
+                'French': '<img src="/images/france.png" alt="France flag" style="width: 20px; height: 15px; margin-right: 5px; vertical-align: middle;">',
+                'Kinyarwanda': '<img src="/images/rwanda.png" alt="Rwanda flag" style="width: 20px; height: 15px; margin-right: 5px; vertical-align: middle;">',
+                'Swahili': '<img src="/images/swahili.png" alt="Swahili flag" style="width: 20px; height: 15px; margin-right: 5px; vertical-align: middle;">' 
+            };
+            
+            return flagMap[language] || '';
+        }
         const socket = io();
         const counterId = window.location.pathname.split('/').pop();
         
@@ -73,6 +93,10 @@
                     document.getElementById('customerName').textContent = counter.current.customerName;
                     document.getElementById('customerService').textContent = counter.current.service;
                     document.getElementById('customerNumber').textContent = counter.current.number;
+                    
+                    // Set language with flag
+                    const languageElement = document.getElementById('customerLanguage');
+                    languageElement.innerHTML = getFlagForLanguage(counter.current.language) + counter.current.language;
                     document.getElementById('currentCustomer').style.display = 'block';
                     document.getElementById('nextBtn').style.display = 'none';
                     document.getElementById('completeBtn').style.display = 'inline-block';
@@ -91,11 +115,34 @@
             if (queue.length === 0) {
                 queueDiv.innerHTML = '<p>No customers waiting for this service</p>';
             } else {
-                queueDiv.innerHTML = queue.slice(0, 5).map(customer => `
-                    <div class="queue-item">
-                        #${customer.number} - ${customer.customerName}
-                    </div>
-                `).join('');
+                // Add table header
+                queueDiv.innerHTML = `
+                    <table style="width:100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #ddd; text-align: left;">
+                                <th style="padding: 8px;">Number</th>
+                                <th style="padding: 8px;">Name</th>
+                                <th style="padding: 8px;">Service</th>
+                                <th style="padding: 8px;">Language</th>
+                                <th style="padding: 8px;">Requested at</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${queue.slice(0, 5).map(customer => `
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding: 8px;">#${customer.number}</td>
+                                    <td style="padding: 8px;">${customer.customerName}</td>
+                                    <td style="padding: 8px;">${customer.service}</td>
+                                    <td style="padding: 8px;">
+                                        ${getFlagForLanguage(customer.language)}
+                                        ${customer.language}
+                                    </td>
+                                    <td style="padding: 8px;">${formatTime(customer.timestamp)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
             }
         }
         
