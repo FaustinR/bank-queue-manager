@@ -93,7 +93,22 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        // Connect to Socket.IO with error handling
+        let socket;
+        try {
+            socket = io({
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000,
+                timeout: 20000
+            });
+            
+            socket.on('connect_error', (err) => {
+                console.error('Socket.IO connection error:', err);
+            });
+            
+            socket.on('connect', () => {
+                console.log('Socket.IO connected successfully');
+            });
         
         document.getElementById('ticketForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -105,11 +120,18 @@
             console.log('Form data being sent:', { customerName, service, language }); // Debug log
             
             try {
+                console.log('Sending request to:', window.location.origin + '/api/ticket');
                 const response = await fetch('/api/ticket', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ customerName, service, language })
                 });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API error:', response.status, errorText);
+                    throw new Error(`API error: ${response.status} - ${errorText}`);
+                }
                 
                 const ticket = await response.json();
                 
@@ -146,8 +168,8 @@
                 document.getElementById('ticketForm').reset();
                 
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error getting ticket. Please try again.');
+                console.error('Error getting ticket:', error);
+                alert('Error getting ticket: ' + error.message);
             }
         });
         

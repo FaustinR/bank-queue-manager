@@ -6,7 +6,12 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -61,6 +66,7 @@ app.post('/api/ticket', (req, res) => {
     console.log('Received request body:', req.body); // Debug log
     
     if (!customerName || !service || !language) {
+      console.log('Missing required fields:', { customerName, service, language });
       return res.status(400).json({ error: 'Name, service, and language are required' });
     }
     
@@ -96,6 +102,11 @@ app.post('/api/ticket', (req, res) => {
 
 app.get('/api/queue', (req, res) => {
   res.json({ queues, counters });
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 app.post('/api/counter/:id/next', (req, res) => {
