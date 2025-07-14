@@ -18,16 +18,16 @@
             </div>
             <p style="color: #666;text-align: center;">Please fill in your information to get your queue number</p>
             
-            <form id="ticketForm">
+            <form id="ticketForm" novalidate>
             <div class="form-group name-field">
                 <label for="customerName">Your Name:</label>
-                <input type="text" id="customerName" required>
+                <input type="text" id="customerName">
             </div>
             
             <div class="form-row">
                 <div class="form-group">
                 <label for="service">Service Needed:</label>
-                <select id="service" required>
+                <select id="service">
                     <option value="">Select a service</option>
                     <option value="Account Opening">Account Opening</option>
                     <option value="Loan Application">Loan Application</option>
@@ -40,7 +40,7 @@
                 
                 <div class="form-group">
                     <label for="language">Preferred Language:</label>
-                    <select id="language" required>
+                    <select id="language">
                         <option value="">Select language</option>
                         <option value="English" data-flag="england.png">English</option>
                         <option value="French" data-flag="france.png">French</option>

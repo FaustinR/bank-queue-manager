@@ -13,23 +13,102 @@ document.getElementById('service').addEventListener('change', function() {
         otherServiceInput.required = false;
         otherServiceInput.value = '';
     }
+    
+    // Clear error when service is selected
+    if (this.value) {
+        clearFieldError('service');
+    }
 });
+
+// Add event listeners to clear errors on input
+document.getElementById('customerName').addEventListener('input', function() {
+    if (this.value.trim()) {
+        clearFieldError('customerName');
+    }
+});
+
+document.getElementById('language').addEventListener('change', function() {
+    if (this.value) {
+        clearFieldError('language');
+    }
+});
+
+document.getElementById('otherService').addEventListener('input', function() {
+    if (this.value.trim()) {
+        clearFieldError('otherService');
+    }
+});
+
+// Clear field errors
+function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorMsg = field.parentNode.querySelector('.error-message');
+    field.classList.remove('field-error');
+    if (errorMsg) {
+        errorMsg.style.display = 'none';
+    }
+}
+
+// Show field error
+function showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    field.classList.add('field-error');
+    
+    let errorMsg = field.parentNode.querySelector('.error-message');
+    if (!errorMsg) {
+        errorMsg = document.createElement('div');
+        errorMsg.className = 'error-message';
+        field.parentNode.appendChild(errorMsg);
+    }
+    
+    errorMsg.textContent = message;
+    errorMsg.style.display = 'block';
+}
 
 document.getElementById('ticketForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const customerName = document.getElementById('customerName').value;
+    // Clear all previous errors
+    clearFieldError('customerName');
+    clearFieldError('service');
+    clearFieldError('language');
+    clearFieldError('otherService');
+    
+    const customerName = document.getElementById('customerName').value.trim();
     let service = document.getElementById('service').value;
     const language = document.getElementById('language').value;
+    
+    let hasErrors = false;
+    
+    // Validate required fields
+    if (!customerName) {
+        showFieldError('customerName', 'Your name is required');
+        hasErrors = true;
+    }
+    
+    if (!service) {
+        showFieldError('service', 'Please select a service');
+        hasErrors = true;
+    }
+    
+    if (!language) {
+        showFieldError('language', 'Please select your preferred language');
+        hasErrors = true;
+    }
     
     // Handle "Other" service
     if (service === 'Other') {
         const otherService = document.getElementById('otherService').value.trim();
         if (!otherService) {
-            alert('Please specify your inquiry when selecting "Other"');
-            return;
+            showFieldError('otherService', 'Please specify your inquiry');
+            hasErrors = true;
+        } else {
+            service = otherService;
         }
-        service = otherService;
+    }
+    
+    if (hasErrors) {
+        return;
     }
     
     console.log('Form data being sent:', { customerName, service, language });
@@ -85,8 +164,10 @@ document.getElementById('ticketForm').addEventListener('submit', async (e) => {
         document.getElementById('otherServiceGroup').style.display = 'none';
         document.getElementById('otherService').required = false;
         
-        // Reset form
+        // Reset form and dropdowns
         document.getElementById('ticketForm').reset();
+        document.getElementById('service').selectedIndex = 0;
+        document.getElementById('language').selectedIndex = 0;
         
     } catch (error) {
         console.error('Error:', error);
