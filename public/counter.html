@@ -2,27 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Counter Management</title>
     <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #2c5aa0; text-align: center; }
-        .counter-info { background: #e8f4fd; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        .current-customer { background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .actions { display: flex; gap: 10px; margin-bottom: 20px; }
-        button { padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .btn-primary { background: #2c5aa0; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-primary:hover { background: #1e3d6f; }
-        .btn-success:hover { background: #1e7e34; }
-        button:disabled { background: #ccc; color: #666; cursor: not-allowed; }
-        button:disabled:hover { background: #ccc; }
-        .queue-preview { background: #f8f9fa; padding: 15px; border-radius: 5px; }
-        .queue-item { padding: 8px; border-bottom: 1px solid #ddd; }
-        .queue-item:last-child { border-bottom: none; }
-    </style>
+    <link rel="stylesheet" href="/css/counter.css">
 </head>
 <body>
     <div class="container">
@@ -55,125 +38,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        // Function to format timestamp
-        function formatTime(timestamp) {
-            if (!timestamp) return 'N/A';
-            
-            const date = new Date(timestamp);
-            return date.toLocaleString([], { 
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit', 
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        }
-        
-        // Function to get flag HTML for a language
-        function getFlagForLanguage(language) {
-            const flagMap = {
-                'English': '<img src="/images/england.png" alt="England flag" style="width: 20px; height: 15px; margin-right: 5px; vertical-align: middle;">',
-                'French': '<img src="/images/france.png" alt="France flag" style="width: 20px; height: 15px; margin-right: 5px; vertical-align: middle;">',
-                'Kinyarwanda': '<img src="/images/rwanda.png" alt="Rwanda flag" style="width: 20px; height: 15px; margin-right: 5px; vertical-align: middle;">',
-                'Swahili': '<img src="/images/swahili.png" alt="Swahili flag" style="width: 20px; height: 15px; margin-right: 5px; vertical-align: middle;">' 
-            };
-            
-            return flagMap[language] || '';
-        }
-        const socket = io();
-        const counterId = window.location.pathname.split('/').pop();
-        
-        document.getElementById('counterTitle').textContent = `Counter ${counterId} Management`;
-        
-        function updateCounter(data) {
-            const { queues, counters } = data;
-            const counter = counters[counterId];
-            const queue = queues[counterId] || [];
-            
-            if (counter) {
-                document.getElementById('counterName').textContent = counter.name;
-                document.getElementById('counterStatus').textContent = counter.status;
-                
-                if (counter.current) {
-                    document.getElementById('customerName').textContent = counter.current.customerName;
-                    document.getElementById('customerService').textContent = counter.current.service;
-                    document.getElementById('customerNumber').textContent = counter.current.number;
-                    
-                    // Set language with flag
-                    const languageElement = document.getElementById('customerLanguage');
-                    languageElement.innerHTML = getFlagForLanguage(counter.current.language) + counter.current.language;
-                    document.getElementById('currentCustomer').style.display = 'block';
-                    document.getElementById('nextBtn').style.display = 'none';
-                    document.getElementById('completeBtn').style.display = 'inline-block';
-                } else {
-                    document.getElementById('currentCustomer').style.display = 'none';
-                    document.getElementById('nextBtn').style.display = 'inline-block';
-                    document.getElementById('completeBtn').style.display = 'none';
-                    
-                    // Enable/disable next button based on queue length
-                    document.getElementById('nextBtn').disabled = queue.length === 0;
-                }
-            }
-            
-            // Update queue preview for this specific service
-            const queueDiv = document.getElementById('queuePreview');
-            if (queue.length === 0) {
-                queueDiv.innerHTML = '<p>No customers waiting for this service</p>';
-            } else {
-                // Add table header
-                queueDiv.innerHTML = `
-                    <table style="width:100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid #ddd; text-align: left;">
-                                <th style="padding: 8px;">Number</th>
-                                <th style="padding: 8px;">Name</th>
-                                <th style="padding: 8px;">Service</th>
-                                <th style="padding: 8px;">Language</th>
-                                <th style="padding: 8px;">Requested at</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${queue.slice(0, 5).map(customer => `
-                                <tr style="border-bottom: 1px solid #eee;">
-                                    <td style="padding: 8px;">#${customer.number}</td>
-                                    <td style="padding: 8px;">${customer.customerName}</td>
-                                    <td style="padding: 8px;">${customer.service}</td>
-                                    <td style="padding: 8px;">
-                                        ${getFlagForLanguage(customer.language)}
-                                        ${customer.language}
-                                    </td>
-                                    <td style="padding: 8px;">${formatTime(customer.timestamp)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            }
-        }
-        
-        document.getElementById('nextBtn').addEventListener('click', async () => {
-            try {
-                await fetch(`/api/counter/${counterId}/next`, {
-                    method: 'POST'
-                });
-            } catch (error) {
-                console.error('Error calling next customer:', error);
-            }
-        });
-        
-        document.getElementById('completeBtn').addEventListener('click', async () => {
-            try {
-                await fetch(`/api/counter/${counterId}/complete`, {
-                    method: 'POST'
-                });
-            } catch (error) {
-                alert('Error completing service');
-            }
-        });
-        
-        socket.on('queueUpdate', updateCounter);
-    </script>
+    <script src="/js/counter.js"></script>
 </body>
 </html>

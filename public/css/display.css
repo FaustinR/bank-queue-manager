@@ -1,0 +1,130 @@
+body { 
+    font-family: Arial, sans-serif; 
+    margin: 0; 
+    padding: 20px; 
+    background: #1a1a2e; 
+    color: white;
+    font-size: 18px;
+}
+
+.header { 
+    text-align: center; 
+    background: #16213e; 
+    padding: 20px; 
+    border-radius: 10px; 
+    margin-bottom: 30px; 
+}
+
+.counters { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    gap: 15px; 
+    margin-bottom: 30px; 
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        font-size: 16px;
+    }
+    
+    .header {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .counters {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+}
+
+.counter { 
+    background: #0f3460; 
+    padding: 20px; 
+    border-radius: 10px; 
+    text-align: center; 
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+@media (max-width: 768px) {
+    .counter {
+        padding: 15px 10px;
+    }
+    
+    .counter h3 {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+    
+    .current-customer {
+        font-size: 18px;
+    }
+}
+
+.counter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.counter.serving { 
+    background: #e94560; 
+}
+
+.counter h3 { 
+    margin-top: 0; 
+    color: #fff; 
+}
+
+.current-customer { 
+    font-size: 24px; 
+    font-weight: bold; 
+    margin: 10px 0; 
+    color: #ffd700; 
+}
+
+.queue-section { 
+    background: #16213e; 
+    padding: 20px; 
+    border-radius: 10px; 
+}
+
+.queue-item { 
+    display: flex; 
+    justify-content: space-between; 
+    padding: 10px; 
+    border-bottom: 1px solid #333; 
+}
+
+@media (max-width: 480px) {
+    .queue-item {
+        flex-direction: column;
+        padding: 8px;
+    }
+    
+    .queue-item span:first-child {
+        margin-bottom: 4px;
+        font-weight: bold;
+    }
+    
+    .now-serving {
+        padding: 15px 10px;
+        font-size: 20px;
+    }
+}
+
+.queue-item:last-child { 
+    border-bottom: none; 
+}
+
+.now-serving { 
+    background: #e94560; 
+    color: white; 
+    padding: 20px; 
+    border-radius: 10px; 
+    margin-bottom: 20px; 
+    text-align: center; 
+    font-size: 24px; 
+    font-weight: bold; 
+}

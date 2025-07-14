@@ -1,6 +1,7 @@
 .custom-select-container {
     position: relative;
     width: 100%;
+    z-index: 2000;
 }
 
 .selected-option {
@@ -12,6 +13,14 @@
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+}
+
+.selected-option::after {
+    content: '\25BC';
+    font-size: 0.8em;
+    color: #666;
+    margin-left: 5px;
 }
 
 .select-options {
@@ -23,9 +32,9 @@
     border: 2px solid #ddd;
     border-top: none;
     border-radius: 0 0 5px 5px;
-    z-index: 10;
-    max-height: 200px;
-    overflow-y: auto;
+    z-index: 2000;
+    max-height: none;
+    overflow: visible;
 }
 
 .select-option {
@@ -33,6 +42,7 @@
     cursor: pointer;
     display: flex;
     align-items: center;
+    white-space: nowrap;
 }
 
 .select-option:hover {
@@ -44,4 +54,21 @@
     height: 15px;
     margin-right: 8px;
     vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+    .selected-option {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .select-options {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    
+    .select-option {
+        padding: 8px;
+        font-size: 14px;
+    }
 }

@@ -2,30 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bank Queue - Customer Kiosk</title>
     <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <link rel="stylesheet" href="/css/custom-select.css">
+    <link rel="stylesheet" href="/css/kiosk.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
-        html, body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f8ff; height: 100%; overflow: hidden; }
-        body { display: flex; align-items: center; justify-content: center; padding: 5px; box-sizing: border-box; }
-        .container { width: 98%; max-width: 1200px; margin: 0; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: grid; grid-template-columns: 45% 55%; grid-gap: 15px; max-height: 98vh; overflow: hidden; box-sizing: border-box; }
-        .left-section { grid-column: 1; display: flex; flex-direction: column; max-height: 95vh; }
-        .right-section { grid-column: 2; max-height: 95vh; }
-        h1 { color: #2c5aa0; margin: 0 0 15px 0; font-size: 1.8em; }
-        .form-group { margin-bottom: 15px; }
-        .form-row { display: flex; gap: 15px; }
-        .form-row .form-group { flex: 1; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        input, select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 15px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #2c5aa0; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
-        button:hover { background: #1e3d6f; }
-        .receipt { background: #f9f9f9; padding: 12px; border-radius: 5px; display: none; height: 100%; box-sizing: border-box; font-size: 0.95em; }
-        .receipt h3 { color: #2c5aa0; margin-top: 0; }
-        .queue-info { background: #e8f4fd; padding: 10px; border-radius: 5px; margin-top: 15px; }
-        .right-section { display: flex; align-items: center; justify-content: center; }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -40,17 +22,25 @@
             </div>
             
             <div class="form-row">
-                <div class="form-group">
-                    <label for="service">Service Needed:</label>
-                    <select id="service" required>
-                        <option value="">Select a service</option>
-                        <option value="Account Opening">Account Opening</option>
-                        <option value="Loan Application">Loan Application</option>
-                        <option value="Money Transfer">Money Transfer</option>
-                        <option value="Card Services">Card Services</option>
-                        <option value="General Inquiry">General Inquiry</option>
-                        <option value="Other">Other (specify)</option>
-                    </select>
+                <div class="service-container">
+                    <div class="form-group">
+                        <label for="service">Service Needed:</label>
+                        <select id="service" required>
+                            <option value="">Select a service</option>
+                            <option value="Account Opening">Account Opening</option>
+                            <option value="Loan Application">Loan Application</option>
+                            <option value="Money Transfer">Money Transfer</option>
+                            <option value="Card Services">Card Services</option>
+                            <option value="General Inquiry">General Inquiry</option>
+                            <option value="Other">Other (specify)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="otherServiceGroup" style="display: none;">
+                        <label for="otherService">Specify your inquiry:</label>
+                        <input type="text" id="otherService" maxlength="50" placeholder="Enter your inquiry (max 50 characters)">
+                        <small style="color: #666;">Required when 'Other' is selected</small>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -65,177 +55,49 @@
                 </div>
             </div>
             
-            <div class="form-group" id="otherServiceGroup" style="display: none;">
-                <label for="otherService">Specify your inquiry:</label>
-                <input type="text" id="otherService" maxlength="50" placeholder="Enter your inquiry (max 50 characters)">
-                <small style="color: #666;">Required when 'Other' is selected</small>
-            </div>
-            
             <button type="submit">Get Queue Number</button>
         </form>
         
-        <div class="queue-info">
+        <div class="queue-info desktop-queue-info">
             <p><strong>Current Queue Status:</strong> <span id="queueCount">0</span> people waiting</p>
         </div>
         </div>
         
         <div class="right-section">
             <div id="receipt" class="receipt">
-            <div style="text-align: center; margin-bottom: 8px;">
-                <img src="/images/favicon.jpeg" alt="Bank Logo" style="width: 40px; height: 40px; margin-bottom: 3px;">
-                <h2 style="color: #2c5aa0; margin: 0; font-size: 1.3em;">Welcome to Our Bank</h2>
-                <p style="margin: 2px 0; color: #666; font-size: 0.85em;">Your trusted financial partner</p>
+            <div class="receipt-header">
+                <img src="/images/favicon.jpeg" alt="Bank Logo" class="receipt-logo">
+                <h2 class="receipt-title">Welcome to Our Bank</h2>
+                <p class="receipt-subtitle">Your trusted financial partner</p>
             </div>
-            <hr style="border: 1px solid #ddd; margin: 8px 0;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="flex: 1;">
-                    <h3 style="margin: 0 0 8px 0; font-size: 1.1em;">Your Queue Ticket</h3>
-                    <p style="margin: 5px 0;"><i class="fas fa-user" style="margin-right: 6px; color: #2c5aa0;"></i><strong>Name:</strong> <span id="receiptName"></span></p>
-                    <p style="margin: 5px 0;"><i class="fas fa-concierge-bell" style="margin-right: 6px; color: #2c5aa0;"></i><strong>Service:</strong> <span id="receiptService"></span></p>
-                    <p style="margin: 5px 0;"><i class="fas fa-language" style="margin-right: 6px; color: #2c5aa0;"></i><strong>Language:</strong> <span id="receiptLanguage"></span></p>
-                    <p style="margin: 5px 0;"><i class="fas fa-ticket-alt" style="margin-right: 6px; color: #2c5aa0;"></i><strong>Queue Number:</strong> <span id="receiptNumber"></span></p>
-                    <p style="margin: 5px 0;"><i class="fas fa-clock" style="margin-right: 6px; color: #2c5aa0;"></i><strong>Time:</strong> <span id="receiptTime"></span></p>
+            <hr class="receipt-divider">
+            <div class="receipt-content">
+                <div class="receipt-details">
+                    <h3 class="receipt-ticket-title">Your Queue Ticket</h3>
+                    <p class="receipt-item"><i class="fas fa-user receipt-icon"></i><strong>Name:</strong> <span id="receiptName"></span></p>
+                    <p class="receipt-item"><i class="fas fa-concierge-bell receipt-icon"></i><strong>Service:</strong> <span id="receiptService"></span></p>
+                    <p class="receipt-item"><i class="fas fa-language receipt-icon"></i><strong>Language:</strong> <span id="receiptLanguage"></span></p>
+                    <p class="receipt-item"><i class="fas fa-ticket-alt receipt-icon"></i><strong>Queue Number:</strong> <span id="receiptNumber"></span></p>
+                    <p class="receipt-item"><i class="fas fa-clock receipt-icon"></i><strong>Time:</strong> <span id="receiptTime"></span></p>
                 </div>
-                <div style="margin-left: 10px;">
-                    <div id="qrcode" style="text-align: center;"></div>
-                    <p style="font-size: 9px; text-align: center; margin-top: 3px;">Scan for details</p>
+                <div class="receipt-qr-container">
+                    <div id="qrcode"></div>
+                    <p class="receipt-qr-caption">Scan for details</p>
                 </div>
             </div>
-            <hr style="border: 1px solid #ddd; margin: 8px 0;">
-            <p style="color: #2c5aa0; font-weight: bold; margin: 5px 0; font-size: 0.9em;">Please wait for your number to be called on the display screen.</p>
-            <p style="font-size: 11px; color: #888; text-align: center; margin: 5px 0;">Thank you for choosing our bank!</p>
+            <hr class="receipt-divider">
+            <p class="receipt-footer">Please wait for your number to be called on the display screen.</p>
+            <p class="receipt-thank-you">Thank you for choosing our bank!</p>
         </div>
+        </div>
+        
+        <div class="queue-info mobile-queue-info">
+            <p><strong>Current Queue Status:</strong> <span id="queueCountMobile">0</span> people waiting</p>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/custom-select.js"></script>
-    <script>
-        // Connect to Socket.IO with error handling
-        let socket;
-        try {
-            socket = io({
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000,
-                timeout: 20000
-            });
-            
-            socket.on('connect_error', (err) => {
-                console.error('Socket.IO connection error:', err);
-            });
-            
-            socket.on('connect', () => {
-                console.log('Socket.IO connected successfully');
-            });
-        } catch (error) {
-            console.error('Socket.IO initialization error:', error);
-        }
-        
-        // Show/hide other service field based on selection
-        document.getElementById('service').addEventListener('change', function() {
-            const otherServiceGroup = document.getElementById('otherServiceGroup');
-            otherServiceGroup.style.display = this.value === 'Other' ? 'block' : 'none';
-            
-            // Make the other service field required only when 'Other' is selected
-            const otherServiceField = document.getElementById('otherService');
-            otherServiceField.required = this.value === 'Other';
-        });
-        
-        document.getElementById('ticketForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const customerName = document.getElementById('customerName').value;
-            let service = document.getElementById('service').value;
-            const language = document.getElementById('language').value;
-            
-            // Validate that otherService is filled when 'Other' is selected
-            if (service === 'Other') {
-                const otherService = document.getElementById('otherService').value.trim();
-                if (!otherService) {
-                    alert('Please specify your inquiry when selecting "Other"');
-                    document.getElementById('otherService').focus();
-                    return;
-                }
-            }
-            
-            // If 'Other' is selected, use the custom text instead
-            if (service === 'Other') {
-                const otherService = document.getElementById('otherService').value;
-                if (otherService.trim()) {
-                    service = 'Other: ' + otherService.trim();
-                    console.log('Using custom service:', service);
-                } else {
-                    service = 'General Inquiry'; // Fallback if no custom text is provided
-                    console.log('No custom text provided, using General Inquiry');
-                }
-            }
-            
-            console.log('Form data being sent:', { customerName, service, language }); // Debug log
-            
-            try {
-                const requestBody = { customerName, service, language };
-                console.log('Sending request to:', window.location.origin + '/api/ticket');
-                console.log('Request body:', JSON.stringify(requestBody));
-                
-                const response = await fetch('/api/ticket', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('API error:', response.status, errorText);
-                    throw new Error(`API error: ${response.status} - ${errorText}`);
-                }
-                
-                const ticket = await response.json();
-                
-                // Show receipt
-                document.getElementById('receiptName').textContent = ticket.customerName;
-                document.getElementById('receiptService').textContent = ticket.service;
-                document.getElementById('receiptLanguage').textContent = ticket.language || 'Not specified';
-                document.getElementById('receiptNumber').textContent = ticket.number;
-                document.getElementById('receiptTime').textContent = new Date(ticket.timestamp).toLocaleTimeString();
-                
-                console.log('Ticket data:', ticket); // Debug log
-                
-                // Generate QR code that redirects to ticket page
-                const ticketUrl = `${window.location.origin}/ticket?name=${encodeURIComponent(ticket.customerName)}&service=${encodeURIComponent(ticket.service)}&language=${encodeURIComponent(ticket.language)}&number=${ticket.number}&time=${encodeURIComponent(new Date(ticket.timestamp).toLocaleTimeString())}&counter=${ticket.counterId}`;
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(ticketUrl)}`;
-                
-                const qrImg = document.createElement('img');
-                qrImg.src = qrUrl;
-                qrImg.alt = 'QR Code';
-                qrImg.style.width = '120px';
-                qrImg.style.height = '120px';
-                qrImg.style.border = '1px solid #ddd';
-                
-                qrImg.onerror = function() {
-                    document.getElementById('qrcode').innerHTML = '<div style="width: 120px; height: 120px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 10px;">QR Code<br>Unavailable</div>';
-                };
-                
-                document.getElementById('qrcode').innerHTML = '';
-                document.getElementById('qrcode').appendChild(qrImg);
-                
-                document.getElementById('receipt').style.display = 'block';
-                
-                // Reset form
-                document.getElementById('ticketForm').reset();
-                
-                // Ensure the otherServiceGroup is hidden after form reset
-                document.getElementById('otherServiceGroup').style.display = 'none';
-                
-            } catch (error) {
-                console.error('Error getting ticket:', error);
-                alert('Error getting ticket: ' + error.message);
-            }
-        });
-        
-        socket.on('queueUpdate', (data) => {
-            const totalWaiting = Object.values(data.queues).reduce((sum, queue) => sum + queue.length, 0);
-            document.getElementById('queueCount').textContent = totalWaiting;
-        });
-    </script>
+    <script src="/js/kiosk.js"></script>
 </body>
 </html>

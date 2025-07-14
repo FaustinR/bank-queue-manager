@@ -1,0 +1,148 @@
+body { 
+    font-family: Arial, sans-serif; 
+    margin: 0; 
+    padding: 20px; 
+    background: #f5f5f5; 
+}
+
+.container { 
+    max-width: 800px; 
+    margin: 0 auto; 
+    background: white; 
+    padding: 30px; 
+    border-radius: 10px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+}
+
+h1 { 
+    color: #2c5aa0; 
+    text-align: center; 
+}
+
+.counter-info { 
+    background: #e8f4fd; 
+    padding: 20px; 
+    border-radius: 5px; 
+    margin-bottom: 20px; 
+}
+
+.current-customer { 
+    background: #fff3cd; 
+    padding: 15px; 
+    border-radius: 5px; 
+    margin-bottom: 20px; 
+}
+
+.actions { 
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 20px; 
+}
+
+@media (max-width: 480px) {
+    .actions {
+        flex-direction: column;
+    }
+}
+
+button { 
+    padding: 12px 20px; 
+    border: none; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    font-size: 16px; 
+}
+
+.btn-primary { 
+    background: #2c5aa0; 
+    color: white; 
+}
+
+.btn-success { 
+    background: #28a745; 
+    color: white; 
+}
+
+.btn-primary:hover { 
+    background: #1e3d6f; 
+}
+
+.btn-success:hover { 
+    background: #1e7e34; 
+}
+
+button:disabled { 
+    background: #ccc; 
+    color: #666; 
+    cursor: not-allowed; 
+}
+
+button:disabled:hover { 
+    background: #ccc; 
+}
+
+.queue-preview { 
+    background: #f8f9fa; 
+    padding: 15px; 
+    border-radius: 5px; 
+}
+
+.queue-item { 
+    padding: 8px; 
+    border-bottom: 1px solid #ddd; 
+}
+
+.queue-item:last-child { 
+    border-bottom: none; 
+}
+
+.queue-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+@media (max-width: 768px) {
+    .queue-table {
+        font-size: 14px;
+    }
+    
+    .queue-table th, .queue-table td {
+        padding: 6px 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .queue-table {
+        font-size: 12px;
+    }
+}
+
+.queue-table th, .queue-table td {
+    padding: 8px;
+    text-align: left;
+}
+
+.queue-table thead tr {
+    border-bottom: 1px solid #ddd;
+}
+
+.queue-table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.language-flag {
+    width: 20px;
+    height: 15px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
