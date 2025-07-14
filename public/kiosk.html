@@ -10,38 +10,30 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <div class="left-section">
+    <div class="main-container">
+        <div class="form-section">
             <h1>Welcome to Our Bank</h1>
             <p style="color: #666;">Please fill in your information to get your queue number</p>
             
             <form id="ticketForm">
-            <div class="form-group">
+            <div class="form-group name-field">
                 <label for="customerName">Your Name:</label>
                 <input type="text" id="customerName" required>
             </div>
             
             <div class="form-row">
-                <div class="service-container">
-                    <div class="form-group">
-                        <label for="service">Service Needed:</label>
-                        <select id="service" required>
-                            <option value="">Select a service</option>
-                            <option value="Account Opening">Account Opening</option>
-                            <option value="Loan Application">Loan Application</option>
-                            <option value="Money Transfer">Money Transfer</option>
-                            <option value="Card Services">Card Services</option>
-                            <option value="General Inquiry">General Inquiry</option>
-                            <option value="Other">Other (specify)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group" id="otherServiceGroup" style="display: none;">
-                        <label for="otherService">Specify your inquiry:</label>
-                        <input type="text" id="otherService" maxlength="50" placeholder="Enter your inquiry (max 50 characters)">
-                        <small style="color: #666;">Required when 'Other' is selected</small>
-                    </div>
-                </div>
+                <div class="form-group">
+                <label for="service">Service Needed:</label>
+                <select id="service" required>
+                    <option value="">Select a service</option>
+                    <option value="Account Opening">Account Opening</option>
+                    <option value="Loan Application">Loan Application</option>
+                    <option value="Money Transfer">Money Transfer</option>
+                    <option value="Card Services">Card Services</option>
+                    <option value="General Inquiry">General Inquiry</option>
+                    <option value="Other">Other (specify)</option>
+                </select>
+            </div>
                 
                 <div class="form-group">
                     <label for="language">Preferred Language:</label>
@@ -55,6 +47,12 @@
                 </div>
             </div>
             
+            <div class="form-group" id="otherServiceGroup" style="display: none;">
+                <label for="otherService">Specify your inquiry:</label>
+                <input type="text" id="otherService" maxlength="50" placeholder="Enter your inquiry (max 50 characters)">
+                <small style="color: #666;">Required when 'Other' is selected</small>
+            </div>
+            
             <button type="submit">Get Queue Number</button>
         </form>
         
@@ -63,7 +61,7 @@
         </div>
         </div>
         
-        <div class="right-section">
+        <div class="ticket-section">
             <div id="receipt" class="receipt">
             <div class="receipt-header">
                 <img src="/images/favicon.jpeg" alt="Bank Logo" class="receipt-logo">

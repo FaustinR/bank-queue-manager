@@ -1,178 +1,191 @@
-html, body { 
-    font-family: Arial, sans-serif; 
-    margin: 0; 
-    padding: 0; 
-    background: #f0f8ff; 
-    height: 100%; 
-    overflow: hidden; 
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 100vh;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-body { 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    padding: 5px; 
-    box-sizing: border-box; 
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 20px;
+    transition: all 0.5s ease;
+    height: calc(100vh - 20px);
+    box-sizing: border-box;
 }
 
-.container { 
-    width: 98%; 
-    max-width: 1200px; 
-    margin: 0; 
-    background: white; 
-    padding: 15px; 
-    border-radius: 10px; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-    display: grid; 
-    grid-template-columns: 45% 55%; 
-    grid-gap: 15px; 
-    max-height: 98vh; 
-    overflow: visible; 
-    box-sizing: border-box; 
-}
-
-.left-section { 
-    grid-column: 1; 
-    display: flex; 
-    flex-direction: column; 
-    max-height: 95vh; 
-    overflow: visible;
-}
-
-.right-section { 
-    grid-column: 2; 
-    max-height: 95vh; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-}
-
-h1 { 
-    color: #2c5aa0; 
-    margin: 0 0 15px 0; 
-    font-size: 1.8em; 
-}
-
-.form-group { 
-    margin-bottom: 15px; 
-    position: relative;
-}
-
-.form-row { 
-    display: flex; 
-    gap: 15px; 
-}
-
-.form-row .form-group,
-.form-row .service-container { 
-    flex: 1; 
-}
-
-.service-container {
+.form-section {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: all 0.5s ease;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-label { 
-    display: block; 
-    margin-bottom: 5px; 
-    font-weight: bold; 
-    color: #333; 
+.ticket-section {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-input, select { 
-    width: 100%; 
-    padding: 10px; 
-    border: 2px solid #ddd; 
-    border-radius: 5px; 
-    font-size: 15px; 
-    box-sizing: border-box; 
+.ticket-section.show {
+    transform: translateX(0);
+    opacity: 1;
 }
 
-@media (max-width: 768px) {
-    input, select {
-        padding: 8px;
-        font-size: 14px;
+.main-container.ticket-generated .form-section {
+    flex: 0.6;
+}
+
+.main-container.ticket-generated .ticket-section {
+    flex: 1;
+}
+
+h1 {
+    color: #2c5aa0;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+input:focus, select:focus {
+    border-color: #2c5aa0;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #2c5aa0, #1e3d6f);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(44, 90, 160, 0.4);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.receipt {
+    background: #f9f9f9;
+    padding: 0;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    animation: slideInFromRight 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
     }
 }
 
-button { 
-    width: 100%; 
-    padding: 12px; 
-    background: #2c5aa0; 
-    color: white; 
-    border: none; 
-    border-radius: 5px; 
-    font-size: 16px; 
-    cursor: pointer; 
-}
-
-@media (max-width: 768px) {
-    button {
-        padding: 10px;
-        font-size: 14px;
-    }
-}
-
-button:hover { 
-    background: #1e3d6f; 
-}
-
-.receipt { 
-    background: #f9f9f9; 
-    padding: 12px; 
-    border-radius: 5px; 
-    display: none; 
-    height: 100%; 
-    box-sizing: border-box; 
-    font-size: 0.95em; 
-}
-
-.receipt h3 { 
-    color: #2c5aa0; 
-    margin-top: 0; 
-}
-
-.queue-info { 
-    background: #e8f4fd; 
-    padding: 10px; 
-    border-radius: 5px; 
-    margin-top: 15px; 
-}
-
-/* Receipt specific styles */
 .receipt-header {
-    text-align: center; 
-    margin-bottom: 8px;
+    text-align: center;
+    padding: 30px 30px 20px;
+    background: linear-gradient(135deg, #2c5aa0, #1e3d6f);
+    border-radius: 15px 15px 0 0;
+    color: white;
 }
 
 .receipt-logo {
-    width: 40px; 
-    height: 40px; 
-    margin-bottom: 3px;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
 .receipt-title {
-    color: #2c5aa0; 
-    margin: 0; 
-    font-size: 1.3em;
+    color: white;
+    margin: 0;
+    font-size: 1.8em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .receipt-subtitle {
-    margin: 2px 0; 
-    color: #666; 
-    font-size: 0.85em;
+    margin: 5px 0 0;
+    color: rgba(255,255,255,0.9);
+    font-size: 14px;
 }
 
 .receipt-divider {
-    border: 1px solid #ddd; 
-    margin: 8px 0;
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ddd, transparent);
+    margin: 0;
 }
 
 .receipt-content {
-    display: flex; 
-    justify-content: space-between; 
+    display: flex;
+    justify-content: space-between;
     align-items: flex-start;
+    padding: 30px;
 }
 
 .receipt-details {
@@ -180,110 +193,220 @@ button:hover {
 }
 
 .receipt-ticket-title {
-    margin: 0 0 8px 0; 
-    font-size: 1.1em;
+    color: #2c5aa0;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4em;
 }
 
 .receipt-item {
-    margin: 5px 0;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
 }
 
 .receipt-icon {
-    margin-right: 6px; 
     color: #2c5aa0;
+    margin-right: 10px;
+    width: 20px;
 }
 
 .receipt-qr-container {
-    margin-left: 10px;
+    margin-left: 20px;
+    text-align: center;
+}
+
+#qrcode {
+    border: 2px solid #2c5aa0;
+    border-radius: 10px;
+    padding: 10px;
+    background: white;
 }
 
 .receipt-qr-caption {
-    font-size: 9px; 
-    text-align: center; 
-    margin-top: 3px;
+    font-size: 10px;
+    text-align: center;
+    margin-top: 5px;
+    color: #666;
 }
 
 .receipt-footer {
-    color: #2c5aa0; 
-    font-weight: bold; 
-    margin: 5px 0; 
-    font-size: 0.9em;
+    color: #2c5aa0;
+    font-weight: bold;
+    text-align: center;
+    margin: 20px 30px 10px;
+    font-size: 16px;
 }
 
 .receipt-thank-you {
-    font-size: 11px; 
-    color: #888; 
-    text-align: center; 
-    margin: 5px 0;
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin: 0 30px 30px;
 }
 
-.desktop-queue-info {
-    display: block;
+.queue-info {
+    background: rgba(255,255,255,0.9);
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+    text-align: center;
+    font-weight: bold;
+    color: #2c5aa0;
 }
 
 .mobile-queue-info {
     display: none;
-    order: 3;
 }
 
 @media (max-width: 768px) {
-    html, body {
+    body {
+        padding: 5px;
         height: auto;
-        overflow: auto;
+        min-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
     
-    body {
+    .main-container {
+        flex-direction: column;
+        gap: 10px;
+        height: auto;
+        min-height: calc(100vh - 10px);
+    }
+    
+    .form-section {
+        flex: none;
         padding: 10px;
+        height: calc(100vh - 80px);
+        max-height: calc(100vh - 80px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+    
+    .ticket-section {
+        flex: none;
+        padding: 15px;
+        height: auto;
+        min-height: 70vh;
+        overflow-y: auto;
+        display: none;
+    }
+    
+    .main-container.ticket-generated .form-section {
+        height: auto;
+        max-height: none;
+        overflow-y: auto;
+    }
+    
+    .main-container.ticket-generated {
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    .main-container.ticket-generated .ticket-section {
         display: block;
     }
     
-    .container {
+    .ticket-section {
+        transform: translateY(0);
+        position: relative;
+        opacity: 0;
+    }
+    
+    .ticket-section.show {
+        transform: translateY(0);
+        opacity: 1;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .main-container.ticket-generated {
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    h1 {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+    }
+    
+    .form-section h1 {
+        margin-bottom: 3px;
+        flex-shrink: 0;
+    }
+    
+    .form-section > p {
+        margin-bottom: 2px;
+        flex-shrink: 0;
+        font-size: 14px;
+    }
+    
+    .form-group {
+        margin-bottom: 12px;
+    }
+    
+    .form-section > form {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        max-height: none;
-        overflow: visible;
-        padding: 15px;
-    }
-    
-    .left-section, .right-section {
-        width: 100%;
-        max-height: none;
-        overflow: visible;
-    }
-    
-    .left-section {
-        order: 1;
-    }
-    
-    .right-section {
-        order: 2;
-        margin-top: 20px;
-        align-items: flex-start;
-    }
-    
-    .receipt {
-        width: 100%;
-        height: auto;
+        justify-content: flex-start;
+        min-height: 0;
+        padding-top: 20px;
     }
     
     .form-row {
         flex-direction: column;
-        gap: 20px;
+        /* gap: 0; */
     }
     
-    .service-container {
-        gap: 10px;
+    /* Mobile form ordering */
+    .form-group.name-field {
+        order: 1;
     }
     
-    .receipt-content {
-        flex-direction: column;
+    .form-row {
+        order: 2;
     }
     
-    .receipt-qr-container {
-        margin-left: 0;
-        margin-top: 15px;
-        text-align: center;
-        width: 100%;
+    #otherServiceGroup {
+        order: 3;
+    }
+    
+    .form-section button {
+        order: 4;
+    }
+    
+    input, select {
+        padding: 8px;
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+    
+    button {
+        padding: 8px;
+        font-size: 16px;
+        margin-top: 20px;
+    }
+    
+    label {
+        margin-bottom: 4px;
+        font-size: 14px;
     }
     
     .desktop-queue-info {
@@ -292,6 +415,39 @@ button:hover {
     
     .mobile-queue-info {
         display: block;
-        margin-top: 15px;
+        margin: 0;
+        padding: 6px;
+        font-size: 13px;
+        flex-shrink: 0;
+        background: rgba(255,255,255,0.95);
+        border-radius: 8px;
+    }
+    
+    .form-section .mobile-queue-info {
+        margin: 0;
+    }
+    
+    .receipt-content {
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+    }
+    
+    .receipt-qr-container {
+        margin-left: 0;
+        align-self: center;
+    }
+    
+    .receipt-header {
+        padding: 20px 20px 15px;
+    }
+    
+    .receipt-logo {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .receipt-title {
+        font-size: 1.4em;
     }
 }
