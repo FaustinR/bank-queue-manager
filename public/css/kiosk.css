@@ -1,7 +1,7 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 10px;
+    padding: 5px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     height: 100vh;
     overflow: hidden;
@@ -14,19 +14,20 @@ body {
     display: flex;
     gap: 20px;
     transition: all 0.5s ease;
-    height: calc(100vh - 20px);
+    height: calc(100vh - 10px);
     box-sizing: border-box;
 }
 
 .form-section {
     flex: 1;
     background: white;
-    padding: 20px;
+    padding: 30px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     transition: all 0.5s ease;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     height: 100%;
     overflow: hidden;
     box-sizing: border-box;
@@ -35,7 +36,7 @@ body {
 .ticket-section {
     flex: 1;
     background: white;
-    padding: 20px;
+    padding: 30px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     transform: translateX(100%);
@@ -44,6 +45,9 @@ body {
     height: 100%;
     overflow: hidden;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .ticket-section.show {
@@ -59,16 +63,30 @@ body {
     flex: 1;
 }
 
+.form-header {
+    text-align: center;
+    margin-top: -20px;
+}
+
+.form-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #2c5aa0;
+    box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
+    margin-bottom: 15px;
+}
+
 h1 {
     color: #2c5aa0;
     text-align: center;
     margin-bottom: 20px;
-    font-size: 1.8em;
+    font-size: clamp(1.2em, 2.5vw + 1rem, 2.5em);
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .form-row {
@@ -85,6 +103,7 @@ label {
     margin-bottom: 5px;
     font-weight: bold;
     color: #333;
+    font-size: clamp(12px, 1.2vw + 0.3rem, 18px);
 }
 
 input, select {
@@ -92,9 +111,13 @@ input, select {
     padding: 12px;
     border: 2px solid #ddd;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: clamp(14px, 1.5vw + 0.5rem, 22px);
     box-sizing: border-box;
     transition: border-color 0.3s ease;
+}
+
+select {
+    min-height: 50px;
 }
 
 input:focus, select:focus {
@@ -105,15 +128,16 @@ input:focus, select:focus {
 
 button {
     width: 100%;
-    padding: 15px;
+    padding: 18px;
     background: linear-gradient(135deg, #2c5aa0, #1e3d6f);
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 18px;
+    font-size: clamp(16px, 1.8vw + 0.5rem, 24px);
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
+    margin-top: 10px;
 }
 
 button:hover {
@@ -262,6 +286,89 @@ button:active {
     display: none;
 }
 
+/* Large screens - extra spacing */
+@media (min-height: 900px) and (min-width: 1200px) {
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-logo {
+        width: 100px;
+        height: 100px;
+    }
+    
+    h1 {
+        font-size: clamp(2em, 3vw + 1rem, 3em);
+        margin-bottom: 25px;
+    }
+    
+    input, select {
+        padding: 18px;
+        font-size: clamp(18px, 2vw + 0.5rem, 24px);
+    }
+    
+    button {
+        padding: 22px;
+        font-size: clamp(20px, 2.2vw + 0.5rem, 26px);
+    }
+}
+
+/* Average screens - ensure dropdown visibility */
+@media (min-height: 700px) and (max-height: 900px) {
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-header {
+        margin-top: -25px;
+        margin-bottom: 10px;
+    }
+    
+    h1 {
+        margin-bottom: 15px;
+    }
+    
+    select {
+        min-height: 85px;
+        line-height: 1.7;
+        padding: 20px 12px;
+        font-size: clamp(16px, 1.6vw + 0.5rem, 20px);
+    }
+    
+    .queue-info {
+        margin-top: 10px;
+        padding: 8px;
+    }
+}
+
+/* Short screens - compact layout */
+@media (max-height: 700px) {
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-logo {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 10px;
+    }
+    
+    h1 {
+        font-size: 1.5em;
+        margin-bottom: 15px;
+    }
+    
+    input, select {
+        padding: 10px;
+        font-size: 16px;
+    }
+    
+    button {
+        padding: 14px;
+        font-size: 18px;
+    }
+}
+
 @media (max-width: 768px) {
     body {
         padding: 5px;
@@ -339,6 +446,16 @@ button:active {
     .main-container.ticket-generated {
         height: auto;
         min-height: 100vh;
+    }
+    
+    .form-header {
+        margin-top: 0;
+    }
+    
+    .form-logo {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 8px;
     }
     
     h1 {
