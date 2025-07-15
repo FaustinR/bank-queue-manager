@@ -15,19 +15,21 @@ body {
     margin: 0 auto;
     display: flex;
     gap: 20px;
-    transition: all 0.5s ease;
+    transition: all 0.8s ease;
     height: calc(100vh - -50px);
     box-sizing: border-box;
     align-items: center;
+    justify-content: center;
 }
 
 .form-section {
-    flex: 1;
+    flex: none;
+    width: 500px;
     background: white;
     padding: 30px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    transition: all 0.5s ease;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -49,14 +51,25 @@ body {
     height: 100%;
     overflow: hidden;
     box-sizing: border-box;
-    display: flex;
+    display: none;
     flex-direction: column;
     justify-content: center;
 }
 
 .ticket-section.show {
+    display: flex;
     transform: translateX(0);
     opacity: 1;
+}
+
+.main-container.ticket-generated {
+    justify-content: center;
+}
+
+@media (min-width: 768px) {
+    .main-container.ticket-generated {
+        margin-left: 150px;
+    }
 }
 
 .main-container.ticket-generated .form-section {
@@ -680,17 +693,18 @@ button:active {
     
     .mobile-queue-info {
         display: block;
-        margin: 15px auto 0;
+        margin: 5px auto 0;
         padding: 6px;
         font-size: 13px;
         flex-shrink: 0;
         background: rgba(255,255,255,0.95);
         border-radius: 8px;
         width: calc(100% - -35px);
+        margin-top: 30px;
     }
     
     .form-section .mobile-queue-info {
-        margin: 15px 0 0;
+        margin: 5px 0 0;
         width: 100%;
     }
     
