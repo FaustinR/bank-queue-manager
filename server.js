@@ -35,6 +35,9 @@ let queues = {
   5: []  // General Inquiry
 };
 
+// Global ticket counter
+let ticketCounter = 0;
+
 let counters = {
   1: { name: 'Account Opening', current: null, status: 'available', service: 'Account Opening' },
   2: { name: 'Loan Application', current: null, status: 'available', service: 'Loan Application' },
@@ -83,9 +86,12 @@ app.post('/api/ticket', (req, res) => {
       console.log('Custom service detected, assigning to General Inquiry counter:', service);
     }
     
+    // Increment global ticket counter
+    ticketCounter++;
+    
     const ticket = {
       id: uuidv4(),
-      number: queues[counterId].length + 1,
+      number: ticketCounter,
       customerName,
       service: serviceToUse,
       language,

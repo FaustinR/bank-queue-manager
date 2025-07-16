@@ -90,6 +90,29 @@ body {
     border-radius: 10px; 
 }
 
+.queue-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.queue-table th,
+.queue-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+}
+
+.queue-table th {
+    background: #0f3460;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.queue-table tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 .queue-item { 
     display: flex; 
     justify-content: space-between; 
@@ -97,7 +120,24 @@ body {
     border-bottom: 1px solid #333; 
 }
 
+@media (max-width: 768px) {
+    .queue-table th,
+    .queue-table td {
+        padding: 8px 4px;
+        font-size: 14px;
+    }
+}
+
 @media (max-width: 480px) {
+    .queue-table {
+        font-size: 12px;
+    }
+    
+    .queue-table th,
+    .queue-table td {
+        padding: 6px 2px;
+    }
+    
     .queue-item {
         flex-direction: column;
         padding: 8px;

@@ -75,7 +75,7 @@ function updateDisplay(data) {
             <div class="current-customer">
                 ${counter.current ? 
                     `${counter.current.customerName}<br>
-                     #${counter.current.number}` : 
+                     is being served` : 
                     'Available'
                 }
             </div>
@@ -94,15 +94,34 @@ function updateDisplay(data) {
         });
     });
     
+    // Sort customers by queue number (ascending)
+    allCustomers.sort((a, b) => a.number - b.number);
+    
     if (allCustomers.length === 0) {
         queueDiv.innerHTML = '<p>No customers waiting</p>';
     } else {
-        queueDiv.innerHTML = allCustomers.map(customer => `
-            <div class="queue-item">
-                <span>#${customer.number} - ${customer.customerName}</span>
-                <span>${customer.service} (Counter ${customer.counterId})</span>
-            </div>
-        `).join('');
+        queueDiv.innerHTML = `
+            <table class="queue-table">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Name</th>
+                        <th>Service</th>
+                        <th>Counter</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${allCustomers.map(customer => `
+                        <tr>
+                            <td>#${customer.number}</td>
+                            <td>${customer.customerName}</td>
+                            <td>${customer.service}</td>
+                            <td>Counter ${customer.counterId}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
     }
 }
 
