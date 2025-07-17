@@ -2,7 +2,13 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue');
+    // Set Node TLS options to fix SSL issues
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    
+    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue', {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
     
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
