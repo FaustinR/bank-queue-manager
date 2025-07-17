@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Bank Queue Management</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
+                <h2>Admin Panel</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="/admin"><i class="icon">📊</i> Dashboard</a></li>
+                    <li><a href="/history" target="_blank"><i class="icon">📜</i> Ticket History</a></li>
+                    <li><a href="/signup"><i class="icon">👤</i> Create User</a></li>
+                    <li><a href="/users"><i class="icon">👥</i> Manage Users</a></li>
+                    <li><a href="/" target="_blank"><i class="icon">🏠</i> Customer Kiosk</a></li>
+                    <li><a href="/display" target="_blank"><i class="icon">📺</i> Display Screen</a></li>
+                    <li class="logout"><a href="/api/auth/logout"><i class="icon">🚪</i> Logout</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Dashboard</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <span class="role-badge" id="userRole">...</span>
+                </div>
+            </header>
+            
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">🎫</div>
+                    <div class="stat-content">
+                        <h3>Total Tickets</h3>
+                        <p class="stat-value" id="totalTickets">0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-content">
+                        <h3>Waiting</h3>
+                        <p class="stat-value" id="waitingTickets">0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🔄</div>
+                    <div class="stat-content">
+                        <h3>Being Served</h3>
+                        <p class="stat-value" id="servingTickets">0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <h3>Completed</h3>
+                        <p class="stat-value" id="completedTickets">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-charts">
+                <div class="chart-card">
+                    <h3>Average Wait Time</h3>
+                    <div class="time-display">
+                        <span id="avgWaitTime">0</span>
+                        <span class="time-unit">minutes</span>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3>Average Service Time</h3>
+                    <div class="time-display">
+                        <span id="avgServiceTime">0</span>
+                        <span class="time-unit">minutes</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="service-distribution">
+                <h3>Service Distribution</h3>
+                <div class="distribution-chart" id="serviceDistribution">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="js/admin.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+</html>

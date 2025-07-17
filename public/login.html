@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Bank Queue Management</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="images/favicon.jpeg" alt="Bank Logo" class="auth-logo">
+                <h1>Staff Login</h1>
+                <p>Enter your credentials to access the system</p>
+            </div>
+            
+            <div class="auth-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="error-message" id="loginError"></div>
+                    
+                    <button type="submit" class="auth-button">Login</button>
+                </form>
+            </div>
+            
+            <div class="auth-footer">
+                <p>Bank Queue Management System</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/login.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+</html>

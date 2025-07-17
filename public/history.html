@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket History - Bank Queue Management</title>
+    <link rel="stylesheet" href="css/history.css">
+    <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="images/favicon.jpeg" alt="Bank Logo" class="logo">
+                <h1>Ticket History</h1>
+            </div>
+            <div class="nav-links">
+                <a href="/" target="_blank">Home</a>
+                <a href="/display" target="_blank">Display</a>
+            </div>
+        </header>
+        
+        <div class="filter-section">
+            <form id="filterForm">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="statusFilter">Status:</label>
+                        <select id="statusFilter">
+                            <option value="">All</option>
+                            <option value="waiting">Waiting</option>
+                            <option value="serving">Serving</option>
+                            <option value="completed">Completed</option>
+                            <option value="no-show">No Show</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="serviceFilter">Service:</label>
+                        <select id="serviceFilter">
+                            <option value="">All</option>
+                            <option value="Account Opening">Account Opening</option>
+                            <option value="Loan Application">Loan Application</option>
+                            <option value="Money Transfer">Money Transfer</option>
+                            <option value="Card Services">Card Services</option>
+                            <option value="General Inquiry">General Inquiry</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="dateFilter">Date:</label>
+                        <input type="date" id="dateFilter">
+                    </div>
+                    
+                    <button type="submit" class="filter-btn">Apply Filters</button>
+                    <button type="button" id="refreshBtn" class="refresh-btn">Refresh</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="table-container">
+            <table class="ticket-table">
+                <thead>
+                    <tr>
+                        <th>Ticket #</th>
+                        <th>Customer</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Wait Time</th>
+                        <th>Service Time</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketTable">
+                    <tr>
+                        <td colspan="7">Loading ticket data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="js/history.js"></script>
+    <script src="js/sidebar.js"></script>
+</body>
+</html>

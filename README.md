@@ -45,6 +45,7 @@ npm start
 - Money Transfer
 - Card Services
 - General Inquiry
+- Other (specify)
 
 ## Counter Configuration
 
@@ -53,11 +54,41 @@ The system includes 5 dedicated service counters:
 - Counter 2: Loan Application
 - Counter 3: Money Transfer
 - Counter 4: Card Services
-- Counter 5: General Inquiry
+- Counter 5: General Inquiry + Other (specify) where the user gets to type in their inquiry
 
 ## Technology Stack
 
 - **Backend**: Node.js, Express, Socket.IO
 - **Frontend**: HTML, CSS, JavaScript
 - **Real-time**: WebSocket communication
-- **Data**: In-memory storage (can be extended with database)
+- **Database**: MongoDB for persistent storage
+
+## MongoDB Setup
+
+1. Install MongoDB on your system or use MongoDB Atlas
+2. Configure the connection string in the `.env` file
+3. The system will automatically create the required collections
+
+## Data Storage
+
+The system stores the following information in MongoDB:
+
+- **Tickets**: Customer information, service requested, wait time, service time
+- **Counters**: Counter status, current ticket, total customers served
+- **Users**: Bank staff accounts with role-based access control
+
+## Authentication
+
+The system includes role-based authentication:
+
+- **Admin**: Full access to all features, including user management
+- **Supervisor**: Access to display screen, counters, and ticket history
+- **Employee**: Access to display screen and assigned counter
+
+### Default Admin Account
+
+A default admin account is created on first run:
+- **Email**: admin@bankqueue.com
+- **Password**: admin123
+
+**Important**: Change the default password after first login!
