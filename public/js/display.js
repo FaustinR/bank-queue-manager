@@ -94,8 +94,8 @@ function updateDisplay(data) {
         });
     });
     
-    // Sort customers by queue number (ascending)
-    allCustomers.sort((a, b) => a.number - b.number);
+    // Sort customers by timestamp (descending) - latest first
+    allCustomers.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     
     if (allCustomers.length === 0) {
         queueDiv.innerHTML = '<p>No customers waiting</p>';

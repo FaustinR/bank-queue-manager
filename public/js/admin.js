@@ -17,6 +17,38 @@ async function fetchUserInfo() {
         if (response.ok && data.user) {
             document.getElementById('userName').textContent = `${data.user.firstName} ${data.user.lastName}`;
             document.getElementById('userRole').textContent = data.user.role;
+            
+            // If user is supervisor, hide any create/edit/delete elements
+            if (data.user.role === 'supervisor') {
+                // Add a read-only indicator
+                const roleElement = document.getElementById('userRole');
+                roleElement.textContent = 'supervisor (read-only)';
+                roleElement.style.backgroundColor = '#fd7e14';
+                
+                // Hide any signup links (create user)
+                const signupLinks = document.querySelectorAll('a[href="/signup"]');
+                signupLinks.forEach(link => {
+                    // Hide the entire list item, not just the link
+                    const listItem = link.closest('li');
+                    if (listItem) {
+                        listItem.style.display = 'none';
+                    } else {
+                        link.style.display = 'none';
+                    }
+                });
+                
+                // Change "Manage Users" to "Users"
+                const usersLink = document.querySelector('a[href="/users"]');
+                if (usersLink) {
+                    // Find the text node (which contains "Manage Users")
+                    for (let i = 0; i < usersLink.childNodes.length; i++) {
+                        if (usersLink.childNodes[i].nodeType === Node.TEXT_NODE) {
+                            usersLink.childNodes[i].textContent = ' Users';
+                            break;
+                        }
+                    }
+                }
+            }
         } else {
             // If not authenticated, redirect to login
             window.location.href = '/login';

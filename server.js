@@ -90,8 +90,8 @@ async function initializeFromDB() {
       ticketCounter = latestTicket.ticketNumber;
     }
     
-    // Get waiting tickets and populate queues
-    const waitingTickets = await Ticket.find({ status: 'waiting' }).sort({ createdAt: 1 });
+    // Get waiting tickets and populate queues (latest first)
+    const waitingTickets = await Ticket.find({ status: 'waiting' }).sort({ createdAt: -1 });
     waitingTickets.forEach(ticket => {
       if (queues[ticket.counterId]) {
         queues[ticket.counterId].push({
@@ -149,7 +149,7 @@ app.get('/ticket', (req, res) => {
 app.get('/login', (req, res) => {
   // If already logged in, redirect based on role
   if (req.session.userId) {
-    if (req.session.userRole === 'admin') {
+    if (req.session.userRole === 'admin' || req.session.userRole === 'supervisor') {
       return res.redirect('/admin');
     } else {
       return res.redirect('/display');
@@ -171,12 +171,21 @@ app.get('/history', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'history.html'));
 });
 
+// Middleware to check for full admin rights (not supervisor)
+const isFullAdmin = (req, res, next) => {
+  if (req.session && req.session.userRole === 'admin') {
+    return next();
+  }
+  
+  return res.redirect('/admin');
+};
+
 // Admin routes
 app.get('/admin', isAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.get('/signup', isAdmin, (req, res) => {
+app.get('/signup', isAdmin, isFullAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
 

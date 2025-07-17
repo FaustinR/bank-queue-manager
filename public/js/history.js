@@ -1,7 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
     fetchTicketHistory();
     
-    document.getElementById('refreshBtn').addEventListener('click', fetchTicketHistory);
+    const refreshBtn = document.getElementById('refreshBtn');
+    refreshBtn.addEventListener('click', function() {
+        // Add active class to show button is clicked
+        refreshBtn.classList.add('active');
+        
+        // Fetch data
+        fetchTicketHistory();
+        
+        // Remove active class after a short delay
+        setTimeout(() => {
+            refreshBtn.classList.remove('active');
+        }, 500);
+    });
+    
     document.getElementById('filterForm').addEventListener('submit', function(e) {
         e.preventDefault();
         fetchTicketHistory();
@@ -27,7 +40,7 @@ async function fetchTicketHistory() {
         }
     } catch (error) {
         console.error('Error fetching ticket history:', error);
-        document.getElementById('ticketTable').innerHTML = '<tr><td colspan="7">Error loading ticket data</td></tr>';
+        document.getElementById('ticketTable').innerHTML = '<tr><td colspan="8">Error loading ticket data</td></tr>';
     }
 }
 
@@ -36,7 +49,7 @@ function displayTickets(tickets) {
     tableBody.innerHTML = '';
     
     if (tickets.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7">No tickets found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8">No tickets found</td></tr>';
         return;
     }
     
@@ -82,6 +95,7 @@ function displayTickets(tickets) {
             <td>${ticket.ticketNumber}</td>
             <td>${ticket.customerName}</td>
             <td>${ticket.service}${ticket.customService ? ` (${ticket.customService})` : ''}</td>
+            <td>${ticket.counterId || '-'}</td>
             <td>${statusHtml}</td>
             <td>${createdDate}</td>
             <td>${waitTime}</td>

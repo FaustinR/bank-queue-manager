@@ -13,7 +13,9 @@ const isAuthenticated = (req, res, next) => {
 
 // Admin role middleware
 const isAdmin = (req, res, next) => {
-  if (req.session && req.session.userRole === 'admin') {
+  if (req.session && (req.session.userRole === 'admin' || req.session.userRole === 'supervisor')) {
+    // Set a flag to indicate if the user is a supervisor (for read-only access)
+    req.isSupervisor = req.session.userRole === 'supervisor';
     return next();
   }
   

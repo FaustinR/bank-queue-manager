@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok) {
                 // Redirect based on role
-                if (data.user.role === 'admin') {
+                if (data.user.role === 'admin' || data.user.role === 'supervisor') {
                     window.location.href = '/admin';
                 } else {
                     window.location.href = '/display';

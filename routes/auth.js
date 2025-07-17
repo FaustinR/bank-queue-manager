@@ -42,8 +42,17 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Signup route (admin only)
-router.post('/signup', isAdmin, async (req, res) => {
+// Middleware to check for full admin rights (not supervisor)
+const isFullAdmin = (req, res, next) => {
+  if (req.session && req.session.userRole === 'admin') {
+    return next();
+  }
+  
+  return res.status(403).json({ message: 'Full admin rights required for this operation' });
+};
+
+// Signup route (admin only, not supervisor)
+router.post('/signup', isAdmin, isFullAdmin, async (req, res) => {
   try {
     const { firstName, lastName, email, password, role } = req.body;
     

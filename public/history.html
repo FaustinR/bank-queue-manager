@@ -51,7 +51,9 @@
                         <input type="date" id="dateFilter">
                     </div>
                     
-                    <button type="submit" class="filter-btn">Apply Filters</button>
+                    <div class="filter-group" style="margin-left: 15px;">
+                        <button type="submit" class="filter-btn">Apply Filters</button>
+                    </div>
                     <button type="button" id="refreshBtn" class="refresh-btn">Refresh</button>
                 </div>
             </form>
@@ -64,6 +66,7 @@
                         <th>Ticket #</th>
                         <th>Customer</th>
                         <th>Service</th>
+                        <th>Counter</th>
                         <th>Status</th>
                         <th>Created</th>
                         <th>Wait Time</th>
@@ -72,7 +75,7 @@
                 </thead>
                 <tbody id="ticketTable">
                     <tr>
-                        <td colspan="7">Loading ticket data...</td>
+                        <td colspan="8">Loading ticket data...</td>
                     </tr>
                 </tbody>
             </table>

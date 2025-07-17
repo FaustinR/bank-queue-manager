@@ -30,8 +30,17 @@ router.get('/:id', isAdmin, async (req, res) => {
   }
 });
 
-// Update user (admin only)
-router.put('/:id', isAdmin, async (req, res) => {
+// Middleware to check for full admin rights (not supervisor)
+const isFullAdmin = (req, res, next) => {
+  if (req.session && req.session.userRole === 'admin') {
+    return next();
+  }
+  
+  return res.status(403).json({ message: 'Full admin rights required for this operation' });
+};
+
+// Update user (admin only, not supervisor)
+router.put('/:id', isAdmin, isFullAdmin, async (req, res) => {
   try {
     const { firstName, lastName, email, role } = req.body;
     
@@ -68,8 +77,8 @@ router.put('/:id', isAdmin, async (req, res) => {
   }
 });
 
-// Delete user (admin only)
-router.delete('/:id', isAdmin, async (req, res) => {
+// Delete user (admin only, not supervisor)
+router.delete('/:id', isAdmin, isFullAdmin, async (req, res) => {
   try {
     // Prevent deleting yourself
     if (req.session.userId === req.params.id) {

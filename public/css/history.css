@@ -113,6 +113,11 @@ select, input[type="date"] {
     background: #5a6268;
 }
 
+.refresh-btn.active {
+    background: #28a745;
+    transform: scale(0.95);
+}
+
 .table-container {
     background: white;
     border-radius: 10px;
