@@ -6,8 +6,8 @@ body {
     height: 100vh;
     overflow: hidden;
     box-sizing: border-box;
-    transform: scale(0.88);
-    transform-origin: top left;
+    transform: none;
+    transform-origin: center center;
 }
 
 .main-container {
@@ -17,7 +17,7 @@ body {
     display: flex;
     gap: 20px;
     transition: all 0.8s ease;
-    height: calc(100vh - -50px);
+    height: 100vh;
     box-sizing: border-box;
     align-items: center;
     justify-content: center;
@@ -29,18 +29,22 @@ body {
     width: 500px;
     max-width: 90vw;
     background: white;
-    padding: 30px;
+    padding: 20px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
+    justify-content: flex-start;
+    height: auto;
+    min-height: 650px;
+    max-height: 90vh;
     overflow: visible;
     box-sizing: border-box;
-    padding-top: 20px;
+    padding-top: 15px;
+    padding-bottom: 50px;
     margin: 0 auto;
+    transform: scale(0.8);
 }
 
 .ticket-section {
@@ -58,6 +62,13 @@ body {
     display: none;
     flex-direction: column;
     justify-content: center;
+    transform: scale(0.9);
+}
+
+@media (max-width: 768px) {
+    .form-section {
+        transform: none !important;
+    }
 }
 
 .ticket-section.show {
@@ -68,49 +79,95 @@ body {
 
 .main-container.ticket-generated {
     justify-content: center;
+    align-items: center;
     padding: 0 20px;
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
 }
 
 @media (min-width: 768px) {
     .main-container.ticket-generated {
-        margin-left: 150px;
+        margin: 0 auto;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        height: auto;
+        max-height: 120vh;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    body.ticket-generated {
+        overflow: hidden;
+        padding-bottom: 0;
+    }
+}
+
+@media (min-width: 1200px) {
+    .main-container.ticket-generated {
+        max-width: 1100px;
     }
 }
 
 .main-container.ticket-generated .form-section {
     flex: 1;
-    justify-content: center;
+    justify-content: flex-start;
+    position: relative;
+    max-width: 45%;
+    width: 45%;
+    height: 700px;
+    min-height: 600px;
+    overflow: hidden;
+    margin: 0 10px 0 0;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9);
 }
 
 .main-container.ticket-generated .ticket-section {
     flex: 1;
+    max-width: 45%;
+    width: 45%;
+    height: 600px;
+    min-height: 600px;
+    overflow: hidden;
+    margin: 0 0 0 10px;
+    display: flex;
+    transform: scale(0.9);
 }
 
 .form-header {
     text-align: center;
     margin-top: 0;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .form-logo {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     border: 3px solid #2c5aa0;
     box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
-    margin-bottom: 8px;
+    margin-bottom: 5px;
 }
 
 h1 {
     color: #2c5aa0;
     text-align: center;
     margin-bottom: 5px;
-    font-size: clamp(1.2em, 2.5vw + 1rem, 2.5em);
+    font-size: clamp(1.2em, 1.5vw + 0.5rem, 2em);
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
 .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .form-row {
@@ -124,18 +181,18 @@ h1 {
 
 label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
     font-weight: bold;
     color: #333;
-    font-size: clamp(12px, 1.2vw + 0.3rem, 16px);
+    font-size: clamp(12px, 0.8vw + 0.2rem, 14px);
 }
 
 input, select {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     border: 2px solid #ddd;
     border-radius: 8px;
-    font-size: clamp(14px, 1.5vw + 0.5rem, 22px);
+    font-size: clamp(14px, 1vw + 0.3rem, 18px);
     box-sizing: border-box;
     transition: border-color 0.3s ease;
 }
@@ -143,6 +200,9 @@ input, select {
 select {
     min-height: 50px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: auto;
+    max-height: 120px;
+    overflow-y: auto;
 }
 
 select:focus {
@@ -175,12 +235,12 @@ input:focus, select:focus {
 
 button {
     width: 100%;
-    padding: 18px;
+    padding: 14px;
     background: linear-gradient(135deg, #2c5aa0, #1e3d6f);
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: clamp(16px, 1.8vw + 0.5rem, 24px);
+    font-size: clamp(14px, 1.2vw + 0.3rem, 20px);
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
@@ -260,7 +320,7 @@ button:active {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 30px;
+    padding: 20px;
 }
 
 .receipt-details {
@@ -327,19 +387,22 @@ button:active {
     background: rgba(255,255,255,0.9);
     padding: 8px;
     border-radius: 8px;
-    margin-top: 10px;
+    margin-top: auto;
+    margin-bottom: 0;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     backdrop-filter: blur(10px);
     text-align: center;
     font-weight: bold;
     color: #2c5aa0;
-    font-size: 14px;
+    font-size: 13px;
     flex-shrink: 0;
     width: 100%;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
     box-sizing: border-box;
+    position: relative;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    z-index: 100;
 }
 
 .main-container.ticket-generated .queue-info {
@@ -549,6 +612,38 @@ button:active {
         transform-origin: initial;
     }
     
+    .form-section {
+        position: relative;
+        width: 90%;
+        max-width: 500px;
+        margin: 15px auto 0;
+    }
+    
+    .main-container.ticket-generated {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        width: 100%;
+        height: auto;
+        min-height: 100vh;
+        padding: 0;
+    }
+    
+    .main-container.ticket-generated .form-section,
+    .main-container.ticket-generated .ticket-section {
+        max-width: 100%;
+        max-height: none;
+        height: auto !important;
+        margin-bottom: 20px;
+        transform: scale(0.9);
+    }
+    @media (max-width: 768px) {
+        .form-section {
+            transform: none !important;
+            margin: 0;
+        }
+    }
     .main-container {
         flex-direction: column;
         gap: 15px;
@@ -570,6 +665,9 @@ button:active {
         box-sizing: border-box;
         width: 100%;
         margin: 15px 0 0;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin: 0;
     }
     
     .ticket-section {
@@ -603,6 +701,9 @@ button:active {
     .main-container.ticket-generated .ticket-section {
         display: block;
         transform: translateY(0);
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin: 0;
     }
     
     .ticket-section {
@@ -727,7 +828,6 @@ button:active {
     }
     
     .queue-info {
-        width: calc(100% - 35px);
         max-width: none;
         margin: 0 auto 20px;
     }

@@ -1,0 +1,17 @@
+#otherServiceGroup {
+    margin-bottom: 40px;
+}
+
+/* Ensure service dropdown doesn't overflow */
+#service {
+    height: auto;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+/* Ensure language dropdown doesn't overflow */
+#language {
+    height: auto;
+    max-height: 120px;
+    overflow-y: auto;
+}

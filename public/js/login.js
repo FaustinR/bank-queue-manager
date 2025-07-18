@@ -23,12 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (response.ok) {
-                // Redirect based on role
-                if (data.user.role === 'admin' || data.user.role === 'supervisor') {
-                    window.location.href = '/admin';
-                } else {
-                    window.location.href = '/display';
-                }
+                // Redirect all users to admin dashboard
+                window.location.href = '/admin';
             } else {
                 // Show error message
                 loginError.textContent = data.message || 'Invalid email or password';

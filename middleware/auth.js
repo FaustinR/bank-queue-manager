@@ -13,17 +13,18 @@ const isAuthenticated = (req, res, next) => {
 
 // Admin role middleware
 const isAdmin = (req, res, next) => {
-  if (req.session && (req.session.userRole === 'admin' || req.session.userRole === 'supervisor')) {
-    // Set a flag to indicate if the user is a supervisor (for read-only access)
+  if (req.session && req.session.userRole) {
+    // Set flags to indicate user role
     req.isSupervisor = req.session.userRole === 'supervisor';
+    req.isEmployee = req.session.userRole === 'employee';
     return next();
   }
   
   if (req.xhr) {
-    return res.status(403).json({ message: 'Admin access required' });
+    return res.status(403).json({ message: 'Authentication required' });
   }
   
-  res.redirect('/display');
+  res.redirect('/login');
 };
 
 // Staff role middleware (admin or supervisor or employee)

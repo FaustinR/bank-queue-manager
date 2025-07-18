@@ -28,4 +28,19 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
     });
+    
+    // Check if we're on a page with a sidebar
+    const sidebar = document.querySelector('.sidebar-header h2');
+    if (sidebar) {
+        // Get user role
+        fetch('/api/auth/me')
+            .then(response => response.json())
+            .then(data => {
+                if (data.user && data.user.role !== 'admin') {
+                    // Hide the h2 element completely for non-admin users
+                    sidebar.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error fetching user info:', error));
+    }
 });

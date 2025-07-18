@@ -1,5 +1,42 @@
 const socket = io();
 
+// Adjust form height when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    adjustFormHeight();
+});
+
+// Function to adjust form height based on screen size
+function adjustFormHeight() {
+    const formSection = document.querySelector('.form-section');
+    if (formSection) {
+        const viewportHeight = window.innerHeight;
+        const isTicketGenerated = document.body.classList.contains('ticket-generated');
+        
+        // Set height based on viewport
+        let minHeight = '650px';
+        if (viewportHeight < 700) {
+            minHeight = '600px';
+        } else if (viewportHeight > 900) {
+            minHeight = '700px';
+        }
+        
+        if (isTicketGenerated) {
+            // Ensure ticket section has same height
+            const ticketSection = document.querySelector('.ticket-section');
+            if (ticketSection) {
+                ticketSection.style.height = minHeight;
+                ticketSection.style.minHeight = minHeight;
+            }
+        }
+    }
+}
+
+// Adjust form height on page load
+window.addEventListener('load', adjustFormHeight);
+
+// Adjust form height on window resize
+window.addEventListener('resize', adjustFormHeight);
+
 // Handle "Other" service selection
 document.getElementById('service').addEventListener('change', function() {
     const otherServiceGroup = document.getElementById('otherServiceGroup');
@@ -8,10 +45,14 @@ document.getElementById('service').addEventListener('change', function() {
     if (this.value === 'Other') {
         otherServiceGroup.style.display = 'block';
         otherServiceInput.required = true;
+        // Adjust form height when Other is selected
+        setTimeout(adjustFormHeight, 10);
     } else {
         otherServiceGroup.style.display = 'none';
         otherServiceInput.required = false;
         otherServiceInput.value = '';
+        // Adjust form height when Other is deselected
+        setTimeout(adjustFormHeight, 10);
     }
     
     // Clear error when service is selected
@@ -154,10 +195,12 @@ document.getElementById('ticketForm').addEventListener('submit', async (e) => {
         
         // Add classes for animation
         mainContainer.classList.add('ticket-generated');
+        document.body.classList.add('ticket-generated');
         
         // Delay to allow form section to resize first
         setTimeout(() => {
             ticketSection.classList.add('show');
+            adjustFormHeight();
         }, 300);
         
         // Hide "Other" service field after ticket generation

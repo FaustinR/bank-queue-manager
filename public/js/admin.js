@@ -18,7 +18,15 @@ async function fetchUserInfo() {
             document.getElementById('userName').textContent = `${data.user.firstName} ${data.user.lastName}`;
             document.getElementById('userRole').textContent = data.user.role;
             
-            // If user is supervisor, hide any create/edit/delete elements
+            // Customize sidebar based on user role
+            if (data.user.role !== 'admin') {
+                // Hide the h2 element completely for non-admin users
+                const sidebarHeader = document.querySelector('.sidebar-header h2');
+                if (sidebarHeader) {
+                    sidebarHeader.style.display = 'none';
+                }
+            }
+            
             if (data.user.role === 'supervisor') {
                 // Add a read-only indicator
                 const roleElement = document.getElementById('userRole');
@@ -48,6 +56,22 @@ async function fetchUserInfo() {
                         }
                     }
                 }
+            } else if (data.user.role === 'employee') {
+                // Add an employee indicator
+                const roleElement = document.getElementById('userRole');
+                roleElement.textContent = 'employee';
+                roleElement.style.backgroundColor = '#20c997';
+                
+                // Hide signup and users links
+                const restrictedLinks = document.querySelectorAll('a[href="/signup"], a[href="/users"]');
+                restrictedLinks.forEach(link => {
+                    const listItem = link.closest('li');
+                    if (listItem) {
+                        listItem.style.display = 'none';
+                    } else {
+                        link.style.display = 'none';
+                    }
+                });
             }
         } else {
             // If not authenticated, redirect to login

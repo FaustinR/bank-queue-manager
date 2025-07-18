@@ -147,13 +147,9 @@ app.get('/ticket', (req, res) => {
 
 // Authentication routes
 app.get('/login', (req, res) => {
-  // If already logged in, redirect based on role
+  // If already logged in, redirect to admin dashboard
   if (req.session.userId) {
-    if (req.session.userRole === 'admin' || req.session.userRole === 'supervisor') {
-      return res.redirect('/admin');
-    } else {
-      return res.redirect('/display');
-    }
+    return res.redirect('/admin');
   }
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -171,9 +167,18 @@ app.get('/history', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'history.html'));
 });
 
-// Middleware to check for full admin rights (not supervisor)
+// Middleware to check for full admin rights (admin only)
 const isFullAdmin = (req, res, next) => {
   if (req.session && req.session.userRole === 'admin') {
+    return next();
+  }
+  
+  return res.redirect('/admin');
+};
+
+// Middleware to check for admin or supervisor (not employee)
+const isAdminOrSupervisor = (req, res, next) => {
+  if (req.session && (req.session.userRole === 'admin' || req.session.userRole === 'supervisor')) {
     return next();
   }
   
@@ -189,7 +194,7 @@ app.get('/signup', isAdmin, isFullAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
 
-app.get('/users', isAdmin, (req, res) => {
+app.get('/users', isAdmin, isAdminOrSupervisor, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'users.html'));
 });
 

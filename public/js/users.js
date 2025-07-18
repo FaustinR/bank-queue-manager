@@ -30,6 +30,14 @@ async function fetchUserInfo() {
             document.getElementById('userName').textContent = `${data.user.firstName} ${data.user.lastName}`;
             document.getElementById('userRole').textContent = data.user.role;
             
+            // Hide the h2 element completely for non-admin users
+            if (data.user.role !== 'admin') {
+                const sidebarHeader = document.querySelector('.sidebar-header h2');
+                if (sidebarHeader) {
+                    sidebarHeader.style.display = 'none';
+                }
+            }
+            
             // Check if user is admin or supervisor
             if (data.user.role === 'admin') {
                 // Admin has full access
