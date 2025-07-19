@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Bank Queue Management</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/users.css">
+    <link rel="stylesheet" href="/css/profile.css">
+    <link rel="shortcut icon" href="/images/favicon.jpeg" type="image/jpeg">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="/images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
+                <h2>Admin Panel</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin"><i class="icon">📊</i> Dashboard</a></li>
+                    <li><a href="/history" target="_blank"><i class="icon">📜</i> Ticket History</a></li>
+                    <li id="createUserLink"><a href="/signup"><i class="icon">👤</i> Create User</a></li>
+                    <li id="manageUsersLink"><a href="/users"><i class="icon">👥</i> Manage Users</a></li>
+                    <li><a href="/" target="_blank"><i class="icon">🏠</i> Customer Kiosk</a></li>
+                    <li><a href="/display" target="_blank"><i class="icon">📺</i> Display Screen</a></li>
+                    <li class="logout"><a href="/api/auth/logout"><img src="images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <h1>My Profile</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <span class="role-badge" id="userRole">...</span>
+                </div>
+            </header>
+            
+            <div class="profile-container">
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required readonly>
+                        <small>Email cannot be changed</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="role">Role</label>
+                        <input type="text" id="role" name="role" readonly>
+                        <small>Role cannot be changed</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">New Password (leave blank to keep current)</label>
+                        <input type="password" id="password" name="password">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="save-btn">Save Changes</button>
+                        <a href="/admin" class="cancel-btn">Cancel</a>
+                    </div>
+                </form>
+                
+                <div id="successMessage" class="success-message">
+                    Profile updated successfully!
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/js/profile.js"></script>
+    <script src="/js/sidebar.js"></script>
+</body>
+</html>

@@ -198,6 +198,14 @@ app.get('/users', isAdmin, isAdminOrSupervisor, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'users.html'));
 });
 
+app.get('/edit-user/:id', isAdmin, isFullAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'edit-user.html'));
+});
+
+app.get('/profile', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
 // API endpoints
 app.post('/api/ticket', async (req, res) => {
   try {

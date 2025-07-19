@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - Bank Queue Management</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/users.css">
+    <link rel="stylesheet" href="../css/edit-user.css">
+    <link rel="shortcut icon" href="../images/favicon.jpeg" type="image/jpeg">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="/images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
+                <h2>Admin Panel</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="../admin"><i class="icon">📊</i> Dashboard</a></li>
+                    <li><a href="../history" target="_blank"><i class="icon">📜</i> Ticket History</a></li>
+                    <li><a href="../signup"><i class="icon">👤</i> Create User</a></li>
+                    <li class="active"><a href="../users"><i class="icon">👥</i> Manage Users</a></li>
+                    <li><a href="../" target="_blank"><i class="icon">🏠</i> Customer Kiosk</a></li>
+                    <li><a href="../display" target="_blank"><i class="icon">📺</i> Display Screen</a></li>
+                    <li class="logout"><a href="../api/auth/logout"><img src="../images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Edit User</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <span class="role-badge" id="userRole">...</span>
+                </div>
+            </header>
+            
+            <div class="edit-user-container">
+                <form id="editUserForm">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="role">Role</label>
+                        <select id="role" name="role" required>
+                            <option value="admin">Admin</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="employee">Employee</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">New Password (leave blank to keep current)</label>
+                        <input type="password" id="password" name="password">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="save-btn">Save Changes</button>
+                        <a href="../users" class="cancel-btn">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+    
+    <script src="../js/edit-user.js"></script>
+    <script src="../js/sidebar.js"></script>
+    <script src="../js/user-profile-link.js"></script>
+</body>
+</html>

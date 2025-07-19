@@ -110,6 +110,40 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// Update user profile
+router.put('/profile', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    const { firstName, lastName, password } = req.body;
+    
+    // Find user
+    const user = await User.findById(req.session.userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Update user fields
+    user.firstName = firstName;
+    user.lastName = lastName;
+    
+    // Update password if provided
+    if (password) {
+      user.password = password;
+    }
+    
+    await user.save();
+    
+    res.json({ message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Logout route
 router.get('/logout', (req, res) => {
   req.session.destroy((err) => {

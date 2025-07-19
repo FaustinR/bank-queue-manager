@@ -15,7 +15,8 @@ async function fetchUserInfo() {
         const data = await response.json();
         
         if (response.ok && data.user) {
-            document.getElementById('userName').textContent = `${data.user.firstName} ${data.user.lastName}`;
+            const userNameElement = document.getElementById('userName');
+            userNameElement.textContent = `${data.user.firstName} ${data.user.lastName}`;
             document.getElementById('userRole').textContent = data.user.role;
             
             // Customize sidebar based on user role
