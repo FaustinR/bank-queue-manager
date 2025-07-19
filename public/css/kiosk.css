@@ -125,7 +125,6 @@ body {
     height: 700px;
     min-height: 600px;
     overflow: hidden;
-    margin: 0 10px 0 0;
     display: flex;
     flex-direction: column;
     transform: scale(0.9);

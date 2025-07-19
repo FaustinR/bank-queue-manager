@@ -41,16 +41,29 @@ window.addEventListener('resize', adjustFormHeight);
 document.getElementById('service').addEventListener('change', function() {
     const otherServiceGroup = document.getElementById('otherServiceGroup');
     const otherServiceInput = document.getElementById('otherService');
+    const formSection = document.querySelector('.form-section');
     
     if (this.value === 'Other') {
         otherServiceGroup.style.display = 'block';
         otherServiceInput.required = true;
+        
+        // Increase form height when Other is selected
+        if (window.innerWidth >= 768) {
+            formSection.style.minHeight = '750px';
+        }
+        
         // Adjust form height when Other is selected
         setTimeout(adjustFormHeight, 10);
     } else {
         otherServiceGroup.style.display = 'none';
         otherServiceInput.required = false;
         otherServiceInput.value = '';
+        
+        // Reset form height when Other is deselected
+        if (window.innerWidth >= 768) {
+            formSection.style.minHeight = '';
+        }
+        
         // Adjust form height when Other is deselected
         setTimeout(adjustFormHeight, 10);
     }
@@ -209,8 +222,22 @@ document.getElementById('ticketForm').addEventListener('submit', async (e) => {
         
         // Reset form and dropdowns
         document.getElementById('ticketForm').reset();
+        
+        // Reset original select elements
         document.getElementById('service').selectedIndex = 0;
         document.getElementById('language').selectedIndex = 0;
+        
+        // Reset custom select elements
+        const customSelects = document.querySelectorAll('.selected-option');
+        customSelects.forEach(select => {
+            // Find which select this is based on its position
+            const isServiceSelect = select.closest('.form-group').querySelector('label').textContent.includes('Service');
+            if (isServiceSelect) {
+                select.textContent = 'Select a service';
+            } else {
+                select.textContent = 'Select language';
+            }
+        });
         
     } catch (error) {
         console.error('Error:', error);

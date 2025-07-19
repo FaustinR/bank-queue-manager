@@ -1,0 +1,79 @@
+/* Base styles for all screen sizes */
+.form-section {
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+    padding-top: 20px !important;
+    padding-bottom: 70px !important; /* Extra space for queue info */
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+}
+
+.desktop-queue-info {
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 20px !important;
+    right: 20px !important;
+    width: calc(100% - 40px) !important;
+    margin-top: 20px !important;
+}
+
+button {
+    margin-bottom: 20px !important;
+}
+
+/* Specific styles for average screens */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .form-section {
+        padding-bottom: 80px !important; /* Extra space for queue info */
+    }
+    
+    /* When Other is selected */
+    #otherServiceGroup:not([style*="display: none"]) ~ button {
+        margin-bottom: 30px !important;
+    }
+    
+    /* Ensure form has enough height when Other is selected */
+    #otherServiceGroup:not([style*="display: none"]) {
+        margin-bottom: 20px !important;
+    }
+    
+    /* Increase form height when Other is selected */
+    #otherServiceGroup:not([style*="display: none"]) ~ .desktop-queue-info {
+        bottom: 20px !important;
+    }
+}
+
+/* Larger screens */
+@media (min-width: 1200px) {
+    .form-section {
+        padding-bottom: 90px !important; /* Extra space for queue info */
+        margin-top: 30px !important;
+        margin-bottom: 30px !important;
+    }
+    
+    .desktop-queue-info {
+        margin-top: 40px !important;
+        bottom: 30px !important;
+    }
+    
+    button {
+        margin-bottom: 30px !important;
+    }
+}
+
+/* Mobile devices */
+@media (max-width: 767px) {
+    .form-section {
+        padding-bottom: 60px !important;
+        margin-top: 10px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .desktop-queue-info {
+        position: relative !important;
+        bottom: auto !important;
+        margin-top: 20px !important;
+        width: 100% !important;
+    }
+}
