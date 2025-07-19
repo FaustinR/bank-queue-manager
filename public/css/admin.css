@@ -353,46 +353,69 @@ body {
     background-color: #3498db; /* Blue for employee */
     content: '👤';
 }
-/* Iframe containers */
-.iframe-container {
-    margin-top: 30px;
+/* Accordion styles */
+.accordion-section {
     background: white;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
     overflow: hidden;
 }
 
-.iframe-header {
+.accordion-header {
+    padding: 15px 20px;
+    background: #f5f7fa;
+    cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    background: #f5f7fa;
     border-bottom: 1px solid #eee;
+    transition: background-color 0.3s;
 }
 
-.iframe-header h3 {
+.accordion-header:hover {
+    background: #edf2f7;
+}
+
+.accordion-header h3 {
     margin: 0;
     color: #2c5aa0;
+    font-size: 16px;
 }
 
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #666;
-    cursor: pointer;
+.accordion-icon {
+    color: #2c5aa0;
+    transition: transform 0.3s;
+}
+
+.accordion-icon i {
+    font-size: 16px;
+}
+
+.accordion-content {
     padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease;
 }
 
-.close-btn:hover {
-    background: rgba(0,0,0,0.05);
+.accordion-section.active .accordion-content {
+    padding: 20px;
+    max-height: 2000px; /* Increased to accommodate dashboard stats */
+}
+
+.accordion-section.active .accordion-icon {
+    transform: rotate(180deg);
+}
+
+/* Ensure dashboard stats and charts display properly in accordion */
+.accordion-content .dashboard-stats,
+.accordion-content .dashboard-charts {
+    margin-bottom: 0;
+}
+
+.accordion-content .dashboard-stats {
+    margin-bottom: 20px;
 }
 
 #ticketHistoryFrame {

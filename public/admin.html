@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Bank Queue Management</title>
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
 </head>
 <body>
@@ -37,72 +38,87 @@
                 </div>
             </header>
             
-            <div class="dashboard-stats">
-                <div class="stat-card">
-                    <div class="stat-icon">🎫</div>
-                    <div class="stat-content">
-                        <h3>Total Tickets</h3>
-                        <p class="stat-value" id="totalTickets">0</p>
-                    </div>
+            <div class="accordion-section active" id="dashboardStatsSection">
+                <div class="accordion-header">
+                    <h3>Queue Overview</h3>
+                    <span class="accordion-icon"><i class="fas fa-chevron-down"></i></span>
                 </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">⏳</div>
-                    <div class="stat-content">
-                        <h3>Waiting</h3>
-                        <p class="stat-value" id="waitingTickets">0</p>
+                <div class="accordion-content">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">🎫</div>
+                            <div class="stat-content">
+                                <h3>Total Tickets</h3>
+                                <p class="stat-value" id="totalTickets">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-content">
+                                <h3>Waiting</h3>
+                                <p class="stat-value" id="waitingTickets">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">🔄</div>
+                            <div class="stat-content">
+                                <h3>Being Served</h3>
+                                <p class="stat-value" id="servingTickets">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-content">
+                                <h3>Completed</h3>
+                                <p class="stat-value" id="completedTickets">0</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">🔄</div>
-                    <div class="stat-content">
-                        <h3>Being Served</h3>
-                        <p class="stat-value" id="servingTickets">0</p>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-content">
-                        <h3>Completed</h3>
-                        <p class="stat-value" id="completedTickets">0</p>
+                    
+                    <div class="dashboard-charts">
+                        <div class="chart-card">
+                            <h3>Average Wait Time</h3>
+                            <div class="time-display">
+                                <span id="avgWaitTime">0</span>
+                                <span class="time-unit">minutes</span>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <h3>Average Service Time</h3>
+                            <div class="time-display">
+                                <span id="avgServiceTime">0</span>
+                                <span class="time-unit">minutes</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="dashboard-charts">
-                <div class="chart-card">
-                    <h3>Average Wait Time</h3>
-                    <div class="time-display">
-                        <span id="avgWaitTime">0</span>
-                        <span class="time-unit">minutes</span>
-                    </div>
+            <div class="accordion-section" id="serviceDistributionSection">
+                <div class="accordion-header">
+                    <h3>Service Distribution</h3>
+                    <span class="accordion-icon"><i class="fas fa-chevron-down"></i></span>
                 </div>
-                
-                <div class="chart-card">
-                    <h3>Average Service Time</h3>
-                    <div class="time-display">
-                        <span id="avgServiceTime">0</span>
-                        <span class="time-unit">minutes</span>
+                <div class="accordion-content">
+                    <div class="distribution-chart" id="serviceDistribution">
+                        <!-- Will be populated by JavaScript -->
                     </div>
-                </div>
-            </div>
-            
-            <div class="service-distribution">
-                <h3>Service Distribution</h3>
-                <div class="distribution-chart" id="serviceDistribution">
-                    <!-- Will be populated by JavaScript -->
                 </div>
             </div>
             
             <!-- Ticket History iframe (initially hidden) -->
-            <div id="ticketHistoryContainer" class="iframe-container" style="display: none;">
-                <div class="iframe-header">
+            <div class="accordion-section" id="ticketHistorySection">
+                <div class="accordion-header">
                     <h3>Ticket History</h3>
-                    <button id="closeTicketHistory" class="close-btn">&times;</button>
+                    <span class="accordion-icon"><i class="fas fa-chevron-down"></i></span>
                 </div>
-                <iframe id="ticketHistoryFrame" src="/history" width="100%" height="600px" frameborder="0"></iframe>
+                <div class="accordion-content">
+                    <iframe id="ticketHistoryFrame" src="/history" width="100%" height="600px" frameborder="0"></iframe>
+                </div>
             </div>
             
             <!-- Display Screen iframe (initially hidden) -->

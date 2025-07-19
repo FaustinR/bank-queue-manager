@@ -8,10 +8,18 @@ document.addEventListener('DOMContentLoaded', function() {
     sidebarLinks.forEach(link => {
         // Skip logout link and links with target="_blank"
         if (link.getAttribute('href') !== '/api/auth/logout' && link.getAttribute('target') !== '_blank') {
-            // Special handling for history and display links on admin page
-            if ((link.getAttribute('href') === '/history' || link.getAttribute('href') === '/display') && 
-                window.location.pathname === '/admin') {
-                // Don't add the default click handler, it will be handled by admin.js
+            // Special handling for history link on admin page
+            if (link.getAttribute('href') === '/history' && window.location.pathname === '/admin') {
+                // Handle history link to open accordion
+                link.onclick = function(e) {
+                    e.preventDefault();
+                    const historySection = document.getElementById('ticketHistorySection');
+                    if (historySection) {
+                        historySection.classList.add('active');
+                        historySection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    return false;
+                };
             } else {
                 // Force the link to open in the same tab
                 link.onclick = function(e) {

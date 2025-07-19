@@ -8,9 +8,36 @@ document.addEventListener('DOMContentLoaded', function() {
     // Refresh stats every 30 seconds
     setInterval(fetchStats, 30000);
     
-    // Set up Ticket History functionality
-    setupTicketHistory();
+    // Setup accordion functionality
+    setupAccordions();
 });
+
+// Accordion functionality
+function setupAccordions() {
+    const accordionSections = document.querySelectorAll('.accordion-section');
+    
+    accordionSections.forEach(section => {
+        const header = section.querySelector('.accordion-header');
+        
+        // Set initial state - Queue Overview and Service Distribution open by default
+        if (section.id === 'dashboardStatsSection' || section.id === 'serviceDistributionSection') {
+            section.classList.add('active');
+        }
+        
+        header.addEventListener('click', () => {
+            // Toggle active class on the clicked section
+            section.classList.toggle('active');
+            
+            // If this is the ticket history section and it's being opened, load the iframe
+            if (section.id === 'ticketHistorySection' && section.classList.contains('active')) {
+                const iframe = section.querySelector('iframe');
+                if (iframe && !iframe.getAttribute('src')) {
+                    iframe.setAttribute('src', '/history');
+                }
+            }
+        });
+    });
+}
 
 async function fetchUserInfo() {
     try {
@@ -139,82 +166,5 @@ function updateServiceDistribution(distribution) {
     // If no data
     if (distribution.length === 0) {
         container.innerHTML = '<p>No data available</p>';
-    }
-}
-function setupTicketHistory() {
-    // Get elements
-    const ticketHistoryLink = document.querySelector('a[href="/history"]');
-    const ticketHistoryContainer = document.getElementById('ticketHistoryContainer');
-    const closeTicketHistoryBtn = document.getElementById('closeTicketHistory');
-    
-    if (ticketHistoryLink && ticketHistoryContainer && closeTicketHistoryBtn) {
-        // Remove target="_blank" to prevent opening in new tab by default
-        ticketHistoryLink.removeAttribute('target');
-        
-        // Add click event to show iframe
-        ticketHistoryLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            ticketHistoryContainer.style.display = 'block';
-            
-            // Scroll to the iframe
-            ticketHistoryContainer.scrollIntoView({ behavior: 'smooth' });
-        });
-        
-        // Add click event to close button
-        closeTicketHistoryBtn.addEventListener('click', function() {
-            ticketHistoryContainer.style.display = 'none';
-        });
-        
-        // Add context menu event to allow opening in new tab
-        ticketHistoryLink.addEventListener('contextmenu', function() {
-            // Don't need to do anything here, just let the browser handle the right-click
-            // The default context menu will show with the "Open in new tab" option
-        });
-    }
-}
-function setupTicketHistory() {
-    // Set up Ticket History iframe
-    setupIframe('history', 'ticketHistoryContainer', 'closeTicketHistory');
-    
-    // Set up Display Screen iframe
-    setupIframe('display', 'displayScreenContainer', 'closeDisplayScreen');
-}
-
-function setupIframe(path, containerId, closeBtnId) {
-    // Get elements
-    const link = document.querySelector(`a[href="/${path}"]`);
-    const container = document.getElementById(containerId);
-    const closeBtn = document.getElementById(closeBtnId);
-    
-    if (link && container && closeBtn) {
-        // Remove target="_blank" to prevent opening in new tab by default
-        link.removeAttribute('target');
-        
-        // Add click event to show iframe
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Hide all iframe containers first
-            document.querySelectorAll('.iframe-container').forEach(el => {
-                el.style.display = 'none';
-            });
-            
-            // Show this iframe container
-            container.style.display = 'block';
-            
-            // Scroll to the iframe
-            container.scrollIntoView({ behavior: 'smooth' });
-        });
-        
-        // Add click event to close button
-        closeBtn.addEventListener('click', function() {
-            container.style.display = 'none';
-        });
-        
-        // Add context menu event to allow opening in new tab
-        link.addEventListener('contextmenu', function() {
-            // Don't need to do anything here, just let the browser handle the right-click
-            // The default context menu will show with the "Open in new tab" option
-        });
     }
 }

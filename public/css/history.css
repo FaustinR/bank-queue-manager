@@ -123,6 +123,7 @@ select, input[type="date"] {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    overflow-x: auto;
 }
 
 .ticket-table {
@@ -140,6 +141,21 @@ select, input[type="date"] {
     background-color: #f8f9fa;
     color: #333;
     font-weight: bold;
+    position: relative;
+    padding: 15px;
+}
+
+.ticket-table th.has-filter {
+    padding-bottom: 15px;
+}
+
+.ticket-table th::before {
+    content: attr(data-title);
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 14px;
+    text-align: left;
 }
 
 .ticket-table tbody tr:hover {
@@ -164,6 +180,50 @@ select, input[type="date"] {
 .status-no-show {
     color: #dc3545;
     font-weight: bold;
+}
+
+/* Column filter styles */
+.column-filter {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.ticket-table th .filter-container {
+    position: relative;
+    display: flex;
+    margin-top: 8px;
+    align-items: center;
+}
+
+/* Sortable columns */
+.ticket-table th.sortable {
+    cursor: pointer;
+}
+
+.ticket-table th.sortable:hover {
+    background-color: #e9ecef;
+}
+
+/* Only show sort arrows on columns with filters */
+.ticket-table th.sortable.has-filter .filter-container::after {
+    content: "↕";
+    opacity: 0.5;
+    margin-left: 8px;
+    font-size: 14px;
+}
+
+.ticket-table th.sort-asc.has-filter .filter-container::after {
+    content: "↑";
+    opacity: 1;
+}
+
+.ticket-table th.sort-desc.has-filter .filter-container::after {
+    content: "↓";
+    opacity: 1;
 }
 
 @media (max-width: 768px) {
@@ -199,5 +259,9 @@ select, input[type="date"] {
     
     .nav-links {
         margin-top: 10px;
+    }
+    
+    .column-filter {
+        width: 100%;
     }
 }

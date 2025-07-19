@@ -64,14 +64,30 @@
             <table class="ticket-table">
                 <thead>
                     <tr>
-                        <th>Ticket #</th>
-                        <th>Customer</th>
-                        <th>Service</th>
-                        <th>Counter</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Wait Time</th>
-                        <th>Service Time</th>
+                        <th class="sortable has-filter" data-title="Ticket #">
+                            <div class="filter-container">
+                                <input type="text" class="column-filter" id="ticketNumberFilter" placeholder="Filter...">
+                            </div>
+                        </th>
+                        <th class="sortable has-filter" data-title="Customer">
+                            <div class="filter-container">
+                                <input type="text" class="column-filter" id="customerFilter" placeholder="Filter...">
+                            </div>
+                        </th>
+                        <th class="sortable has-filter" data-title="Service">
+                            <div class="filter-container">
+                                <input type="text" class="column-filter" id="serviceColumnFilter" placeholder="Filter...">
+                            </div>
+                        </th>
+                        <th class="sortable has-filter" data-title="Counter">
+                            <div class="filter-container">
+                                <input type="text" class="column-filter" id="counterFilter" placeholder="Filter...">
+                            </div>
+                        </th>
+                        <th class="sortable" data-title="Status"></th>
+                        <th class="sortable" data-title="Created"></th>
+                        <th data-title="Wait Time"></th>
+                        <th data-title="Service Time"></th>
                     </tr>
                 </thead>
                 <tbody id="ticketTable">
