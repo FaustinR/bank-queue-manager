@@ -95,6 +95,24 @@
                     <!-- Will be populated by JavaScript -->
                 </div>
             </div>
+            
+            <!-- Ticket History iframe (initially hidden) -->
+            <div id="ticketHistoryContainer" class="iframe-container" style="display: none;">
+                <div class="iframe-header">
+                    <h3>Ticket History</h3>
+                    <button id="closeTicketHistory" class="close-btn">&times;</button>
+                </div>
+                <iframe id="ticketHistoryFrame" src="/history" width="100%" height="600px" frameborder="0"></iframe>
+            </div>
+            
+            <!-- Display Screen iframe (initially hidden) -->
+            <div id="displayScreenContainer" class="iframe-container" style="display: none;">
+                <div class="iframe-header">
+                    <h3>Display Screen</h3>
+                    <button id="closeDisplayScreen" class="close-btn">&times;</button>
+                </div>
+                <iframe id="displayScreenFrame" src="/display" width="100%" height="600px" frameborder="0"></iframe>
+            </div>
         </main>
     </div>
     

@@ -57,6 +57,14 @@ if ('speechSynthesis' in window) {
 
 const socket = io();
 
+// Check if page is in an iframe
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.self !== window.top) {
+        // We're in an iframe
+        document.body.classList.add('embedded-display');
+    }
+});
+
 function updateDisplay(data) {
     const { queues, counters } = data;
     

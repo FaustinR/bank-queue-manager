@@ -1,0 +1,47 @@
+/* Styles for embedded history page */
+body.embedded-history {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+body.embedded-history header {
+    display: none;
+}
+
+body.embedded-history .container {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+body.embedded-history .filter-section {
+    padding: 15px;
+    background: #f5f7fa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+body.embedded-history .nav-links {
+    display: none;
+}
+
+body.embedded-history .logo-container {
+    display: none;
+}
+
+/* Make table more compact in embedded view */
+body.embedded-history .ticket-table {
+    font-size: 14px;
+}
+
+body.embedded-history .ticket-table th,
+body.embedded-history .ticket-table td {
+    padding: 8px;
+}
+
+/* Hide elements when in iframe */
+body.embedded-history .container > *:not(.filter-section):not(.table-container) {
+    display: none;
+}

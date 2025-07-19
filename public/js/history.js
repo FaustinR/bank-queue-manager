@@ -1,5 +1,34 @@
+// Initialize socket connection if available
+let socket;
+if (typeof io !== 'undefined') {
+    socket = io();
+    
+    // Listen for queue updates to refresh ticket history
+    socket.on('queueUpdate', function() {
+        fetchTicketHistory();
+    });
+    
+    // Listen for specific ticket updates
+    socket.on('ticketUpdated', function() {
+        fetchTicketHistory();
+    });
+}
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if page is in an iframe
+    if (window.self !== window.top) {
+        // We're in an iframe
+        document.body.classList.add('embedded-history');
+    }
+    
     fetchTicketHistory();
+    
+    // Set up auto-refresh every 30 seconds
+    const refreshInterval = setInterval(fetchTicketHistory, 30000);
+    
+    // Clean up interval when page is unloaded
+    window.addEventListener('beforeunload', function() {
+        clearInterval(refreshInterval);
+    });
     
     const refreshBtn = document.getElementById('refreshBtn');
     refreshBtn.addEventListener('click', function() {
@@ -66,11 +95,65 @@ function displayTickets(tickets) {
         if (ticket.calledAt && ticket.createdAt) {
             const waitTimeMs = new Date(ticket.calledAt) - new Date(ticket.createdAt);
             const waitTimeMin = Math.round(waitTimeMs / 60000);
-            waitTime = `${waitTimeMin} min`;
+            
+            // Format wait time more nicely
+            if (waitTimeMin < 60) {
+                waitTime = `${waitTimeMin} min`;
+            } else {
+                const hours = Math.floor(waitTimeMin / 60);
+                const mins = waitTimeMin % 60;
+                waitTime = `${hours}h ${mins}m`;
+            }
+        } else if (ticket.status === 'waiting') {
+            // For waiting tickets, calculate time since creation
+            const waitTimeMs = new Date() - new Date(ticket.createdAt);
+            const waitTimeMin = Math.round(waitTimeMs / 60000);
+            
+            if (waitTimeMin < 60) {
+                waitTime = `${waitTimeMin} min (waiting)`;
+            } else {
+                const hours = Math.floor(waitTimeMin / 60);
+                const mins = waitTimeMin % 60;
+                waitTime = `${hours}h ${mins}m (waiting)`;
+            }
         }
         
         // Service time
-        const serviceTime = ticket.serviceTime ? `${ticket.serviceTime} min` : '-';
+        let serviceTime = '-';
+        if (ticket.serviceTime && ticket.serviceTime > 0) {
+            // Format service time more nicely
+            if (ticket.serviceTime < 60) {
+                serviceTime = `${ticket.serviceTime} min`;
+            } else {
+                const hours = Math.floor(ticket.serviceTime / 60);
+                const mins = ticket.serviceTime % 60;
+                serviceTime = `${hours}h ${mins}m`;
+            }
+        } else if (ticket.status === 'serving' && ticket.calledAt) {
+            // For tickets being served, calculate time since called
+            const serviceTimeMs = new Date() - new Date(ticket.calledAt);
+            const serviceTimeMin = Math.round(serviceTimeMs / 60000);
+            
+            if (serviceTimeMin < 60) {
+                serviceTime = `${serviceTimeMin} min (ongoing)`;
+            } else {
+                const hours = Math.floor(serviceTimeMin / 60);
+                const mins = serviceTimeMin % 60;
+                serviceTime = `${hours}h ${mins}m (ongoing)`;
+            }
+        } else if (ticket.status === 'completed' && ticket.calledAt && ticket.completedAt) {
+            // Calculate service time for completed tickets that don't have serviceTime set
+            const serviceTimeMs = new Date(ticket.completedAt) - new Date(ticket.calledAt);
+            const serviceTimeMin = Math.round(serviceTimeMs / 60000);
+            
+            if (serviceTimeMin < 60) {
+                serviceTime = `${serviceTimeMin} min`;
+            } else {
+                const hours = Math.floor(serviceTimeMin / 60);
+                const mins = serviceTimeMin % 60;
+                serviceTime = `${hours}h ${mins}m`;
+            }
+        }
         
         // Status with color
         let statusHtml = '';
@@ -91,10 +174,16 @@ function displayTickets(tickets) {
                 statusHtml = ticket.status;
         }
         
+        // Display service name without duplication
+        let serviceDisplay = ticket.service;
+        if (ticket.customService && ticket.customService !== ticket.service) {
+            serviceDisplay = ticket.customService;
+        }
+        
         row.innerHTML = `
             <td>${ticket.ticketNumber}</td>
             <td>${ticket.customerName}</td>
-            <td>${ticket.service}${ticket.customService ? ` (${ticket.customService})` : ''}</td>
+            <td>${serviceDisplay}</td>
             <td>${ticket.counterId || '-'}</td>
             <td>${statusHtml}</td>
             <td>${createdDate}</td>

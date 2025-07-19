@@ -8,12 +8,18 @@ document.addEventListener('DOMContentLoaded', function() {
     sidebarLinks.forEach(link => {
         // Skip logout link and links with target="_blank"
         if (link.getAttribute('href') !== '/api/auth/logout' && link.getAttribute('target') !== '_blank') {
-            // Force the link to open in the same tab
-            link.onclick = function(e) {
-                e.preventDefault();
-                window.location.href = this.getAttribute('href');
-                return false;
-            };
+            // Special handling for history and display links on admin page
+            if ((link.getAttribute('href') === '/history' || link.getAttribute('href') === '/display') && 
+                window.location.pathname === '/admin') {
+                // Don't add the default click handler, it will be handled by admin.js
+            } else {
+                // Force the link to open in the same tab
+                link.onclick = function(e) {
+                    e.preventDefault();
+                    window.location.href = this.getAttribute('href');
+                    return false;
+                };
+            }
         }
     });
     

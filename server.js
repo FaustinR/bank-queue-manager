@@ -342,15 +342,21 @@ app.post('/api/counter/:id/complete', async (req, res) => {
       const ticket = await Ticket.findById(currentTicket.id);
       if (ticket) {
         ticket.status = 'completed';
-        ticket.completedAt = new Date();
+        const completedAt = new Date();
+        ticket.completedAt = completedAt;
         
         // Calculate service time if calledAt exists
         if (ticket.calledAt) {
-          const serviceTimeMs = new Date() - ticket.calledAt;
+          const calledAt = new Date(ticket.calledAt);
+          const serviceTimeMs = completedAt - calledAt;
           ticket.serviceTime = Math.round(serviceTimeMs / 60000); // Convert to minutes
+          console.log(`Service time calculated: ${ticket.serviceTime} minutes for ticket ${ticket.ticketNumber}`);
         }
         
         await ticket.save();
+        
+        // Emit a specific event for ticket updates
+        io.emit('ticketUpdated', { ticket });
       }
     }
     
@@ -408,10 +414,11 @@ app.get('/api/tickets/history', async (req, res) => {
       };
     }
     
-    // Get tickets
+    // Get tickets - increased limit to show more history
     const tickets = await Ticket.find(query)
       .sort({ createdAt: -1 })
-      .limit(100);
+      .limit(500)
+      .select('ticketNumber customerName service customService counterId status createdAt calledAt completedAt serviceTime waitTime');
     
     res.json({ tickets });
   } catch (error) {
