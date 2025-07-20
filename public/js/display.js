@@ -36,10 +36,7 @@ function speak(text, language) {
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
         
-        // Log available voices for debugging
-        console.log('Available voices:', voices);
-        console.log('Selected language:', utterance.lang);
-        console.log('Selected voice:', utterance.voice ? utterance.voice.name : 'Default');
+        // Voice selection complete
         
         window.speechSynthesis.speak(utterance);
     }
@@ -91,9 +88,9 @@ async function fetchCounterStaff() {
         }
         
         const data = await response.json();
+        console.log('Counter staff data received:', data);
         counterStaff = data.counterStaff || {};
-        console.log('Counter staff loaded:', counterStaff);
-        console.log('Counter staff keys:', Object.keys(counterStaff));
+        console.log('Counter staff map:', counterStaff);
         
         // Force update the display with the latest staff information
         const countersDiv = document.getElementById('counters');
@@ -106,23 +103,23 @@ async function fetchCounterStaff() {
                 if (counterStaff[counterId]) {
                     // If staff element exists, update it, otherwise create it
                     if (staffElement) {
-                        staffElement.textContent = `${counterStaff[counterId]}`;
+                        staffElement.innerHTML = `<strong>Teller:</strong> ${counterStaff[counterId]}`;
                     } else {
                         const staffP = document.createElement('p');
                         staffP.className = 'counter-staff';
-                        staffP.textContent = `${counterStaff[counterId]}`;
+                        staffP.innerHTML = `<strong>Teller:</strong> ${counterStaff[counterId]}`;
                         
-                        // Insert after the counter name paragraph
-                        const counterNameP = counterDiv.querySelector('p');
-                        if (counterNameP) {
-                            counterNameP.insertAdjacentElement('afterend', staffP);
+                        // Insert after the counter heading
+                        const counterHeading = counterDiv.querySelector('h3');
+                        if (counterHeading) {
+                            counterHeading.insertAdjacentElement('afterend', staffP);
                         }
                     }
                 }
             });
         }
     } catch (error) {
-        console.error('Error fetching counter staff:', error);
+        // Error handling without logging
     }
 }
 
@@ -160,6 +157,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateDisplay(data) {
     const { queues, counters } = data;
     
+    console.log('Updating display with data:', data);
+    console.log('Current counterStaff:', counterStaff);
+    
     // Update counters
     const countersDiv = document.getElementById('counters');
     countersDiv.innerHTML = '';
@@ -173,17 +173,16 @@ function updateDisplay(data) {
         // Make sure the ID is a string for comparison with counterStaff
         const counterId = id.toString();
         
-        // Debug log for counter staff
-        console.log(`Counter ${id} staff check:`, { 
-            counterId, 
-            hasStaff: !!counterStaff[counterId],
-            staffName: counterStaff[counterId] || 'None'
-        });
+        console.log(`Checking staff for counter ${counterId}:`, counterStaff[counterId]);
         
         counterDiv.innerHTML = `
             <h3>Counter ${id}</h3>
-            <p>${counter.name}</p>
-            ${counterStaff[counterId] ? `<p class="counter-staff">${counterStaff[counterId]}</p>` : ''}
+            ${counterStaff[counterId] ? `<p class="counter-staff"><strong>Teller:</strong> ${counterStaff[counterId]}</p>` : '<p class="counter-staff"><strong>Teller:</strong> Not assigned</p>'}
+            <div class="counter-info">
+                <p class="counter-service"><strong>Service:</strong> ${counter.name}</p>
+                <p class="counter-status"><strong>Status:</strong> ${counter.status.charAt(0).toUpperCase() + counter.status.slice(1)}</p>
+                <p class="waiting-count ${queueLength > 0 ? 'has-waiting' : ''}"><strong>Customers waiting:</strong> ${queueLength}</p>
+            </div>
             <div class="current-customer">
                 ${counter.current ? 
                     `${counter.current.customerName}<br>
@@ -191,7 +190,6 @@ function updateDisplay(data) {
                     'Available'
                 }
             </div>
-            <p class="waiting-count ${queueLength > 0 ? 'has-waiting' : ''}">Waiting: ${queueLength}</p>
         `;
         countersDiv.appendChild(counterDiv);
     });
@@ -239,12 +237,27 @@ function updateDisplay(data) {
 
 socket.on('queueUpdate', async (data) => {
     try {
-        // Refresh counter staff information
-        await fetchCounterStaff();
+        // Update counter staff information from the data
+        if (data.counterStaff) {
+            console.log('Received counter staff data:', data.counterStaff);
+            counterStaff = data.counterStaff;
+        } else {
+            // Fallback to fetching counter staff information
+            console.log('No counter staff data in queue update, fetching separately...');
+            await fetchCounterStaff();
+        }
         updateDisplay(data);
+        
+        // Always fetch counter staff information after a queue update
+        // This ensures we have the latest staff information
+        setTimeout(async () => {
+            console.log('Refreshing counter staff information after queue update...');
+            await fetchCounterStaff();
+            updateDisplay(data);
+        }, 1000);
     } catch (error) {
         console.error('Error handling queue update:', error);
-        // Still update the display even if fetching staff fails
+        // Still update the display even if there's an error
         updateDisplay(data);
     }
 });

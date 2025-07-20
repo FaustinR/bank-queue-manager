@@ -23,9 +23,42 @@ router.post('/login', async (req, res) => {
     }
     
     // Assign counter to user if provided and user is an employee
-    if (counter && user.role === 'employee') {
+    console.log('Login: Counter provided:', counter, 'User role:', user.role);
+    // Allow any role to select a counter for testing purposes
+    if (counter) {
+      console.log('Login: Assigning counter', counter, 'to user', user.email);
       user.counter = counter;
       await user.save();
+      console.log('Login: User saved with counter:', user.counter);
+      
+      // Notify all clients about the counter staff update
+      try {
+        // Use node-fetch or axios for server-side fetch
+        // This is a server-side request, so we need to use the full URL
+        const http = require('http');
+        const options = {
+          hostname: 'localhost',
+          port: process.env.PORT || 3000,
+          path: '/api/notify-counter-update',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        };
+        
+        const req = http.request(options, (res) => {
+          console.log('Counter staff update notification sent, status:', res.statusCode);
+        });
+        
+        req.on('error', (error) => {
+          console.error('Error notifying counter staff update:', error);
+        });
+        
+        req.write(JSON.stringify({}));
+        req.end();
+      } catch (notifyError) {
+        console.error('Error notifying counter staff update:', notifyError);
+      }
     }
     
     // Set session

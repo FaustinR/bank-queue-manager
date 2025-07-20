@@ -272,8 +272,11 @@ app.post('/api/ticket', async (req, res) => {
     
     queues[counterId].push(ticket);
     
+    // Get counter staff information
+    const counterStaff = await getCounterStaffInfo();
+    
     // Broadcast to all displays
-    io.emit('queueUpdate', { queues, counters });
+    io.emit('queueUpdate', { queues, counters, counterStaff });
     
     console.log('Sending ticket response:', ticket); // Debug log
     res.json(ticket);
@@ -294,7 +297,11 @@ app.get('/api/queue', async (req, res) => {
     
     // Get fresh data from MongoDB
     await initializeFromDB();
-    res.json({ queues, counters });
+    
+    // Get counter staff information
+    const counterStaff = await getCounterStaffInfo();
+    
+    res.json({ queues, counters, counterStaff });
   } catch (error) {
     console.error('Error fetching queue data:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -309,9 +316,12 @@ app.get('/api/health', (req, res) => {
 // API endpoint to get counter staff information
 app.get('/api/counters/staff', async (req, res) => {
   try {
+    console.log('API: Fetching counter staff information...');
     // Find all users with assigned counters
     const counterStaff = await User.find({ counter: { $ne: null } })
       .select('firstName lastName counter');
+    
+    console.log('API: Found counter staff:', counterStaff);
     
     // Create a map of counter ID to staff name
     const staffMap = {};
@@ -319,11 +329,8 @@ app.get('/api/counters/staff', async (req, res) => {
       // Make sure the counter is stored as a string
       const counterId = staff.counter.toString();
       staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
+      console.log(`API: Mapped counter ${counterId} to staff ${staff.firstName} ${staff.lastName}`);
     });
-    
-    console.log('Counter staff map:', staffMap);
-    console.log('Number of staff with counters:', counterStaff.length);
-    console.log('Staff details:', counterStaff);
     
     // Return the staff map
     res.json({ counterStaff: staffMap });
@@ -359,7 +366,10 @@ app.post('/api/counter/:id/next', async (req, res) => {
         );
       }
       
-      io.emit('queueUpdate', { queues, counters });
+      // Get counter staff information
+      const counterStaff = await getCounterStaffInfo();
+      
+      io.emit('queueUpdate', { queues, counters, counterStaff });
       io.emit('customerCalled', { 
         customer: nextCustomer, 
         counter: counterId,
@@ -419,7 +429,10 @@ app.post('/api/counter/:id/complete', async (req, res) => {
     counters[counterId].current = null;
     counters[counterId].status = 'available';
     
-    io.emit('queueUpdate', { queues, counters });
+    // Get counter staff information
+    const counterStaff = await getCounterStaffInfo();
+    
+    io.emit('queueUpdate', { queues, counters, counterStaff });
     
     res.json({ success: true });
   } catch (error) {
@@ -428,16 +441,59 @@ app.post('/api/counter/:id/complete', async (req, res) => {
   }
 });
 
+// Function to get counter staff information
+async function getCounterStaffInfo() {
+  try {
+    console.log('Getting counter staff information...');
+    // Find all users with assigned counters
+    const counterStaff = await User.find({ counter: { $ne: null } })
+      .select('firstName lastName counter');
+    
+    console.log('Found counter staff:', counterStaff);
+    
+    // Create a map of counter ID to staff name
+    const staffMap = {};
+    counterStaff.forEach(staff => {
+      // Make sure the counter is stored as a string
+      const counterId = staff.counter.toString();
+      staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
+      console.log(`Mapped counter ${counterId} to staff ${staff.firstName} ${staff.lastName}`);
+    });
+    
+    console.log('Final staff map:', staffMap);
+    return staffMap;
+  } catch (error) {
+    console.error('Error getting counter staff info:', error);
+    return {};
+  }
+}
+
 // Socket.io connection
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log('Client connected');
   
+  // Get counter staff information
+  const counterStaff = await getCounterStaffInfo();
+  
   // Send current state to new client
-  socket.emit('queueUpdate', { queues, counters });
+  socket.emit('queueUpdate', { queues, counters, counterStaff });
   
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
+});
+
+// Emit counter staff update when a user logs in with a counter
+app.post('/api/notify-counter-update', async (req, res) => {
+  console.log('Counter staff update notification received');
+  
+  // Get updated counter staff information
+  const counterStaff = await getCounterStaffInfo();
+  
+  // Emit update to all clients with the counter staff information
+  io.emit('queueUpdate', { queues, counters, counterStaff });
+  
+  res.json({ success: true });
 });
 
 

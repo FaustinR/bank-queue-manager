@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = document.getElementById('password').value;
         const counter = document.getElementById('counter').value;
         
+        console.log('Login attempt with counter:', counter);
+        
         // Reset error message
         loginError.style.display = 'none';
         
@@ -24,6 +26,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (response.ok) {
+                // Notify about counter staff update before redirecting
+                try {
+                    await fetch('/api/notify-counter-update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({})
+                    });
+                    console.log('Counter staff update notification sent from client');
+                } catch (notifyError) {
+                    console.error('Error notifying counter staff update from client:', notifyError);
+                }
+                
                 // Redirect all users to admin dashboard
                 window.location.href = '/admin';
             } else {
