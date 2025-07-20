@@ -24,7 +24,7 @@
                     <li><a href="/users"><i class="icon">👥</i> Manage Users</a></li>
                     <li><a href="/" target="_blank"><i class="icon">🏠</i> Customer Kiosk</a></li>
                     <li><a href="/display" target="_blank"><i class="icon">📺</i> Display Screen</a></li>
-                    <li class="logout"><a href="/api/auth/logout"><img src="images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a></li>
+                    <!-- Logout button moved to header -->
                 </ul>
             </nav>
         </aside>
@@ -35,6 +35,7 @@
                 <div class="user-info">
                     <span id="userName">Loading...</span>
                     <span class="role-badge" id="userRole">...</span>
+                    <a href="/api/auth/logout" class="header-logout-btn"><img src="images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a>
                 </div>
             </header>
             
