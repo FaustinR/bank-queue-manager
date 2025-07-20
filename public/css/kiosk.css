@@ -384,7 +384,6 @@ button:active {
 
 .queue-info {
     background: rgba(255,255,255,0.9);
-    padding: 8px;
     border-radius: 8px;
     margin-top: auto;
     margin-bottom: 0;
@@ -402,10 +401,12 @@ button:active {
     visibility: visible;
     opacity: 1;
     z-index: 100;
+    width: 100% !important;
 }
 
 .main-container.ticket-generated .queue-info {
     max-width: 100%;
+    margin-top: 20px !important;
 }
 
 .mobile-queue-info {

@@ -47,11 +47,6 @@ document.getElementById('service').addEventListener('change', function() {
         otherServiceGroup.style.display = 'block';
         otherServiceInput.required = true;
         
-        // Increase form height when Other is selected
-        if (window.innerWidth >= 768) {
-            formSection.style.minHeight = '750px';
-        }
-        
         // Adjust form height when Other is selected
         setTimeout(adjustFormHeight, 10);
     } else {
