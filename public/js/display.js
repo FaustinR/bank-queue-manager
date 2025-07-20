@@ -111,7 +111,8 @@ function updateDisplay(data) {
     Object.entries(counters).forEach(([id, counter]) => {
         const queueLength = queues[id] ? queues[id].length : 0;
         const counterDiv = document.createElement('div');
-        counterDiv.className = `counter ${counter.status}`;
+        // Add 'has-waiting' class if there are customers waiting
+        counterDiv.className = `counter ${counter.status} ${queueLength > 0 ? 'has-waiting' : ''}`;
         counterDiv.onclick = () => showCounterIframe(id, counter.name);
         counterDiv.innerHTML = `
             <h3>Counter ${id}</h3>
@@ -123,7 +124,7 @@ function updateDisplay(data) {
                     'Available'
                 }
             </div>
-            <p style="font-size: 14px; margin-top: 10px;">Waiting: ${queueLength}</p>
+            <p class="waiting-count ${queueLength > 0 ? 'has-waiting' : ''}">Waiting: ${queueLength}</p>
         `;
         countersDiv.appendChild(counterDiv);
     });

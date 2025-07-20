@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup display screen close button
     setupDisplayScreenClose();
+    
+    // Show display screen on page load
+    showDisplayScreen();
 });
 
 // Setup display screen close button
@@ -25,6 +28,22 @@ function setupDisplayScreenClose() {
                 displayContainer.style.display = 'none';
             }
         });
+    }
+}
+
+// Show display screen
+function showDisplayScreen() {
+    const displayContainer = document.getElementById('displayScreenContainer');
+    const displayFrame = document.getElementById('displayScreenFrame');
+    
+    if (displayContainer && displayFrame) {
+        // Set the iframe source if not already set
+        if (!displayFrame.getAttribute('src') || displayFrame.getAttribute('src') === '') {
+            displayFrame.setAttribute('src', '/display');
+        }
+        
+        // Show the container
+        displayContainer.style.display = 'block';
     }
 }
 
