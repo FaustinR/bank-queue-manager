@@ -123,11 +123,15 @@ body {
 .sidebar.folded .sidebar-nav li a {
     padding: 12px;
     justify-content: center;
+    position: relative;
 }
 
 .sidebar.folded .sidebar-nav li a span {
     display: none;
 }
+
+/* Tooltip for folded sidebar items */
+/* Tooltip styles are now handled by JavaScript */
 
 .sidebar-nav li a:hover {
     background: rgba(255,255,255,0.1);

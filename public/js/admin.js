@@ -75,9 +75,9 @@ async function fetchUserInfo() {
             }
             
             if (data.user.role === 'supervisor') {
-                // Add a read-only indicator
+                // Set supervisor role without read-only indicator
                 const roleElement = document.getElementById('userRole');
-                roleElement.textContent = 'supervisor (read-only)';
+                roleElement.textContent = 'supervisor';
                 roleElement.style.backgroundColor = '#fd7e14';
                 
                 // Hide any signup links (create user)
@@ -95,12 +95,10 @@ async function fetchUserInfo() {
                 // Change "Manage Users" to "Users"
                 const usersLink = document.querySelector('a[href="/users"]');
                 if (usersLink) {
-                    // Find the text node (which contains "Manage Users")
-                    for (let i = 0; i < usersLink.childNodes.length; i++) {
-                        if (usersLink.childNodes[i].nodeType === Node.TEXT_NODE) {
-                            usersLink.childNodes[i].textContent = ' Users';
-                            break;
-                        }
+                    // Find the span element that contains the text
+                    const spanElement = usersLink.querySelector('span');
+                    if (spanElement) {
+                        spanElement.textContent = ' Users';
                     }
                 }
             } else if (data.user.role === 'employee') {

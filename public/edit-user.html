@@ -7,11 +7,15 @@
     <link rel="stylesheet" href="../css/admin.css">
     <link rel="stylesheet" href="../css/users.css">
     <link rel="stylesheet" href="../css/edit-user.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="shortcut icon" href="../images/favicon.jpeg" type="image/jpeg">
 </head>
 <body>
     <div class="admin-container">
         <aside class="sidebar">
+            <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
             <div class="sidebar-header">
                 <img src="/images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
                 <h2>Admin Panel</h2>
@@ -19,13 +23,13 @@
             
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="../admin"><i class="icon">📊</i> Dashboard</a></li>
-                    <li><a href="../history" target="_blank"><i class="icon">📜</i> Ticket History</a></li>
-                    <li><a href="../signup"><i class="icon">👤</i> Create User</a></li>
-                    <li class="active"><a href="../users"><i class="icon">👥</i> Manage Users</a></li>
-                    <li><a href="../" target="_blank"><i class="icon">🏠</i> Customer Kiosk</a></li>
-                    <li><a href="../display" target="_blank"><i class="icon">📺</i> Display Screen</a></li>
-                    <li class="logout"><a href="../api/auth/logout"><img src="../images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a></li>
+                    <li><a href="../admin"><i class="icon">📊</i><span> Dashboard</span></a></li>
+                    <li><a href="../history"><i class="icon">📜</i><span> Ticket History</span></a></li>
+                    <li><a href="../signup"><i class="icon">👤</i><span> Create User</span></a></li>
+                    <li class="active"><a href="../users"><i class="icon">👥</i><span> Manage Users</span></a></li>
+                    <li><a href="../" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
+                    <li><a href="../display"><i class="icon">📺</i><span> Display Screen</span></a></li>
+                    <!-- Logout button moved to header -->
                 </ul>
             </nav>
         </aside>
@@ -36,6 +40,7 @@
                 <div class="user-info">
                     <span id="userName">Loading...</span>
                     <span class="role-badge" id="userRole">...</span>
+                    <a href="../api/auth/logout" class="header-logout-btn"><img src="../images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a>
                 </div>
             </header>
             
@@ -82,5 +87,6 @@
     <script src="../js/edit-user.js"></script>
     <script src="../js/sidebar.js"></script>
     <script src="../js/user-profile-link.js"></script>
+    <script src="../js/tooltip.js"></script>
 </body>
 </html>
