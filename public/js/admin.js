@@ -11,39 +11,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup accordion functionality
     setupAccordions();
     
-    // Setup display screen close button
-    setupDisplayScreenClose();
-    
-    // Show display screen on page load
-    showDisplayScreen();
+    // Check URL parameters
+    handleUrlParameters();
 });
 
-// Setup display screen close button
-function setupDisplayScreenClose() {
-    const closeBtn = document.getElementById('closeDisplayScreen');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-            const displayContainer = document.getElementById('displayScreenContainer');
-            if (displayContainer) {
-                displayContainer.style.display = 'none';
-            }
-        });
-    }
-}
+// No longer needed - display screen is now an accordion section
 
-// Show display screen
+// Initialize display screen (no need for separate function now)
+
+// Show display screen and scroll to it
 function showDisplayScreen() {
-    const displayContainer = document.getElementById('displayScreenContainer');
-    const displayFrame = document.getElementById('displayScreenFrame');
+    const displaySection = document.getElementById('displayScreenSection');
     
-    if (displayContainer && displayFrame) {
-        // Set the iframe source if not already set
-        if (!displayFrame.getAttribute('src') || displayFrame.getAttribute('src') === '') {
-            displayFrame.setAttribute('src', '/display');
-        }
+    if (displaySection) {
+        // Show the section
+        displaySection.classList.add('active');
         
-        // Show the container
-        displayContainer.style.display = 'block';
+        // Wait a moment for the display to become visible before scrolling
+        setTimeout(() => {
+            displaySection.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
     }
 }
 
@@ -199,5 +186,31 @@ function updateServiceDistribution(distribution) {
     // If no data
     if (distribution.length === 0) {
         container.innerHTML = '<p>No data available</p>';
+    }
+}
+
+// Handle URL parameters to show specific sections
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const section = urlParams.get('section');
+    
+    if (section === 'history') {
+        // Open history section
+        const historySection = document.getElementById('ticketHistorySection');
+        if (historySection) {
+            historySection.classList.add('active');
+            setTimeout(() => {
+                historySection.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+    } else if (section === 'display') {
+        // Show display screen
+        const displaySection = document.getElementById('displayScreenSection');
+        if (displaySection) {
+            displaySection.classList.add('active');
+            setTimeout(() => {
+                displaySection.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
     }
 }

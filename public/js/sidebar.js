@@ -11,27 +11,54 @@ document.addEventListener('DOMContentLoaded', function() {
     sidebarLinks.forEach(link => {
         // Skip logout link and links with target="_blank"
         if (link.getAttribute('href') !== '/api/auth/logout' && link.getAttribute('target') !== '_blank') {
-            // Special handling for history link on admin page
-            if (link.getAttribute('href') === '/history' && window.location.pathname === '/admin') {
-                // Handle history link to open accordion
+            // Special handling for dashboard link on admin page
+            if (link.getAttribute('href') === '/admin' && window.location.pathname === '/admin') {
+                // Handle dashboard link to scroll to top
                 link.onclick = function(e) {
                     e.preventDefault();
-                    const historySection = document.getElementById('ticketHistorySection');
-                    if (historySection) {
-                        historySection.classList.add('active');
-                        historySection.scrollIntoView({ behavior: 'smooth' });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return false;
+                };
+            }
+            // Special handling for history link
+            else if (link.getAttribute('href') === '/history') {
+                // Handle history link
+                link.onclick = function(e) {
+                    e.preventDefault();
+                    if (window.location.pathname === '/admin') {
+                        // On admin page, open the accordion
+                        const historySection = document.getElementById('ticketHistorySection');
+                        if (historySection) {
+                            historySection.classList.add('active');
+                            historySection.scrollIntoView({ behavior: 'smooth' });
+                            return false;
+                        }
+                    } else {
+                        // From other pages, go to admin page with history section
+                        window.location.href = '/admin?section=history';
                     }
                     return false;
                 };
             }
-            // Special handling for display screen link on admin page
-            else if (link.getAttribute('href') === '/display' && window.location.pathname === '/admin') {
-                // Handle display link to show display screen iframe
+            // Special handling for display screen link
+            else if (link.getAttribute('href') === '/display') {
+                // Handle display link
                 link.onclick = function(e) {
                     e.preventDefault();
-                    const displayContainer = document.getElementById('displayScreenContainer');
-                    if (displayContainer) {
-                        displayContainer.style.display = 'block';
+                    if (window.location.pathname === '/admin') {
+                        // On admin page, show the display screen accordion
+                        const displaySection = document.getElementById('displayScreenSection');
+                        if (displaySection) {
+                            displaySection.classList.add('active');
+                            // Wait a moment for the display to become visible before scrolling
+                            setTimeout(() => {
+                                displaySection.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                            return false;
+                        }
+                    } else {
+                        // From other pages, go to admin page with display section
+                        window.location.href = '/admin?section=display';
                     }
                     return false;
                 };

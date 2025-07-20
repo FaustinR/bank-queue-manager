@@ -126,12 +126,14 @@
             </div>
             
             <!-- Display Screen iframe (initially hidden) -->
-            <div id="displayScreenContainer" class="iframe-container" style="display: none;">
-                <div class="iframe-header">
+            <div class="accordion-section" id="displayScreenSection">
+                <div class="accordion-header">
                     <h3>Display Screen</h3>
-                    <button id="closeDisplayScreen" class="close-btn">&times;</button>
+                    <span class="accordion-icon"><i class="fas fa-chevron-down"></i></span>
                 </div>
-                <iframe id="displayScreenFrame" src="/display" width="100%" height="600px" frameborder="0"></iframe>
+                <div class="accordion-content">
+                    <iframe id="displayScreenFrame" src="/display" width="100%" height="600px" frameborder="0"></iframe>
+                </div>
             </div>
         </main>
     </div>
