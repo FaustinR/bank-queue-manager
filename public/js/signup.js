@@ -2,6 +2,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const signupForm = document.getElementById('signupForm');
     const signupError = document.getElementById('signupError');
     
+    // Fix the signup form in place
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    // Prevent all scroll events
+    function preventScroll(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
+    
+    // Add event listeners for all scroll-related events
+    window.addEventListener('wheel', preventScroll, { passive: false });
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+    window.addEventListener('scroll', preventScroll, { passive: false });
+    window.addEventListener('mousewheel', preventScroll, { passive: false });
+    window.addEventListener('DOMMouseScroll', preventScroll, { passive: false });
+    
+    // Run on load and resize
+    adjustHeight();
+    window.addEventListener('resize', adjustHeight);
+    
     signupForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         

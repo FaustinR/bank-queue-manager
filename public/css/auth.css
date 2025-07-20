@@ -8,6 +8,17 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
+    scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+body::-webkit-scrollbar {
+    display: none;
+}
+
+/* Apply scrollbar hiding to html element as well */
+html::-webkit-scrollbar {
+    display: none;
 }
 
 .auth-container {
@@ -15,6 +26,10 @@ html, body {
     max-width: 450px;
     padding: 20px;
     box-sizing: border-box;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .auth-card {
@@ -24,8 +39,20 @@ html, body {
     overflow: hidden;
 }
 
+/* Specific style for login card */
+.auth-card #loginForm {
+    min-height: 300px; /* Increase the height of the login form */
+}
+
+/* Make login form inputs taller */
+.auth-card #loginForm input {
+    padding: 15px;
+    font-size: 16px;
+}
+
 .signup-card {
     max-width: 550px;
+    max-height: 95vh; /* Limit height to prevent scrollbar */
 }
 
 .auth-header {
@@ -57,6 +84,18 @@ html, body {
 
 .auth-body {
     padding: 30px;
+}
+
+/* Increase spacing for login form */
+.auth-card #loginForm .form-group {
+    margin-bottom: 30px;
+}
+
+/* Add more space before the login button and make it taller */
+.auth-card #loginForm .auth-button {
+    margin-top: 30px;
+    padding: 18px;
+    font-size: 18px;
 }
 
 .form-group {
@@ -159,9 +198,10 @@ input:focus, select:focus {
         padding: 15px;
     }
     
-    /* Enable scrolling on very small screens */
-    body {
-        overflow-y: auto;
+    /* Keep fixed position and prevent scrolling */
+    html, body {
+        height: 100%;
+        overflow: hidden;
     }
     
     .auth-header {
@@ -194,5 +234,49 @@ input:focus, select:focus {
     .auth-button {
         padding: 12px;
         font-size: 14px;
+    }
+}
+
+/* Additional media query for very small screens */
+@media (max-height: 700px) {
+    html, body {
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    .auth-container {
+        padding: 10px;
+    }
+    
+    .auth-header {
+        padding: 15px 15px 10px;
+    }
+    
+    .auth-logo {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 10px;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.5em;
+    }
+    
+    .auth-body {
+        padding: 15px;
+    }
+    
+    .form-group {
+        margin-bottom: 10px;
+    }
+    
+    label {
+        margin-bottom: 3px;
+        font-size: 12px;
+    }
+    
+    input, select {
+        padding: 8px;
+        font-size: 13px;
     }
 }
