@@ -21,12 +21,60 @@ body {
     flex-direction: column;
     position: relative;
     min-height: 100vh;
+    transition: width 0.3s ease;
+}
+
+/* Folded sidebar state */
+.sidebar.folded {
+    width: 60px;
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+    position: absolute;
+    top: 20px;
+    right: -15px;
+    width: 30px;
+    height: 30px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #f5f7fa;
+}
+
+.sidebar-toggle i {
+    color: #2c5aa0;
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+.sidebar.folded .sidebar-toggle i {
+    transform: rotate(180deg);
 }
 
 .sidebar-header {
     padding: 20px;
     text-align: center;
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: padding 0.3s ease;
+}
+
+.sidebar.folded .sidebar-header {
+    padding: 10px;
+}
+
+.sidebar.folded .sidebar-header h2 {
+    display: none;
 }
 
 .sidebar-logo {
@@ -68,6 +116,17 @@ body {
     color: rgba(255,255,255,0.8);
     text-decoration: none;
     transition: all 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar.folded .sidebar-nav li a {
+    padding: 12px;
+    justify-content: center;
+}
+
+.sidebar.folded .sidebar-nav li a span {
+    display: none;
 }
 
 .sidebar-nav li a:hover {
@@ -447,6 +506,51 @@ body {
 }
 
 #ticketHistoryFrame {
+    width: 100%;
+    height: 600px;
+    border: none;
+}
+
+/* Display Screen Container */
+.iframe-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.iframe-header {
+    padding: 15px 20px;
+    background: #f5f7fa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.iframe-header h3 {
+    margin: 0;
+    color: #2c5aa0;
+    font-size: 16px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0 5px;
+    margin: 0;
+}
+
+.close-btn:hover {
+    color: #e74c3c;
+}
+
+#displayScreenFrame {
     width: 100%;
     height: 600px;
     border: none;

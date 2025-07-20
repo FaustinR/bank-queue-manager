@@ -11,6 +11,9 @@
 <body>
     <div class="admin-container">
         <aside class="sidebar">
+            <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
             <div class="sidebar-header">
                 <img src="images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
                 <h2>Admin Panel</h2>
@@ -18,12 +21,12 @@
             
             <nav class="sidebar-nav">
                 <ul>
-                    <li class="active"><a href="/admin"><i class="icon">📊</i> Dashboard</a></li>
-                    <li><a href="/history" target="_blank"><i class="icon">📜</i> Ticket History</a></li>
-                    <li><a href="/signup"><i class="icon">👤</i> Create User</a></li>
-                    <li><a href="/users"><i class="icon">👥</i> Manage Users</a></li>
-                    <li><a href="/" target="_blank"><i class="icon">🏠</i> Customer Kiosk</a></li>
-                    <li><a href="/display" target="_blank"><i class="icon">📺</i> Display Screen</a></li>
+                    <li class="active"><a href="/admin"><i class="icon">📊</i><span> Dashboard</span></a></li>
+                    <li><a href="/history"><i class="icon">📜</i><span> Ticket History</span></a></li>
+                    <li><a href="/signup"><i class="icon">👤</i><span> Create User</span></a></li>
+                    <li><a href="/users"><i class="icon">👥</i><span> Manage Users</span></a></li>
+                    <li><a href="/" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
+                    <li><a href="/display"><i class="icon">📺</i><span> Display Screen</span></a></li>
                     <!-- Logout button moved to header -->
                 </ul>
             </nav>

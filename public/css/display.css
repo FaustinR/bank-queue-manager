@@ -168,3 +168,47 @@ body {
     font-size: 24px; 
     font-weight: bold; 
 }
+
+/* Counter iframe container */
+.counter-container {
+    background: #16213e;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.counter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #0f3460;
+    border-bottom: 1px solid #333;
+}
+
+.counter-header h3 {
+    margin: 0;
+    color: #ffd700;
+    font-size: 18px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+}
+
+.close-btn:hover {
+    color: #e94560;
+}
+
+#counterFrame {
+    width: 100%;
+    height: 500px;
+    border: none;
+    background: #fff;
+}

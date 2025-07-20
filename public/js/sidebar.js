@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Setup sidebar toggle
+    setupSidebarToggle();
+    
     // Fix for links opening in new tabs
     
     // Get all links in the sidebar
@@ -17,6 +20,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (historySection) {
                         historySection.classList.add('active');
                         historySection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    return false;
+                };
+            }
+            // Special handling for display screen link on admin page
+            else if (link.getAttribute('href') === '/display' && window.location.pathname === '/admin') {
+                // Handle display link to show display screen iframe
+                link.onclick = function(e) {
+                    e.preventDefault();
+                    const displayContainer = document.getElementById('displayScreenContainer');
+                    if (displayContainer) {
+                        displayContainer.style.display = 'block';
                     }
                     return false;
                 };
@@ -58,3 +73,28 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error fetching user info:', error));
     }
 });
+
+// Setup sidebar toggle functionality
+function setupSidebarToggle() {
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (toggleBtn && sidebar) {
+        // Check if there's a saved preference
+        const sidebarState = localStorage.getItem('sidebarState');
+        if (sidebarState === 'folded') {
+            sidebar.classList.add('folded');
+        }
+        
+        toggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('folded');
+            
+            // Save preference
+            if (sidebar.classList.contains('folded')) {
+                localStorage.setItem('sidebarState', 'folded');
+            } else {
+                localStorage.setItem('sidebarState', 'expanded');
+            }
+        });
+    }
+}

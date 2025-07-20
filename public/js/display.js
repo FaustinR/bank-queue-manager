@@ -55,13 +55,49 @@ if ('speechSynthesis' in window) {
     window.speechSynthesis.getVoices();
 }
 
+// Function to show counter iframe
+function showCounterIframe(counterId, counterName) {
+    const counterContainer = document.getElementById('counterContainer');
+    const counterFrame = document.getElementById('counterFrame');
+    const counterTitle = document.getElementById('counterTitle');
+    
+    // Set the iframe source
+    counterFrame.src = `/counter/${counterId}`;
+    
+    // Set the counter title
+    counterTitle.textContent = `Counter ${counterId}: ${counterName}`;
+    
+    // Show the container
+    counterContainer.style.display = 'block';
+    
+    // Scroll to the container
+    counterContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
 const socket = io();
 
-// Check if page is in an iframe
+// Check if page is in an iframe and setup close button
 document.addEventListener('DOMContentLoaded', function() {
     if (window.self !== window.top) {
         // We're in an iframe
         document.body.classList.add('embedded-display');
+    }
+    
+    // Setup close button for counter iframe
+    const closeBtn = document.getElementById('closeCounter');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            const counterContainer = document.getElementById('counterContainer');
+            const counterFrame = document.getElementById('counterFrame');
+            
+            // Hide the container
+            counterContainer.style.display = 'none';
+            
+            // Clear the iframe src to stop any ongoing processes
+            setTimeout(() => {
+                counterFrame.src = '';
+            }, 300);
+        });
     }
 });
 
@@ -76,7 +112,7 @@ function updateDisplay(data) {
         const queueLength = queues[id] ? queues[id].length : 0;
         const counterDiv = document.createElement('div');
         counterDiv.className = `counter ${counter.status}`;
-        counterDiv.onclick = () => window.open(`/counter/${id}`, '_blank');
+        counterDiv.onclick = () => showCounterIframe(id, counter.name);
         counterDiv.innerHTML = `
             <h3>Counter ${id}</h3>
             <p>${counter.name}</p>

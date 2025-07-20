@@ -10,7 +10,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup accordion functionality
     setupAccordions();
+    
+    // Setup display screen close button
+    setupDisplayScreenClose();
 });
+
+// Setup display screen close button
+function setupDisplayScreenClose() {
+    const closeBtn = document.getElementById('closeDisplayScreen');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            const displayContainer = document.getElementById('displayScreenContainer');
+            if (displayContainer) {
+                displayContainer.style.display = 'none';
+            }
+        });
+    }
+}
 
 // Accordion functionality
 function setupAccordions() {
