@@ -235,6 +235,13 @@ app.post('/api/ticket', async (req, res) => {
       console.log('Custom service detected, assigning to General Inquiry counter:', service);
     }
     
+    // Check if database is empty and reset counter if needed
+    const ticketCount = await Ticket.countDocuments();
+    if (ticketCount === 0) {
+      ticketCounter = 0;
+      console.log('Database is empty. Resetting ticket counter to 0.');
+    }
+    
     // Increment global ticket counter
     ticketCounter++;
     console.log('Creating new ticket with number:', ticketCounter);
@@ -278,6 +285,13 @@ app.post('/api/ticket', async (req, res) => {
 
 app.get('/api/queue', async (req, res) => {
   try {
+    // Check if database is empty and reset counter if needed
+    const ticketCount = await Ticket.countDocuments();
+    if (ticketCount === 0) {
+      ticketCounter = 0;
+      console.log('Database is empty. Resetting ticket counter to 0.');
+    }
+    
     // Get fresh data from MongoDB
     await initializeFromDB();
     res.json({ queues, counters });

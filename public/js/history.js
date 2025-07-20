@@ -80,6 +80,16 @@ function setupColumnFilters() {
     document.getElementById('counterFilter').addEventListener('input', function() {
         filterTickets();
     });
+    
+    // Status filter
+    document.getElementById('statusColumnFilter').addEventListener('input', function() {
+        filterTickets();
+    });
+    
+    // Created date filter
+    document.getElementById('createdFilter').addEventListener('input', function() {
+        filterTickets();
+    });
 }
 
 function setupSortableColumns() {
@@ -164,6 +174,8 @@ function filterTickets() {
     const customerFilter = document.getElementById('customerFilter').value.toLowerCase();
     const serviceFilter = document.getElementById('serviceColumnFilter').value.toLowerCase();
     const counterFilter = document.getElementById('counterFilter').value.toLowerCase();
+    const statusFilter = document.getElementById('statusColumnFilter').value.toLowerCase();
+    const createdFilter = document.getElementById('createdFilter').value.toLowerCase();
     
     // Start with all tickets
     let filteredTickets = [...allTickets];
@@ -195,6 +207,18 @@ function filterTickets() {
     if (counterFilter) {
         filteredTickets = filteredTickets.filter(ticket => 
             String(ticket.counterId).includes(counterFilter));
+    }
+    
+    // Filter by status
+    if (statusFilter) {
+        filteredTickets = filteredTickets.filter(ticket => 
+            ticket.status.toLowerCase().includes(statusFilter));
+    }
+    
+    // Filter by created date
+    if (createdFilter) {
+        filteredTickets = filteredTickets.filter(ticket => 
+            new Date(ticket.createdAt).toLocaleString().toLowerCase().includes(createdFilter));
     }
     
     // Display the filtered tickets
