@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'supervisor', 'employee'],
     default: 'employee'
   },
+  counter: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

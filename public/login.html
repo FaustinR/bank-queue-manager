@@ -28,6 +28,18 @@
                         <input type="password" id="password" name="password" required>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="counter">Select Counter</label>
+                        <select id="counter" name="counter" required>
+                            <option value="" disabled selected>Select a counter</option>
+                            <option value="1">Counter 1: Account Opening</option>
+                            <option value="2">Counter 2: Loan Application</option>
+                            <option value="3">Counter 3: Money Transfer</option>
+                            <option value="4">Counter 4: Card Services</option>
+                            <option value="5">Counter 5: General Inquiry</option>
+                        </select>
+                    </div>
+                    
                     <div class="error-message" id="loginError"></div>
                     
                     <button type="submit" class="auth-button">Login</button>

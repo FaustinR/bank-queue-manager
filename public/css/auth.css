@@ -41,7 +41,14 @@ html::-webkit-scrollbar {
 
 /* Specific style for login card */
 .auth-card #loginForm {
-    min-height: 300px; /* Increase the height of the login form */
+    min-height: 380px; /* Increase the height of the login form to accommodate counter selection */
+}
+
+/* Style for counter dropdown */
+.auth-card #loginForm #counter {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: 500;
 }
 
 /* Make login form inputs taller */

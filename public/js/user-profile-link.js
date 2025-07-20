@@ -22,8 +22,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         roleIcon.textContent = '👤'; // Person for employee
                     }
                     
-                    // Get the current text content
-                    const userName = userNameElement.textContent;
+                    // Get the current text content - extract just the name without counter info
+                    let userName = userNameElement.textContent;
+                    // Remove counter information if present
+                    if (userName.includes('(Counter')) {
+                        userName = userName.substring(0, userName.indexOf('(Counter')).trim();
+                    }
                     
                     // Clear existing content
                     userNameElement.innerHTML = '';

@@ -76,6 +76,56 @@ function showCounterIframe(counterId, counterName) {
 
 const socket = io();
 
+// Global variable to store counter staff information
+let counterStaff = {};
+
+// Fetch counter staff information
+async function fetchCounterStaff() {
+    try {
+        console.log('Fetching counter staff information...');
+        const response = await fetch('/api/counters/staff');
+        
+        if (!response.ok) {
+            console.error('Failed to fetch counter staff:', response.status, response.statusText);
+            return;
+        }
+        
+        const data = await response.json();
+        counterStaff = data.counterStaff || {};
+        console.log('Counter staff loaded:', counterStaff);
+        console.log('Counter staff keys:', Object.keys(counterStaff));
+        
+        // Force update the display with the latest staff information
+        const countersDiv = document.getElementById('counters');
+        if (countersDiv && countersDiv.children.length > 0) {
+            // Find all counter divs and update staff information
+            Array.from(countersDiv.children).forEach(counterDiv => {
+                const counterId = counterDiv.querySelector('h3').textContent.replace('Counter ', '').trim();
+                const staffElement = counterDiv.querySelector('.counter-staff');
+                
+                if (counterStaff[counterId]) {
+                    // If staff element exists, update it, otherwise create it
+                    if (staffElement) {
+                        staffElement.textContent = `${counterStaff[counterId]}`;
+                    } else {
+                        const staffP = document.createElement('p');
+                        staffP.className = 'counter-staff';
+                        staffP.textContent = `${counterStaff[counterId]}`;
+                        
+                        // Insert after the counter name paragraph
+                        const counterNameP = counterDiv.querySelector('p');
+                        if (counterNameP) {
+                            counterNameP.insertAdjacentElement('afterend', staffP);
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching counter staff:', error);
+    }
+}
+
 // Check if page is in an iframe and setup close button
 document.addEventListener('DOMContentLoaded', function() {
     if (window.self !== window.top) {
@@ -99,6 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         });
     }
+    
+    // Fetch counter staff information immediately
+    fetchCounterStaff();
+    
+    // Refresh counter staff information every 10 seconds
+    setInterval(fetchCounterStaff, 10000);
 });
 
 function updateDisplay(data) {
@@ -114,9 +170,20 @@ function updateDisplay(data) {
         // Add 'has-waiting' class if there are customers waiting
         counterDiv.className = `counter ${counter.status} ${queueLength > 0 ? 'has-waiting' : ''}`;
         counterDiv.onclick = () => showCounterIframe(id, counter.name);
+        // Make sure the ID is a string for comparison with counterStaff
+        const counterId = id.toString();
+        
+        // Debug log for counter staff
+        console.log(`Counter ${id} staff check:`, { 
+            counterId, 
+            hasStaff: !!counterStaff[counterId],
+            staffName: counterStaff[counterId] || 'None'
+        });
+        
         counterDiv.innerHTML = `
             <h3>Counter ${id}</h3>
             <p>${counter.name}</p>
+            ${counterStaff[counterId] ? `<p class="counter-staff">${counterStaff[counterId]}</p>` : ''}
             <div class="current-customer">
                 ${counter.current ? 
                     `${counter.current.customerName}<br>
@@ -170,7 +237,17 @@ function updateDisplay(data) {
     }
 }
 
-socket.on('queueUpdate', updateDisplay);
+socket.on('queueUpdate', async (data) => {
+    try {
+        // Refresh counter staff information
+        await fetchCounterStaff();
+        updateDisplay(data);
+    } catch (error) {
+        console.error('Error handling queue update:', error);
+        // Still update the display even if fetching staff fails
+        updateDisplay(data);
+    }
+});
 
 socket.on('customerCalled', (data) => {
     const { customer, counter, counterName } = data;

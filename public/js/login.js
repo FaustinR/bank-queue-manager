@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
+        const counter = document.getElementById('counter').value;
         
         // Reset error message
         loginError.style.display = 'none';
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password, counter })
             });
             
             const data = await response.json();

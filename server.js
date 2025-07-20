@@ -306,6 +306,33 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// API endpoint to get counter staff information
+app.get('/api/counters/staff', async (req, res) => {
+  try {
+    // Find all users with assigned counters
+    const counterStaff = await User.find({ counter: { $ne: null } })
+      .select('firstName lastName counter');
+    
+    // Create a map of counter ID to staff name
+    const staffMap = {};
+    counterStaff.forEach(staff => {
+      // Make sure the counter is stored as a string
+      const counterId = staff.counter.toString();
+      staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
+    });
+    
+    console.log('Counter staff map:', staffMap);
+    console.log('Number of staff with counters:', counterStaff.length);
+    console.log('Staff details:', counterStaff);
+    
+    // Return the staff map
+    res.json({ counterStaff: staffMap });
+  } catch (error) {
+    console.error('Error fetching counter staff:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.post('/api/counter/:id/next', async (req, res) => {
   const counterId = parseInt(req.params.id);
   
@@ -412,6 +439,8 @@ io.on('connection', (socket) => {
     console.log('Client disconnected');
   });
 });
+
+
 
 // API endpoint for ticket history
 app.get('/api/tickets/history', async (req, res) => {

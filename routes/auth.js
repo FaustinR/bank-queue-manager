@@ -6,7 +6,7 @@ const { isAdmin } = require('../middleware/auth');
 // Login route
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, counter } = req.body;
     
     // Find user by email
     const user = await User.findOne({ email });
@@ -22,9 +22,18 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     
+    // Assign counter to user if provided and user is an employee
+    if (counter && user.role === 'employee') {
+      user.counter = counter;
+      await user.save();
+    }
+    
     // Set session
     req.session.userId = user._id;
     req.session.userRole = user.role;
+    if (user.counter) {
+      req.session.userCounter = user.counter;
+    }
     
     // Return user info (without password)
     const userResponse = {
@@ -32,7 +41,8 @@ router.post('/login', async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role
+      role: user.role,
+      counter: user.counter
     };
     
     res.json({ user: userResponse });
@@ -100,7 +110,8 @@ router.get('/me', async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role
+      role: user.role,
+      counter: user.counter
     };
     
     res.json({ user: userResponse });

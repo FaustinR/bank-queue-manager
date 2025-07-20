@@ -71,6 +71,8 @@ async function fetchUserInfo() {
             userNameElement.textContent = `${data.user.firstName} ${data.user.lastName}`;
             document.getElementById('userRole').textContent = data.user.role;
             
+            // No longer displaying counter information in the header
+            
             // Customize sidebar based on user role
             if (data.user.role !== 'admin') {
                 // Hide the h2 element completely for non-admin users
@@ -187,6 +189,19 @@ function updateServiceDistribution(distribution) {
     if (distribution.length === 0) {
         container.innerHTML = '<p>No data available</p>';
     }
+}
+
+// Helper function to get counter name from counter number
+function getCounterName(counterNumber) {
+    const counterNames = {
+        '1': 'Account Opening',
+        '2': 'Loan Application',
+        '3': 'Money Transfer',
+        '4': 'Card Services',
+        '5': 'General Inquiry'
+    };
+    
+    return counterNames[counterNumber] || 'Unknown';
 }
 
 // Handle URL parameters to show specific sections
