@@ -33,6 +33,9 @@ const io = socketIo(server, {
   }
 });
 
+// Make io available to routes
+app.set('io', io);
+
 app.use(express.static('public'));
 app.use(express.json());
 

@@ -90,6 +90,9 @@ router.post('/', isAuthenticated, async (req, res) => {
       return res.status(404).json({ message: 'Recipient not found' });
     }
     
+    // Get sender info for notification
+    const sender = await User.findById(req.session.userId).select('firstName lastName');
+    
     const newMessage = new Message({
       sender: req.session.userId,
       recipient: recipientId,
@@ -99,6 +102,21 @@ router.post('/', isAuthenticated, async (req, res) => {
     });
     
     await newMessage.save();
+    
+    // Emit a Socket.IO event to notify the recipient
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('newMessage', { 
+          recipientId, 
+          messageId: newMessage._id,
+          subject,
+          senderName: `${sender.firstName} ${sender.lastName}`
+        });
+      }
+    } catch (socketError) {
+      // Continue even if socket notification fails
+    }
     
     res.status(201).json({ message: 'Message sent successfully', messageId: newMessage._id });
   } catch (error) {

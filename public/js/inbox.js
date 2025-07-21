@@ -17,6 +17,65 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentFolder = 'inbox';
     let currentMessages = [];
     let selectedMessageId = null;
+    let currentUserId = null;
+    
+    // Connect to Socket.IO for real-time notifications
+    const socket = io();
+    
+    // Listen for new message notifications
+    socket.on('newMessage', function(data) {
+        // Check if this message is for the current user
+        if (data.recipientId === currentUserId) {
+            // Show notification
+            showNotification(data.senderName, data.subject);
+            
+            // Update unread count and refresh messages if in inbox
+            updateUnreadCount();
+            if (currentFolder === 'inbox') {
+                loadMessages();
+            }
+        }
+    });
+    
+    // Function to show browser notification
+    function showNotification(sender, subject) {
+        // Check if browser supports notifications
+        if (!('Notification' in window)) {
+            return;
+        }
+        
+        // Check if permission is already granted
+        if (Notification.permission === 'granted') {
+            createNotification(sender, subject);
+        }
+        // Otherwise, request permission
+        else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                    createNotification(sender, subject);
+                }
+            });
+        }
+    }
+    
+    // Create and show notification
+    function createNotification(sender, subject) {
+        const notification = new Notification('New Message', {
+            body: `From: ${sender}\nSubject: ${subject}`,
+            icon: '/images/favicon.jpeg'
+        });
+        
+        notification.onclick = function() {
+            window.focus();
+            if (window.location.pathname !== '/inbox') {
+                window.location.href = '/inbox';
+            }
+            this.close();
+        };
+        
+        // Auto close after 5 seconds
+        setTimeout(notification.close.bind(notification), 5000);
+    }
     
     // Initialize
     loadUsers();
@@ -49,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 document.getElementById('userName').textContent = `${data.user.firstName} ${data.user.lastName}`;
                 document.getElementById('userRole').textContent = data.user.role;
+                currentUserId = data.user._id;
             })
             .catch(error => {
                 console.error('Authentication error:', error);
