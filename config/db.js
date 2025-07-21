@@ -5,9 +5,16 @@ const connectDB = async () => {
     // Set Node TLS options to fix SSL issues
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
     
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue', {
-      serverSelectionTimeoutMS: 5000,
+    console.log('Connecting to MongoDB...');
+    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue';
+    console.log('MongoDB URI:', mongoUri);
+    
+    const conn = await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      useNewUrlParser: true,
+      useUnifiedTopology: true
     });
     
     console.log(`MongoDB Connected: ${conn.connection.host}`);

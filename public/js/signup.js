@@ -20,6 +20,20 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('mousewheel', preventScroll, { passive: false });
     window.addEventListener('DOMMouseScroll', preventScroll, { passive: false });
     
+    // Function to adjust height of the form
+    function adjustHeight() {
+        const windowHeight = window.innerHeight;
+        const formHeight = signupForm.offsetHeight;
+        const headerHeight = document.querySelector('.auth-header').offsetHeight;
+        const footerHeight = document.querySelector('.auth-footer').offsetHeight;
+        
+        // Adjust body height if needed
+        if (formHeight + headerHeight + footerHeight > windowHeight) {
+            document.body.style.overflow = 'auto';
+            document.documentElement.style.overflow = 'auto';
+        }
+    }
+    
     // Run on load and resize
     adjustHeight();
     window.addEventListener('resize', adjustHeight);

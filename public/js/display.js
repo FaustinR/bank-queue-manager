@@ -79,18 +79,14 @@ let counterStaff = {};
 // Fetch counter staff information
 async function fetchCounterStaff() {
     try {
-        console.log('Fetching counter staff information...');
         const response = await fetch('/api/counters/staff');
         
         if (!response.ok) {
-            console.error('Failed to fetch counter staff:', response.status, response.statusText);
             return;
         }
         
         const data = await response.json();
-        console.log('Counter staff data received:', data);
         counterStaff = data.counterStaff || {};
-        console.log('Counter staff map:', counterStaff);
         
         // Force update the display with the latest staff information
         const countersDiv = document.getElementById('counters');
@@ -114,6 +110,11 @@ async function fetchCounterStaff() {
                         if (counterHeading) {
                             counterHeading.insertAdjacentElement('afterend', staffP);
                         }
+                    }
+                } else {
+                    // No staff assigned to this counter
+                    if (staffElement) {
+                        staffElement.innerHTML = `<strong>Teller:</strong> <span class="not-assigned">Not assigned</span>`;
                     }
                 }
             });
@@ -157,9 +158,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateDisplay(data) {
     const { queues, counters } = data;
     
-    console.log('Updating display with data:', data);
-    console.log('Current counterStaff:', counterStaff);
-    
     // Update counters
     const countersDiv = document.getElementById('counters');
     countersDiv.innerHTML = '';
@@ -173,11 +171,13 @@ function updateDisplay(data) {
         // Make sure the ID is a string for comparison with counterStaff
         const counterId = id.toString();
         
-        console.log(`Checking staff for counter ${counterId}:`, counterStaff[counterId]);
-        
         counterDiv.innerHTML = `
             <h3>Counter ${id}</h3>
-            ${counterStaff[counterId] ? `<p class="counter-staff"><strong>Teller:</strong> ${counterStaff[counterId]}</p>` : '<p class="counter-staff"><strong>Teller:</strong> Not assigned</p>'}
+            <div class="counter-staff-container ${counterStaff[counterId] ? 'has-staff' : 'no-staff'}">
+                ${counterStaff[counterId] ? 
+                    `<p class="counter-staff"><strong>Teller:</strong> ${counterStaff[counterId]}</p>` : 
+                    '<p class="counter-staff"><strong>Teller:</strong> <span class="not-assigned">Not assigned</span></p>'}
+            </div>
             <div class="counter-info">
                 <p class="counter-service"><strong>Service:</strong> ${counter.name}</p>
                 <p class="counter-status"><strong>Status:</strong> ${counter.status.charAt(0).toUpperCase() + counter.status.slice(1)}</p>
@@ -239,11 +239,9 @@ socket.on('queueUpdate', async (data) => {
     try {
         // Update counter staff information from the data
         if (data.counterStaff) {
-            console.log('Received counter staff data:', data.counterStaff);
             counterStaff = data.counterStaff;
         } else {
             // Fallback to fetching counter staff information
-            console.log('No counter staff data in queue update, fetching separately...');
             await fetchCounterStaff();
         }
         updateDisplay(data);
@@ -251,14 +249,60 @@ socket.on('queueUpdate', async (data) => {
         // Always fetch counter staff information after a queue update
         // This ensures we have the latest staff information
         setTimeout(async () => {
-            console.log('Refreshing counter staff information after queue update...');
             await fetchCounterStaff();
             updateDisplay(data);
         }, 1000);
     } catch (error) {
-        console.error('Error handling queue update:', error);
         // Still update the display even if there's an error
         updateDisplay(data);
+    }
+});
+
+// Listen for staff logout events
+socket.on('staffLogout', async (data) => {
+    try {
+        const { counterId } = data;
+        
+        // Remove staff from the counter in our local data immediately
+        if (counterId && counterStaff[counterId]) {
+            delete counterStaff[counterId];
+            
+            // Update the display immediately with the local change
+            const countersDiv = document.getElementById('counters');
+            if (countersDiv) {
+                const counterDivs = Array.from(countersDiv.querySelectorAll('.counter'));
+                const counterDiv = counterDivs.find(div => {
+                    const id = div.querySelector('h3').textContent.replace('Counter ', '').trim();
+                    return id === counterId.toString();
+                });
+                
+                if (counterDiv) {
+                    const staffContainer = counterDiv.querySelector('.counter-staff-container');
+                    if (staffContainer) {
+                        staffContainer.className = 'counter-staff-container no-staff';
+                    }
+                    
+                    const staffElement = counterDiv.querySelector('.counter-staff');
+                    if (staffElement) {
+                        staffElement.innerHTML = '<strong>Teller:</strong> <span class="not-assigned">Not assigned</span>';
+                    }
+                }
+            }
+        }
+        
+        // Then get fresh data from server
+        const response = await fetch('/api/queue');
+        if (response.ok) {
+            const freshData = await response.json();
+            updateDisplay(freshData);
+        } else {
+            // If fetch fails, at least refresh counter staff information
+            await fetchCounterStaff();
+        }
+    } catch (error) {
+        // Error handling without logging
+        // Still try to refresh counter staff information
+        await fetchCounterStaff();
     }
 });
 

@@ -126,6 +126,14 @@ label {
     font-size: 14px;
 }
 
+#counterOptionalText {
+    font-weight: normal;
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    display: none;
+}
+
 input, select {
     width: 100%;
     padding: 12px;

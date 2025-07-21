@@ -28,10 +28,10 @@
                         <input type="password" id="password" name="password" required>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="counter">Select Counter</label>
-                        <select id="counter" name="counter" required>
-                            <option value="" disabled selected>Select a counter</option>
+                    <div class="form-group" id="counterSelectGroup">
+                        <label for="counter">Select Counter <span id="counterOptionalText">(Optional for Admins)</span></label>
+                        <select id="counter" name="counter">
+                            <option value="" selected>No counter (Admin access only)</option>
                             <option value="1">Counter 1: Account Opening</option>
                             <option value="2">Counter 2: Loan Application</option>
                             <option value="3">Counter 3: Money Transfer</option>

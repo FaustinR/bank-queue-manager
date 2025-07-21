@@ -15,6 +15,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     
+    // Check if password exists
+    if (!user.password) {
+      return res.status(401).json({ message: 'User account is not properly set up. Please contact an administrator.' });
+    }
+    
     // Check password
     const isMatch = await user.comparePassword(password);
     
@@ -22,14 +27,98 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     
-    // Assign counter to user if provided and user is an employee
-    console.log('Login: Counter provided:', counter, 'User role:', user.role);
-    // Allow any role to select a counter for testing purposes
+    // Check if counter is required for non-admin users
+    if (user.role !== 'admin' && !counter) {
+      return res.status(400).json({ message: 'Counter selection is required for non-admin users' });
+    }
+    
+    // For admin users, counter is optional
+    if (user.role === 'admin' && !counter) {
+      // If admin doesn't select a counter, make sure any previous counter assignment is cleared
+      if (user.counter) {
+        const previousCounter = user.counter;
+        user.counter = null;
+        await user.save();
+        
+        // Clear Counter model assignment
+        const Counter = require('../models/Counter');
+        await Counter.updateOne(
+          { counterId: parseInt(previousCounter), staffId: user._id },
+          { $set: { staffId: null, staffName: null } }
+        );
+      }
+    }
+    
+    // Clear any previous counter assignment
+    if (user.counter) {
+      user.counter = null;
+      await user.save();
+      
+      // Clear user from any counter they might be assigned to
+      const Counter = require('../models/Counter');
+      await Counter.updateMany(
+        { staffId: user._id },
+        { $set: { staffId: null, staffName: null } }
+      );
+    }
+    
+    // Assign counter to user if provided
     if (counter) {
-      console.log('Login: Assigning counter', counter, 'to user', user.email);
+      // Check if counter is already occupied by a REAL staff member
+      const Counter = require('../models/Counter');
+      const occupiedCounter = await Counter.findOne({ 
+        counterId: parseInt(counter), 
+        staffId: { $ne: null, $ne: user._id },
+        staffName: { $ne: null, $ne: "null", $ne: "undefined" }
+      });
+      
+      if (occupiedCounter && occupiedCounter.staffName) {
+        return res.status(400).json({ 
+          message: `Counter ${counter} is already occupied by ${occupiedCounter.staffName}. Please select another counter.` 
+        });
+      }
+      
+      // Also check User model as a fallback
+      const occupiedByUser = await User.findOne({ 
+        counter: counter, 
+        _id: { $ne: user._id },
+        firstName: { $ne: null },
+        lastName: { $ne: null }
+      });
+      
+      if (occupiedByUser && occupiedByUser.firstName && occupiedByUser.lastName) {
+        return res.status(400).json({ 
+          message: `Counter ${counter} is already occupied by ${occupiedByUser.firstName} ${occupiedByUser.lastName}. Please select another counter.` 
+        });
+      }
+      
+      // Clear any invalid counter assignments before assigning this user
+      await Counter.updateOne(
+        { counterId: parseInt(counter) },
+        { $set: { staffId: null, staffName: null } }
+      );
+      
+      // Clear any user assignments to this counter
+      await User.updateMany(
+        { counter: counter.toString(), _id: { $ne: user._id } },
+        { $set: { counter: null } }
+      );
+      
       user.counter = counter;
       await user.save();
-      console.log('Login: User saved with counter:', user.counter);
+      
+      try {
+        // Assign the user to the selected counter
+        await Counter.findOneAndUpdate(
+          { counterId: parseInt(counter) },
+          { 
+            staffId: user._id,
+            staffName: `${user.firstName} ${user.lastName}`
+          }
+        );
+      } catch (counterError) {
+        // Error handling without logging
+      }
       
       // Notify all clients about the counter staff update
       try {
@@ -47,17 +136,17 @@ router.post('/login', async (req, res) => {
         };
         
         const req = http.request(options, (res) => {
-          console.log('Counter staff update notification sent, status:', res.statusCode);
+          // Request completed
         });
         
         req.on('error', (error) => {
-          console.error('Error notifying counter staff update:', error);
+          // Error handling without logging
         });
         
         req.write(JSON.stringify({}));
         req.end();
       } catch (notifyError) {
-        console.error('Error notifying counter staff update:', notifyError);
+        // Error handling without logging
       }
     }
     
@@ -80,7 +169,6 @@ router.post('/login', async (req, res) => {
     
     res.json({ user: userResponse });
   } catch (error) {
-    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -99,6 +187,11 @@ router.post('/signup', isAdmin, isFullAdmin, async (req, res) => {
   try {
     const { firstName, lastName, email, password, role } = req.body;
     
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password || !role) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     
@@ -111,7 +204,7 @@ router.post('/signup', isAdmin, isFullAdmin, async (req, res) => {
       firstName,
       lastName,
       email,
-      password,
+      password, // Will be hashed by pre-save middleware
       role
     });
     
@@ -119,7 +212,6 @@ router.post('/signup', isAdmin, isFullAdmin, async (req, res) => {
     
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
-    console.error('Signup error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -149,7 +241,6 @@ router.get('/me', async (req, res) => {
     
     res.json({ user: userResponse });
   } catch (error) {
-    console.error('Get user error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -183,20 +274,68 @@ router.put('/profile', async (req, res) => {
     
     res.json({ message: 'Profile updated successfully' });
   } catch (error) {
-    console.error('Update profile error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Logout route
-router.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error logging out' });
+router.get('/logout', async (req, res) => {
+  try {
+    // Get user information before destroying the session
+    const userId = req.session.userId;
+    const userCounter = req.session.userCounter;
+    
+    // Clear counter assignment in Counter model if the user was assigned to a counter
+    if (userId && userCounter) {
+      // Clear counter assignment in Counter model
+      const Counter = require('../models/Counter');
+      await Counter.findOneAndUpdate(
+        { counterId: parseInt(userCounter), staffId: userId },
+        { $set: { staffId: null, staffName: null } }
+      );
+      
+      // Also clear counter assignment in User model
+      await User.findByIdAndUpdate(userId, { $set: { counter: null } });
+      
+      // Notify all clients about the staff logout
+      try {
+        const http = require('http');
+        const options = {
+          hostname: 'localhost',
+          port: process.env.PORT || 3000,
+          path: '/api/notify-staff-logout',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        };
+        
+        const req = http.request(options, (res) => {
+          // Request completed
+        });
+        
+        req.on('error', (error) => {
+          // Error handling without logging
+        });
+        
+        req.write(JSON.stringify({ counterId: userCounter }));
+        req.end();
+      } catch (notifyError) {
+        // Error handling without logging
+      }
     }
     
-    res.redirect('/login');
-  });
+    // Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Error logging out' });
+      }
+      
+      res.redirect('/login');
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error during logout' });
+  }
 });
 
 module.exports = router;

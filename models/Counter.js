@@ -31,6 +31,15 @@ const counterSchema = new mongoose.Schema({
   averageServiceTime: {
     type: Number,
     default: 0 // Time in minutes
+  },
+  staffId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  staffName: {
+    type: String,
+    default: null
   }
 });
 

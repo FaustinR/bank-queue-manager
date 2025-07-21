@@ -100,12 +100,36 @@ body {
     margin: 5px 0;
 }
 
+.counter-staff-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 8px;
+    margin: 5px 0 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.counter-staff-container.has-staff {
+    background: rgba(46, 204, 113, 0.2); /* Green background */
+    border: 1px solid rgba(46, 204, 113, 0.5);
+}
+
+.counter-staff-container.no-staff {
+    background: rgba(231, 76, 60, 0.2); /* Red background */
+    border: 1px solid rgba(231, 76, 60, 0.5);
+}
+
 .counter-staff {
     font-size: 18px;
     color: #ffd700; /* Gold color */
     font-weight: normal;
-    margin: 5px 0 15px;
+    margin: 5px 0;
     text-align: center;
+}
+
+.counter-staff .not-assigned {
+    color: #e74c3c; /* Red color */
+    font-style: italic;
 }
 
 .current-customer { 

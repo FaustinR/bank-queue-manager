@@ -33,14 +33,45 @@ app.use(express.static('public'));
 app.use(express.json());
 
 // Session middleware
+const sessionStore = MongoStore.create({ 
+  mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue',
+  ttl: 14 * 24 * 60 * 60, // 14 days
+  autoRemove: 'interval',
+  autoRemoveInterval: 10 // Check expired sessions every 10 minutes
+});
+
+// Handle session expiration
+sessionStore.on('expired', async function(sessionId) {
+  try {
+    // Find user with this session and clear their counter assignment
+    const sessionData = await sessionStore.get(sessionId);
+    if (sessionData && sessionData.userId && sessionData.userCounter) {
+      // Clear counter assignment in User model
+      await User.findByIdAndUpdate(sessionData.userId, { counter: null });
+      
+      // Clear counter assignment in Counter model
+      await Counter.findOneAndUpdate(
+        { counterId: parseInt(sessionData.userCounter) },
+        { $set: { staffId: null, staffName: null } }
+      );
+      
+      // Notify clients about the staff logout
+      io.emit('staffLogout', { counterId: sessionData.userCounter });
+      
+      // Update counter staff information
+      const counterStaff = await getCounterStaffInfo();
+      io.emit('queueUpdate', { queues, counters, counterStaff });
+    }
+  } catch (error) {
+    // Error handling without logging
+  }
+});
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'bank-queue-secret',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({ 
-    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue',
-    ttl: 14 * 24 * 60 * 60 // 14 days
-  }),
+  store: sessionStore,
   cookie: {
     maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days in milliseconds
   }
@@ -88,10 +119,8 @@ async function initializeFromDB() {
     const latestTicket = await Ticket.findOne().sort({ ticketNumber: -1 });
     if (latestTicket) {
       ticketCounter = latestTicket.ticketNumber;
-      console.log('Initialized ticket counter to:', ticketCounter);
     } else {
       ticketCounter = 0; // Will be incremented to 1 when first ticket is created
-      console.log('No tickets found in database. Initializing counter to 0.');
     }
     
     // Get waiting tickets and populate queues (latest first)
@@ -131,9 +160,22 @@ async function initializeFromDB() {
       }
     });
     
-    console.log('Data initialized from MongoDB');
+    // Sync counter staff information from User model to Counter model
+    const usersWithCounters = await User.find({ counter: { $ne: null } })
+      .select('_id firstName lastName counter');
+    
+    for (const user of usersWithCounters) {
+      const counterId = parseInt(user.counter);
+      await Counter.findOneAndUpdate(
+        { counterId },
+        { 
+          staffId: user._id,
+          staffName: `${user.firstName} ${user.lastName}`
+        }
+      );
+    }
   } catch (error) {
-    console.error('Error initializing data from MongoDB:', error);
+    // Error handling without logging
   }
 }
 
@@ -210,15 +252,14 @@ app.get('/profile', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
 
+// No debug pages
+
 // API endpoints
 app.post('/api/ticket', async (req, res) => {
   try {
     const { customerName, service, language } = req.body;
-    console.log('Received request body:', req.body); // Debug log
-    console.log('Service type:', typeof service, 'Service value:', service);
     
     if (!customerName || !service || !language) {
-      console.log('Missing required fields:', { customerName, service, language });
       return res.status(400).json({ error: 'Name, service, and language are required' });
     }
     
@@ -232,19 +273,16 @@ app.post('/api/ticket', async (req, res) => {
       // Always assign custom services to General Inquiry counter
       counterId = 5;
       customService = service;
-      console.log('Custom service detected, assigning to General Inquiry counter:', service);
     }
     
     // Check if database is empty and reset counter if needed
     const ticketCount = await Ticket.countDocuments();
     if (ticketCount === 0) {
       ticketCounter = 0;
-      console.log('Database is empty. Resetting ticket counter to 0.');
     }
     
     // Increment global ticket counter
     ticketCounter++;
-    console.log('Creating new ticket with number:', ticketCounter);
     
     // Create ticket in MongoDB
     const newTicket = new Ticket({
@@ -278,10 +316,8 @@ app.post('/api/ticket', async (req, res) => {
     // Broadcast to all displays
     io.emit('queueUpdate', { queues, counters, counterStaff });
     
-    console.log('Sending ticket response:', ticket); // Debug log
     res.json(ticket);
   } catch (error) {
-    console.error('Error creating ticket:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -292,7 +328,6 @@ app.get('/api/queue', async (req, res) => {
     const ticketCount = await Ticket.countDocuments();
     if (ticketCount === 0) {
       ticketCounter = 0;
-      console.log('Database is empty. Resetting ticket counter to 0.');
     }
     
     // Get fresh data from MongoDB
@@ -303,7 +338,6 @@ app.get('/api/queue', async (req, res) => {
     
     res.json({ queues, counters, counterStaff });
   } catch (error) {
-    console.error('Error fetching queue data:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -316,26 +350,137 @@ app.get('/api/health', (req, res) => {
 // API endpoint to get counter staff information
 app.get('/api/counters/staff', async (req, res) => {
   try {
-    console.log('API: Fetching counter staff information...');
-    // Find all users with assigned counters
-    const counterStaff = await User.find({ counter: { $ne: null } })
-      .select('firstName lastName counter');
-    
-    console.log('API: Found counter staff:', counterStaff);
+    // Get counter staff information directly from Counter model
+    const countersWithStaff = await Counter.find({ staffName: { $ne: null } })
+      .select('counterId staffName');
     
     // Create a map of counter ID to staff name
     const staffMap = {};
+    countersWithStaff.forEach(counter => {
+      // Make sure the counter ID is stored as a string
+      const counterId = counter.counterId.toString();
+      staffMap[counterId] = counter.staffName;
+    });
+    
+    // As a fallback, also check User model for any users with assigned counters
+    // that might not be in the Counter model yet
+    const counterStaff = await User.find({ counter: { $ne: null } })
+      .select('firstName lastName counter');
+    
     counterStaff.forEach(staff => {
       // Make sure the counter is stored as a string
       const counterId = staff.counter.toString();
-      staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
-      console.log(`API: Mapped counter ${counterId} to staff ${staff.firstName} ${staff.lastName}`);
+      // Only add if not already in the map
+      if (!staffMap[counterId]) {
+        staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
+      }
     });
     
     // Return the staff map
     res.json({ counterStaff: staffMap });
   } catch (error) {
-    console.error('Error fetching counter staff:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API endpoint to check if a counter is occupied
+app.get('/api/counters/:id/check', async (req, res) => {
+  try {
+    const counterId = req.params.id;
+    
+    // First, clear any invalid counter assignments
+    const invalidCounter = await Counter.findOne({
+      counterId: parseInt(counterId),
+      $or: [
+        { staffId: null, staffName: { $ne: null } },  // staffName without staffId
+        { staffId: { $ne: null }, staffName: null },   // staffId without staffName
+        { staffId: { $ne: null }, staffName: "null" }, // staffId with "null" staffName
+        { staffId: { $ne: null }, staffName: "undefined" } // staffId with "undefined" staffName
+      ]
+    });
+    
+    if (invalidCounter) {
+      // Auto-clear invalid assignments
+      await Counter.updateOne(
+        { counterId: parseInt(counterId) },
+        { $set: { staffId: null, staffName: null } }
+      );
+      
+      // Also clear any user assignments to this counter
+      await User.updateMany(
+        { counter: counterId.toString() },
+        { $set: { counter: null } }
+      );
+      
+      // Return not occupied since we just cleared it
+      return res.json({ occupied: false });
+    }
+    
+    // Now check if counter has a valid staff assignment
+    const counter = await Counter.findOne({ 
+      counterId: parseInt(counterId), 
+      staffId: { $ne: null },
+      staffName: { $ne: null, $ne: "null", $ne: "undefined" }
+    });
+    
+    if (counter && counter.staffName) {
+      return res.json({ occupied: true, staffName: counter.staffName });
+    }
+    
+    // As a fallback, check User model for valid users
+    const user = await User.findOne({ 
+      counter: counterId,
+      firstName: { $ne: null },
+      lastName: { $ne: null }
+    });
+    
+    if (user && user.firstName && user.lastName) {
+      // Update the counter with the user's information
+      await Counter.updateOne(
+        { counterId: parseInt(counterId) },
+        { 
+          $set: { 
+            staffId: user._id,
+            staffName: `${user.firstName} ${user.lastName}`
+          } 
+        }
+      );
+      
+      return res.json({ 
+        occupied: true, 
+        staffName: `${user.firstName} ${user.lastName}` 
+      });
+    }
+    
+    // Counter is not occupied
+    res.json({ occupied: false });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API endpoint to clear orphaned counter assignments
+app.post('/api/counters/:id/clear', async (req, res) => {
+  try {
+    const counterId = req.params.id;
+    
+    // Clear counter assignment in Counter model
+    await Counter.updateOne(
+      { counterId: parseInt(counterId) },
+      { $set: { staffId: null, staffName: null } }
+    );
+    
+    // Clear counter assignment in User model
+    await User.updateMany(
+      { counter: counterId.toString() },
+      { $set: { counter: null } }
+    );
+    
+    // Emit staff logout event
+    io.emit('staffLogout', { counterId });
+    
+    res.json({ success: true });
+  } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -381,7 +526,6 @@ app.post('/api/counter/:id/next', async (req, res) => {
       res.json({ success: false, message: 'No customers in queue for this service' });
     }
   } catch (error) {
-    console.error('Error calling next customer:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -406,7 +550,6 @@ app.post('/api/counter/:id/complete', async (req, res) => {
           const calledAt = new Date(ticket.calledAt);
           const serviceTimeMs = completedAt - calledAt;
           ticket.serviceTime = Math.round(serviceTimeMs / 60000); // Convert to minutes
-          console.log(`Service time calculated: ${ticket.serviceTime} minutes for ticket ${ticket.ticketNumber}`);
         }
         
         await ticket.save();
@@ -436,7 +579,6 @@ app.post('/api/counter/:id/complete', async (req, res) => {
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Error completing service:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -444,34 +586,41 @@ app.post('/api/counter/:id/complete', async (req, res) => {
 // Function to get counter staff information
 async function getCounterStaffInfo() {
   try {
-    console.log('Getting counter staff information...');
-    // Find all users with assigned counters
-    const counterStaff = await User.find({ counter: { $ne: null } })
-      .select('firstName lastName counter');
-    
-    console.log('Found counter staff:', counterStaff);
+    // Get counter staff information directly from Counter model
+    const Counter = require('./models/Counter');
+    const countersWithStaff = await Counter.find({ staffName: { $ne: null } })
+      .select('counterId staffName');
     
     // Create a map of counter ID to staff name
     const staffMap = {};
+    countersWithStaff.forEach(counter => {
+      // Make sure the counter ID is stored as a string
+      const counterId = counter.counterId.toString();
+      staffMap[counterId] = counter.staffName;
+    });
+    
+    // As a fallback, also check User model for any users with assigned counters
+    // that might not be in the Counter model yet
+    const counterStaff = await User.find({ counter: { $ne: null } })
+      .select('firstName lastName counter');
+    
     counterStaff.forEach(staff => {
       // Make sure the counter is stored as a string
       const counterId = staff.counter.toString();
-      staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
-      console.log(`Mapped counter ${counterId} to staff ${staff.firstName} ${staff.lastName}`);
+      // Only add if not already in the map
+      if (!staffMap[counterId]) {
+        staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
+      }
     });
     
-    console.log('Final staff map:', staffMap);
     return staffMap;
   } catch (error) {
-    console.error('Error getting counter staff info:', error);
     return {};
   }
 }
 
 // Socket.io connection
 io.on('connection', async (socket) => {
-  console.log('Client connected');
-  
   // Get counter staff information
   const counterStaff = await getCounterStaffInfo();
   
@@ -479,13 +628,47 @@ io.on('connection', async (socket) => {
   socket.emit('queueUpdate', { queues, counters, counterStaff });
   
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
+    // Client disconnected
   });
 });
 
 // Emit counter staff update when a user logs in with a counter
 app.post('/api/notify-counter-update', async (req, res) => {
-  console.log('Counter staff update notification received');
+  // Get updated counter staff information
+  const counterStaff = await getCounterStaffInfo();
+  
+  // Emit update to all clients with the counter staff information
+  io.emit('queueUpdate', { queues, counters, counterStaff });
+  
+  res.json({ success: true });
+});
+
+// Emit staff logout event when a user logs out
+app.post('/api/notify-staff-logout', async (req, res) => {
+  const { counterId } = req.body;
+  
+  if (counterId) {
+    // Double-check that the counter is actually cleared in both models
+    const counterIdInt = parseInt(counterId);
+    
+    // Clear in Counter model
+    await Counter.updateOne(
+      { counterId: counterIdInt },
+      { $set: { staffId: null, staffName: null } }
+    );
+    
+    // Clear in User model
+    await User.updateMany(
+      { counter: counterId.toString() },
+      { $set: { counter: null } }
+    );
+    
+    // Emit staff logout event to all clients
+    io.emit('staffLogout', { counterId });
+    
+    // Force refresh of in-memory data
+    await initializeFromDB();
+  }
   
   // Get updated counter staff information
   const counterStaff = await getCounterStaffInfo();
@@ -496,7 +679,82 @@ app.post('/api/notify-counter-update', async (req, res) => {
   res.json({ success: true });
 });
 
+// API endpoint to clear counter assignment when browser tab is closed
+app.post('/api/clear-counter-assignment', async (req, res) => {
+  try {
+    // Get user from session
+    if (req.session && req.session.userId) {
+      const userId = req.session.userId;
+      const user = await User.findById(userId);
+      
+      if (user && user.counter) {
+        const counterId = user.counter;
+        
+        // Clear counter assignment in User model
+        user.counter = null;
+        await user.save();
+        
+        // Clear counter assignment in Counter model
+        await Counter.updateOne(
+          { counterId: parseInt(counterId) },
+          { $set: { staffId: null, staffName: null } }
+        );
+        
+        // Emit staff logout event
+        io.emit('staffLogout', { counterId });
+        
+        // Force refresh of in-memory data
+        await initializeFromDB();
+        
+        // Get updated counter staff information
+        const counterStaff = await getCounterStaffInfo();
+        
+        // Emit update to all clients
+        io.emit('queueUpdate', { queues, counters, counterStaff });
+      }
+    }
+    
+    // Always return success, even if no session (for beacon requests)
+    res.status(200).send();
+  } catch (error) {
+    // Always return success for beacon requests
+    res.status(200).send();
+  }
+});
 
+// Also support GET for beacon requests
+app.get('/api/clear-counter-assignment', async (req, res) => {
+  try {
+    // Get user from session
+    if (req.session && req.session.userId) {
+      const userId = req.session.userId;
+      const user = await User.findById(userId);
+      
+      if (user && user.counter) {
+        const counterId = user.counter;
+        
+        // Clear counter assignment in User model
+        user.counter = null;
+        await user.save();
+        
+        // Clear counter assignment in Counter model
+        await Counter.updateOne(
+          { counterId: parseInt(counterId) },
+          { $set: { staffId: null, staffName: null } }
+        );
+        
+        // Emit staff logout event
+        io.emit('staffLogout', { counterId });
+      }
+    }
+    
+    // Always return success, even if no session
+    res.status(200).send();
+  } catch (error) {
+    // Always return success
+    res.status(200).send();
+  }
+});
 
 // API endpoint for ticket history
 app.get('/api/tickets/history', async (req, res) => {
@@ -526,7 +784,6 @@ app.get('/api/tickets/history', async (req, res) => {
     
     res.json({ tickets });
   } catch (error) {
-    console.error('Error fetching ticket history:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -582,7 +839,6 @@ app.get('/api/stats', async (req, res) => {
       serviceDistribution
     });
   } catch (error) {
-    console.error('Error fetching statistics:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -602,25 +858,67 @@ async function createDefaultAdmin() {
       });
       
       await defaultAdmin.save();
-      console.log('Default admin user created');
-      console.log('Email: admin@bankqueue.com');
-      console.log('Password: admin123');
     }
   } catch (error) {
-    console.error('Error creating default admin:', error);
+    // Error handling without logging
+  }
+}
+
+// Function to clean up orphaned counter assignments
+async function cleanupOrphanedCounters() {
+  try {
+    // Get all counters with staff assigned
+    const countersWithStaff = await Counter.find({ staffId: { $ne: null } });
+    
+    for (const counter of countersWithStaff) {
+      // Check if the assigned user exists and still has this counter assigned
+      const user = await User.findOne({ _id: counter.staffId, counter: counter.counterId.toString() });
+      
+      if (!user) {
+        // This is an orphaned assignment, clear it
+        counter.staffId = null;
+        counter.staffName = null;
+        await counter.save();
+        
+        // Emit staff logout event
+        io.emit('staffLogout', { counterId: counter.counterId.toString() });
+      }
+    }
+    
+    // Also check for users with counter assignments that don't match Counter model
+    const usersWithCounters = await User.find({ counter: { $ne: null } });
+    
+    for (const user of usersWithCounters) {
+      const counter = await Counter.findOne({ 
+        counterId: parseInt(user.counter),
+        staffId: user._id
+      });
+      
+      if (!counter) {
+        // This is an orphaned assignment in User model, clear it
+        user.counter = null;
+        await user.save();
+      }
+    }
+    
+    // Get updated counter staff information
+    const counterStaff = await getCounterStaffInfo();
+    
+    // Emit update to all clients
+    io.emit('queueUpdate', { queues, counters, counterStaff });
+  } catch (error) {
+    // Error handling without logging
   }
 }
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Kiosk: http://localhost:${PORT}`);
-  console.log(`Login: http://localhost:${PORT}/login`);
-  console.log(`Display: http://localhost:${PORT}/display`);
-  Object.keys(counters).forEach(id => {
-    console.log(`Counter ${id} (${counters[id].name}): http://localhost:${PORT}/counter/${id}`);
-  });
-  
   // Create default admin user
   createDefaultAdmin();
+  
+  // Run initial cleanup of orphaned counter assignments
+  cleanupOrphanedCounters();
+  
+  // Schedule periodic cleanup every 5 minutes
+  setInterval(cleanupOrphanedCounters, 5 * 60 * 1000);
 });
