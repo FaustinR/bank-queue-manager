@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox - Bank Queue Management</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/inbox.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="sidebar-header">
+                <img src="images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
+                <h2>Admin Panel</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin"><i class="icon">📊</i><span> Dashboard</span></a></li>
+                    <li><a href="/history"><i class="icon">📜</i><span> Ticket History</span></a></li>
+                    <li class="active"><a href="/inbox"><i class="icon">✉️</i><span> Inbox</span></a></li>
+                    <li><a href="/signup"><i class="icon">👤</i><span> Create User</span></a></li>
+                    <li><a href="/users"><i class="icon">👥</i><span> Manage Users</span></a></li>
+                    <li><a href="/" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
+                    <li><a href="/display"><i class="icon">📺</i><span> Display Screen</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Inbox</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <span class="role-badge" id="userRole">...</span>
+                    <a href="/api/auth/logout" class="header-logout-btn"><img src="images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a>
+                </div>
+            </header>
+            
+            <div class="inbox-container">
+                <div class="inbox-sidebar">
+                    <button id="composeBtn" class="compose-btn">
+                        <i class="fas fa-plus"></i> Compose
+                    </button>
+                    
+                    <ul class="inbox-nav">
+                        <li class="active" data-folder="inbox">
+                            <i class="fas fa-inbox"></i> Inbox
+                            <span class="badge" id="unreadCount">0</span>
+                        </li>
+                        <li data-folder="sent">
+                            <i class="fas fa-paper-plane"></i> Sent
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="inbox-content">
+                    <div class="message-list" id="messageList">
+                        <!-- Messages will be loaded here -->
+                        <div class="empty-state">
+                            <i class="fas fa-envelope-open"></i>
+                            <p>No messages to display</p>
+                        </div>
+                    </div>
+                    
+                    <div class="message-view" id="messageView">
+                        <!-- Selected message will be displayed here -->
+                        <div class="empty-state">
+                            <i class="fas fa-envelope"></i>
+                            <p>Select a message to view</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Compose Message Modal -->
+            <div id="composeModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Compose Message</h2>
+                        <span class="close">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <form id="composeForm">
+                            <div class="form-group">
+                                <label for="recipient">To:</label>
+                                <select id="recipient" required>
+                                    <option value="">Select recipient</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="subject">Subject:</label>
+                                <input type="text" id="subject" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="relatedTicket">Related Ticket (optional):</label>
+                                <input type="text" id="relatedTicket" placeholder="Ticket number">
+                            </div>
+                            <div class="form-group">
+                                <label for="messageContent">Message:</label>
+                                <textarea id="messageContent" rows="6" required></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Send</button>
+                                <button type="button" class="btn-secondary" id="cancelCompose">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="js/inbox.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/user-profile-link.js"></script>
+    <script src="js/tooltip.js"></script>
+    <script src="js/session-timeout.js"></script>
+    <script src="js/session-handler.js"></script>
+    <script src="js/restart-check.js"></script>
+</body>
+</html>

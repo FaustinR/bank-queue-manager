@@ -6,8 +6,30 @@
     <title>Counter Management</title>
     <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <link rel="stylesheet" href="/css/counter.css">
+    <link rel="stylesheet" href="/css/unread-badge.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
+    <aside class="sidebar">
+        <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Sidebar">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="sidebar-header">
+            <img src="images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
+            <h2>Counter Panel</h2>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="/admin"><i class="icon">📊</i><span> Dashboard</span></a></li>
+                <li><a href="/history"><i class="icon">📜</i><span> Ticket History</span></a></li>
+                <li><a href="/inbox"><i class="icon">✉️</i><span> Inbox</span></a></li>
+                <li><a href="/" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
+                <li><a href="/display"><i class="icon">📺</i><span> Display Screen</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+    
     <div class="container">
         <div class="header-bar">
             <h1 id="counterTitle">Counter Management</h1>
@@ -43,6 +65,7 @@
     <script src="/js/counter.js"></script>
     <script src="/js/sidebar.js"></script>
     <script src="/js/session-handler.js"></script>
-    <script src="/js/restart-check.js">
+    <script src="/js/restart-check.js"></script>
+    <script src="/js/unread-messages.js">
 </body>
 </html>

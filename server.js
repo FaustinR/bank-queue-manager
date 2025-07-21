@@ -12,6 +12,7 @@ const Counter = require('./models/Counter');
 const User = require('./models/User');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const messageRoutes = require('./routes/messages');
 const { isAuthenticated, isAdmin, isStaff } = require('./middleware/auth');
 
 // Load environment variables
@@ -83,6 +84,7 @@ app.use(session({
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Services and their dedicated counters
 const services = {
@@ -260,6 +262,10 @@ app.get('/edit-user/:id', isAdmin, isFullAdmin, (req, res) => {
 
 app.get('/profile', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
+app.get('/inbox', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'inbox.html'));
 });
 
 // No debug pages
@@ -782,6 +788,27 @@ app.get('/api/clear-counter-assignment', async (req, res) => {
   } catch (error) {
     // Always return success
     res.status(200).send();
+  }
+});
+
+// API endpoint to get a ticket by number
+app.get('/api/tickets/by-number/:number', async (req, res) => {
+  try {
+    const ticketNumber = parseInt(req.params.number);
+    
+    if (isNaN(ticketNumber)) {
+      return res.status(400).json({ message: 'Invalid ticket number' });
+    }
+    
+    const ticket = await Ticket.findOne({ ticketNumber });
+    
+    if (!ticket) {
+      return res.status(404).json({ message: 'Ticket not found' });
+    }
+    
+    res.json({ ticket });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

@@ -1,0 +1,27 @@
+/* Unread message badge styles */
+.unread-badge {
+    background-color: #f44336;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 11px;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* For history.html nav links */
+.nav-links a {
+    position: relative;
+}
+
+.nav-links .unread-badge {
+    right: -10px;
+    top: -5px;
+}
