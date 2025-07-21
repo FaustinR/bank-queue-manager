@@ -185,31 +185,139 @@ document.addEventListener('DOMContentLoaded', function() {
         
         messageList.innerHTML = '';
         
+        // Group messages by sender/recipient
+        const groupedMessages = {};
+        const isInbox = currentFolder === 'inbox';
+        
         currentMessages.forEach(message => {
-            const isInbox = currentFolder === 'inbox';
             const person = isInbox ? message.sender : message.recipient;
-            const personName = person ? `${person.firstName} ${person.lastName}` : 'Unknown User';
+            if (!person) return;
             
-            const messageItem = document.createElement('div');
-            messageItem.className = `message-item ${isInbox && !message.read ? 'unread' : ''}`;
-            messageItem.dataset.id = message._id;
+            const personId = person._id;
+            const personName = `${person.firstName} ${person.lastName}`;
             
-            if (selectedMessageId === message._id) {
-                messageItem.classList.add('active');
+            if (!groupedMessages[personId]) {
+                groupedMessages[personId] = {
+                    name: personName,
+                    messages: [],
+                    hasUnread: false
+                };
             }
             
-            messageItem.innerHTML = `
-                <div class="message-sender">${personName}</div>
-                <div class="message-subject">${message.subject}</div>
-                <div class="message-preview">${message.content.substring(0, 60)}${message.content.length > 60 ? '...' : ''}</div>
-                <div class="message-time">${formatDate(message.createdAt)}</div>
+            groupedMessages[personId].messages.push(message);
+            
+            // Check if there are any unread messages
+            if (isInbox && !message.read) {
+                groupedMessages[personId].hasUnread = true;
+            }
+        });
+        
+        // Create message groups
+        Object.keys(groupedMessages).forEach(personId => {
+            const group = groupedMessages[personId];
+            const messages = group.messages;
+            
+            // Sort messages by date (newest first)
+            messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            // Create group header
+            const groupHeader = document.createElement('div');
+            groupHeader.className = `message-group-header ${group.hasUnread ? 'has-unread' : ''}`;
+            groupHeader.innerHTML = `
+                <div class="group-name">${group.name}</div>
+                <div class="group-count">${messages.length} message${messages.length > 1 ? 's' : ''}</div>
+                <div class="group-toggle"><i class="fas fa-chevron-right"></i></div>
             `;
             
-            messageItem.addEventListener('click', () => {
-                viewMessage(message._id);
+            // Create group container
+            const groupContainer = document.createElement('div');
+            groupContainer.className = 'message-group collapsed';
+            groupContainer.dataset.personId = personId;
+            
+            // Add group header to container
+            groupContainer.appendChild(groupHeader);
+            
+            // Create messages container
+            const messagesContainer = document.createElement('div');
+            messagesContainer.className = 'message-group-items';
+            
+            // Add messages to container
+            messages.forEach(message => {
+                const messageItem = document.createElement('div');
+                messageItem.className = `message-item ${isInbox && !message.read ? 'unread' : ''}`;
+                messageItem.dataset.id = message._id;
+                
+                if (selectedMessageId === message._id) {
+                    messageItem.classList.add('active');
+                }
+                
+                messageItem.innerHTML = `
+                    <div class="message-subject">${message.subject}</div>
+                    <div class="message-preview">${message.content.substring(0, 60)}${message.content.length > 60 ? '...' : ''}</div>
+                    <div class="message-time">${formatDate(message.createdAt)}</div>
+                `;
+                
+                messageItem.addEventListener('click', () => {
+                    viewMessage(message._id);
+                });
+                
+                messagesContainer.appendChild(messageItem);
             });
             
-            messageList.appendChild(messageItem);
+            // Add messages container to group container
+            groupContainer.appendChild(messagesContainer);
+            
+            // Add group container to message list
+            messageList.appendChild(groupContainer);
+            
+            // Add click event to toggle group
+            groupHeader.addEventListener('click', () => {
+                // Close all other groups first
+                document.querySelectorAll('.message-group').forEach(group => {
+                    if (group !== groupContainer) {
+                        group.classList.add('collapsed');
+                        const otherIcon = group.querySelector('.group-toggle i');
+                        if (otherIcon) {
+                            otherIcon.className = 'fas fa-chevron-right';
+                        }
+                    }
+                });
+                
+                // Toggle this group
+                groupContainer.classList.toggle('collapsed');
+                const icon = groupHeader.querySelector('.group-toggle i');
+                if (groupContainer.classList.contains('collapsed')) {
+                    icon.className = 'fas fa-chevron-right';
+                } else {
+                    icon.className = 'fas fa-chevron-down';
+                }
+            });
+            
+            // If this group has the selected message, make sure it's expanded
+            if (selectedMessageId && messages.some(m => m._id === selectedMessageId)) {
+                // Close all other groups
+                document.querySelectorAll('.message-group').forEach(group => {
+                    if (group !== groupContainer) {
+                        group.classList.add('collapsed');
+                        const otherIcon = group.querySelector('.group-toggle i');
+                        if (otherIcon) {
+                            otherIcon.className = 'fas fa-chevron-right';
+                        }
+                    }
+                });
+                
+                // Expand this group
+                groupContainer.classList.remove('collapsed');
+                const icon = groupHeader.querySelector('.group-toggle i');
+                icon.className = 'fas fa-chevron-down';
+            }
+            
+            // If this group has unread messages, expand it by default
+            if (group.hasUnread && !selectedMessageId) {
+                groupContainer.classList.remove('collapsed');
+                const icon = groupHeader.querySelector('.group-toggle i');
+                icon.className = 'fas fa-chevron-down';
+            }
         });
     }
     
@@ -217,13 +325,35 @@ document.addEventListener('DOMContentLoaded', function() {
     function viewMessage(messageId) {
         selectedMessageId = messageId;
         
-        // Update active class in message list
-        document.querySelectorAll('.message-item').forEach(item => {
-            item.classList.remove('active');
-            if (item.dataset.id === messageId) {
-                item.classList.add('active');
+        // Find the message item and its parent group
+        const messageItem = document.querySelector(`.message-item[data-id="${messageId}"]`);
+        if (messageItem) {
+            // Update active class
+            document.querySelectorAll('.message-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            messageItem.classList.add('active');
+            
+            // Find the parent group and expand it
+            const parentGroup = messageItem.closest('.message-group');
+            if (parentGroup) {
+                // Collapse all groups
+                document.querySelectorAll('.message-group').forEach(group => {
+                    group.classList.add('collapsed');
+                    const icon = group.querySelector('.group-toggle i');
+                    if (icon) {
+                        icon.className = 'fas fa-chevron-right';
+                    }
+                });
+                
+                // Expand this group
+                parentGroup.classList.remove('collapsed');
+                const icon = parentGroup.querySelector('.group-toggle i');
+                if (icon) {
+                    icon.className = 'fas fa-chevron-down';
+                }
             }
-        });
+        }
         
         // Find the message
         const message = currentMessages.find(m => m._id === messageId);
@@ -318,9 +448,46 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Delete a message
     function deleteMessage(messageId) {
-        if (!confirm('Are you sure you want to delete this message?')) {
-            return;
-        }
+        // Create a custom confirmation dialog
+        const confirmDialog = document.createElement('div');
+        confirmDialog.className = 'custom-confirm';
+        confirmDialog.innerHTML = `
+            <div class="custom-confirm-content">
+                <div class="custom-confirm-header">
+                    <h3>Confirm Deletion</h3>
+                </div>
+                <div class="custom-confirm-body">
+                    <p>Are you sure you want to delete this message?</p>
+                </div>
+                <div class="custom-confirm-footer">
+                    <button class="btn-cancel">Cancel</button>
+                    <button class="btn-confirm">Delete</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(confirmDialog);
+        
+        // Add event listeners
+        const cancelBtn = confirmDialog.querySelector('.btn-cancel');
+        const confirmBtn = confirmDialog.querySelector('.btn-confirm');
+        
+        cancelBtn.addEventListener('click', () => {
+            confirmDialog.remove();
+        });
+        
+        confirmBtn.addEventListener('click', () => {
+            confirmDialog.remove();
+            performDelete(messageId);
+        });
+        
+        // Show dialog with animation
+        setTimeout(() => {
+            confirmDialog.classList.add('show');
+        }, 10);
+    }
+    
+    // Perform the actual deletion
+    function performDelete(messageId) {
         
         fetch(`/api/messages/${messageId}`, {
             method: 'DELETE'
@@ -328,6 +495,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Find the message to be deleted
+                const deletedMessage = currentMessages.find(m => m._id === messageId);
+                
                 // Remove from current messages
                 currentMessages = currentMessages.filter(m => m._id !== messageId);
                 
@@ -346,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Update unread count if needed
-                if (currentFolder === 'inbox') {
+                if (currentFolder === 'inbox' && deletedMessage && !deletedMessage.read) {
                     updateUnreadCount();
                 }
             }
@@ -430,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Validate form
         if (!recipientId || !subject || !content) {
-            alert('Please fill in all required fields');
+            window.notifications.error('Form Error', 'Please fill in all required fields');
             return;
         }
         
@@ -485,14 +655,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 changeFolder('sent');
                 
                 // Show success message
-                alert('Message sent successfully');
+                window.notifications.success('Success', 'Message sent successfully');
             } else {
-                alert('Error sending message: ' + data.message);
+                window.notifications.error('Error', 'Error sending message: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error sending message:', error);
-            alert('Error sending message. Please try again.');
+            window.notifications.error('Error', 'Error sending message. Please try again.');
         });
     }
     
@@ -554,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             console.log('Test message created:', data);
-            alert('Test message created. You should see a badge on the inbox link.');
+            window.notifications.info('Test Message', 'Test message created. You should see a badge on the inbox link.');
             // Force update of unread count
             updateUnreadCount();
         })
