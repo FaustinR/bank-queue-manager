@@ -21,7 +21,7 @@ dotenv.config();
 connectDB();
 
 // Server restart flag - changes on each restart
-const SERVER_RESTART_ID = Date.now().toString();
+global.SERVER_RESTART_ID = Date.now().toString();
 
 const app = express();
 const server = http.createServer(app);
@@ -351,13 +351,10 @@ app.get('/api/queue', async (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), restartId: SERVER_RESTART_ID });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Endpoint to get server restart ID
-app.get('/api/server-restart-id', (req, res) => {
-  res.json({ restartId: SERVER_RESTART_ID });
-});
+// No longer needed - server restart ID is accessed directly via global variable
 
 // API endpoint to get counter staff information
 app.get('/api/counters/staff', async (req, res) => {

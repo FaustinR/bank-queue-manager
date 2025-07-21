@@ -5,38 +5,37 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
     
+    // Prevent infinite loops by checking if we've recently checked
+    const lastCheckTime = parseInt(sessionStorage.getItem('lastRestartCheckTime') || '0');
+    const now = Date.now();
+    
+    // Only check once every 5 minutes
+    if (now - lastCheckTime < 5 * 60 * 1000) {
+        return;
+    }
+    
+    // Update the last check time
+    sessionStorage.setItem('lastRestartCheckTime', now.toString());
+    
     try {
-        // Get current server restart ID
-        const response = await fetch('/api/server-restart-id');
-        if (!response.ok) {
+        // Check if user is non-admin by looking for counter assignment
+        const userResponse = await fetch('/api/auth/me');
+        if (!userResponse.ok) {
             return;
         }
         
-        const data = await response.json();
-        const currentRestartId = data.restartId;
+        const userData = await userResponse.json();
         
-        // Get stored restart ID from localStorage
-        const storedRestartId = localStorage.getItem('serverRestartId');
+        // Only proceed with restart check for non-admin users
+        if (!userData.user || userData.user.role === 'admin') {
+            return;
+        }
         
-        // If this is the first visit or server has restarted
-        if (!storedRestartId || storedRestartId !== currentRestartId) {
-            // Store the new restart ID
-            localStorage.setItem('serverRestartId', currentRestartId);
-            
-            // If this is not the first visit (we had a stored ID)
-            if (storedRestartId) {
-                // Check if user is non-admin by looking for counter assignment
-                const userResponse = await fetch('/api/auth/me');
-                if (userResponse.ok) {
-                    const userData = await userResponse.json();
-                    
-                    // If user is not admin, force logout
-                    if (userData.user && userData.user.role !== 'admin') {
-                        // Redirect to logout which will clear the session
-                        window.location.href = '/api/auth/logout';
-                    }
-                }
-            }
+        // For non-admin users, check if they have a counter assigned
+        if (!userData.user.counter) {
+            // If no counter is assigned, redirect to logout
+            window.location.href = '/api/auth/logout';
+            return;
         }
     } catch (error) {
         // Error handling without logging

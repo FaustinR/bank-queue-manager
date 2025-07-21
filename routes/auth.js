@@ -157,46 +157,8 @@ router.post('/login', async (req, res) => {
       req.session.userCounter = user.counter;
     }
     
-    // Get and store server restart ID
-    try {
-      const http = require('http');
-      const options = {
-        hostname: 'localhost',
-        port: process.env.PORT || 3000,
-        path: '/api/server-restart-id',
-        method: 'GET'
-      };
-      
-      const serverRestartIdPromise = new Promise((resolve, reject) => {
-        const req = http.request(options, (response) => {
-          let data = '';
-          
-          response.on('data', (chunk) => {
-            data += chunk;
-          });
-          
-          response.on('end', () => {
-            try {
-              const parsedData = JSON.parse(data);
-              resolve(parsedData.restartId);
-            } catch (e) {
-              reject(e);
-            }
-          });
-        });
-        
-        req.on('error', (error) => {
-          reject(error);
-        });
-        
-        req.end();
-      });
-      
-      const currentRestartId = await serverRestartIdPromise;
-      req.session.serverRestartId = currentRestartId;
-    } catch (error) {
-      // If we can't get the restart ID, continue anyway
-    }
+    // Store server restart ID in session
+    req.session.serverRestartId = global.SERVER_RESTART_ID;
     
     // Return user info (without password)
     const userResponse = {
