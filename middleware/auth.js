@@ -1,30 +1,11 @@
 // Authentication middleware
 const isAuthenticated = async (req, res, next) => {
   if (req.session && req.session.userId) {
-    // For non-admin users, check if they have a counter assigned
-    if (req.session.userRole !== 'admin') {
-      try {
-        const User = require('../models/User');
-        
-        // Get user's counter
-        const user = await User.findById(req.session.userId);
-        if (!user || !user.counter) {
-          // No counter assigned, force logout
-          req.session.destroy();
-          
-          if (req.xhr) {
-            return res.status(401).json({ message: 'Please select a counter to continue' });
-          }
-          
-          return res.redirect('/login?restart=true');
-        }
-      } catch (error) {
-        // If we can't check the user, continue anyway
-      }
-    }
+    // Counter is optional for all users
+    // No need to check for counter assignment
     
     // Update the server restart ID in the session
-    req.session.serverRestartId = SERVER_RESTART_ID;
+    req.session.serverRestartId = global.SERVER_RESTART_ID;
     
     return next();
   }

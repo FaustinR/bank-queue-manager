@@ -171,9 +171,8 @@
         timeoutModal.style.opacity = '1';
         timeoutModal.style.visibility = 'visible';
         
-        // Call logout API
-        fetch('/api/auth/logout', { method: 'POST' })
-            .catch(error => console.error('Error logging out:', error));
+        // Call logout API using direct navigation
+        window.location.href = '/api/auth/logout';
     }
     
     // Activity detection

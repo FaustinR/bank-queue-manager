@@ -14,27 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionStorage.setItem('systemRestarted', 'true');
     }
     
-    // Function to check if email is admin (for demo purposes)
-    emailInput.addEventListener('blur', function() {
-        const email = emailInput.value.toLowerCase();
-        if (email.includes('admin')) {
-            // Make counter optional for admin emails
-            counterSelect.removeAttribute('required');
-            counterOptionalText.style.display = 'inline';
-            // Show the "No counter" option
-            counterSelect.querySelector('option[value=""]').disabled = false;
-        } else {
-            // Make counter required for non-admin emails
-            counterSelect.setAttribute('required', 'required');
-            counterOptionalText.style.display = 'none';
-            // Hide the "No counter" option
-            counterSelect.querySelector('option[value=""]').disabled = true;
-            // If "No counter" is selected, reset it
-            if (!counterSelect.value) {
-                counterSelect.selectedIndex = 0;
-            }
-        }
-    });
+    // Make counter optional for all users
+    counterSelect.removeAttribute('required');
+    counterOptionalText.style.display = 'inline';
+    counterSelect.querySelector('option[value=""]').disabled = false;
     
     // Check if counter is occupied when counter selection changes
     counterSelect.addEventListener('change', async function() {

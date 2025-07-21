@@ -27,10 +27,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     
-    // Check if counter is required for non-admin users
-    if (user.role !== 'admin' && !counter) {
-      return res.status(400).json({ message: 'Counter selection is required for non-admin users' });
-    }
+    // Counter is optional for all users
     
     // For admin users, counter is optional
     if (user.role === 'admin' && !counter) {
@@ -155,10 +152,16 @@ router.post('/login', async (req, res) => {
     req.session.userRole = user.role;
     if (user.counter) {
       req.session.userCounter = user.counter;
+    } else {
+      // Make sure to remove userCounter from session if user has no counter
+      req.session.userCounter = null;
     }
     
     // Store server restart ID in session
     req.session.serverRestartId = global.SERVER_RESTART_ID;
+    
+    // Save session explicitly
+    req.session.save();
     
     // Return user info (without password)
     const userResponse = {
@@ -288,43 +291,44 @@ router.get('/logout', async (req, res) => {
     const userId = req.session.userId;
     const userCounter = req.session.userCounter;
     
-    // Clear counter assignment in Counter model if the user was assigned to a counter
-    if (userId && userCounter) {
-      // Clear counter assignment in Counter model
-      const Counter = require('../models/Counter');
-      await Counter.findOneAndUpdate(
-        { counterId: parseInt(userCounter), staffId: userId },
-        { $set: { staffId: null, staffName: null } }
-      );
-      
-      // Also clear counter assignment in User model
+    if (userId) {
+      // Always clear user's counter assignment in User model, even for admin users
       await User.findByIdAndUpdate(userId, { $set: { counter: null } });
       
-      // Notify all clients about the staff logout
-      try {
-        const http = require('http');
-        const options = {
-          hostname: 'localhost',
-          port: process.env.PORT || 3000,
-          path: '/api/notify-staff-logout',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        };
+      // Clear counter assignment in Counter model if the user was assigned to a counter
+      if (userCounter) {
+        const Counter = require('../models/Counter');
+        await Counter.findOneAndUpdate(
+          { counterId: parseInt(userCounter), staffId: userId },
+          { $set: { staffId: null, staffName: null } }
+        );
         
-        const req = http.request(options, (res) => {
-          // Request completed
-        });
-        
-        req.on('error', (error) => {
+        // Notify all clients about the staff logout
+        try {
+          const http = require('http');
+          const options = {
+            hostname: 'localhost',
+            port: process.env.PORT || 3000,
+            path: '/api/notify-staff-logout',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          };
+          
+          const req = http.request(options, (res) => {
+            // Request completed
+          });
+          
+          req.on('error', (error) => {
+            // Error handling without logging
+          });
+          
+          req.write(JSON.stringify({ counterId: userCounter }));
+          req.end();
+        } catch (notifyError) {
           // Error handling without logging
-        });
-        
-        req.write(JSON.stringify({ counterId: userCounter }));
-        req.end();
-      } catch (notifyError) {
-        // Error handling without logging
+        }
       }
     }
     

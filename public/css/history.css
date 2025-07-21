@@ -54,6 +54,21 @@ h1 {
     color: #764ba2;
 }
 
+.nav-links .logout-btn {
+    background: #dc3545;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.nav-links .logout-btn:hover {
+    background: #c82333;
+    color: white;
+}
+
 .filter-section {
     background: white;
     padding: 15px 20px;

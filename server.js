@@ -72,8 +72,8 @@ sessionStore.on('expired', async function(sessionId) {
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'bank-queue-secret',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   store: sessionStore,
   cookie: {
     maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days in milliseconds
@@ -873,41 +873,12 @@ async function createDefaultAdmin() {
   }
 }
 
-// Function to log out all non-admin users
+// Function to log out all non-admin users (disabled - counter is now optional)
 async function logoutNonAdminUsers() {
   try {
-    // Find all non-admin users with counter assignments
-    const nonAdminUsers = await User.find({
-      role: { $ne: 'admin' },
-      counter: { $ne: null }
-    });
-    
-    // Clear counter assignments for all non-admin users
-    for (const user of nonAdminUsers) {
-      const counterId = user.counter;
-      
-      // Clear counter assignment in User model
-      user.counter = null;
-      await user.save();
-      
-      // Clear counter assignment in Counter model
-      await Counter.updateOne(
-        { counterId: parseInt(counterId) },
-        { $set: { staffId: null, staffName: null } }
-      );
-      
-      // Emit staff logout event
-      io.emit('staffLogout', { counterId });
-    }
-    
-    // Get updated counter staff information
-    const counterStaff = await getCounterStaffInfo();
-    
-    // Emit update to all clients
-    io.emit('queueUpdate', { queues, counters, counterStaff });
-    
-    // Log the number of users logged out
-    console.log(`Logged out ${nonAdminUsers.length} non-admin users on application restart`);
+    // Counter is now optional for all users, so we don't need to log out non-admin users
+    console.log('Counter is optional for all users - no users logged out on restart');
+    return;
   } catch (error) {
     // Error handling without logging
   }

@@ -13,7 +13,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check URL parameters
     handleUrlParameters();
+    
+    // Setup logout button
+    setupLogoutButton();
 });
+
+// Handle logout button click
+function setupLogoutButton() {
+    const logoutLink = document.querySelector('a.header-logout-btn');
+    
+    if (logoutLink) {
+        logoutLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            this.innerHTML = '<img src="images/logout.jpg" alt="Logout" class="logout-icon"> Logging out...';
+            this.style.opacity = '0.7';
+            this.style.pointerEvents = 'none';
+            
+            // Redirect to logout URL
+            window.location.href = '/api/auth/logout';
+        });
+    }
+}
 
 // No longer needed - display screen is now an accordion section
 
