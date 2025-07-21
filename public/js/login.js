@@ -3,8 +3,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginError = document.getElementById('loginError');
     const emailInput = document.getElementById('email');
     const counterSelect = document.getElementById('counter');
+    const systemNotification = document.getElementById('systemNotification');
     
     const counterOptionalText = document.getElementById('counterOptionalText');
+    
+    // Check URL parameters to see if we need to show the system restart notification
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('restart') || sessionStorage.getItem('systemRestarted')) {
+        systemNotification.style.display = 'block';
+        sessionStorage.setItem('systemRestarted', 'true');
+    }
     
     // Function to check if email is admin (for demo purposes)
     emailInput.addEventListener('blur', function() {

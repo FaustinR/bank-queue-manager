@@ -157,6 +157,47 @@ router.post('/login', async (req, res) => {
       req.session.userCounter = user.counter;
     }
     
+    // Get and store server restart ID
+    try {
+      const http = require('http');
+      const options = {
+        hostname: 'localhost',
+        port: process.env.PORT || 3000,
+        path: '/api/server-restart-id',
+        method: 'GET'
+      };
+      
+      const serverRestartIdPromise = new Promise((resolve, reject) => {
+        const req = http.request(options, (response) => {
+          let data = '';
+          
+          response.on('data', (chunk) => {
+            data += chunk;
+          });
+          
+          response.on('end', () => {
+            try {
+              const parsedData = JSON.parse(data);
+              resolve(parsedData.restartId);
+            } catch (e) {
+              reject(e);
+            }
+          });
+        });
+        
+        req.on('error', (error) => {
+          reject(error);
+        });
+        
+        req.end();
+      });
+      
+      const currentRestartId = await serverRestartIdPromise;
+      req.session.serverRestartId = currentRestartId;
+    } catch (error) {
+      // If we can't get the restart ID, continue anyway
+    }
+    
     // Return user info (without password)
     const userResponse = {
       _id: user._id,
@@ -331,7 +372,7 @@ router.get('/logout', async (req, res) => {
         return res.status(500).json({ message: 'Error logging out' });
       }
       
-      res.redirect('/login');
+      res.redirect('/login?restart=true');
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error during logout' });

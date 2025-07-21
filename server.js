@@ -20,6 +20,9 @@ dotenv.config();
 // Connect to MongoDB
 connectDB();
 
+// Server restart flag - changes on each restart
+const SERVER_RESTART_ID = Date.now().toString();
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -159,6 +162,10 @@ async function initializeFromDB() {
         }
       }
     });
+    
+    // Log out all non-admin users on application restart
+    // This ensures employees have to select a counter when logging in again
+    await logoutNonAdminUsers();
     
     // Sync counter staff information from User model to Counter model
     const usersWithCounters = await User.find({ counter: { $ne: null } })
@@ -344,7 +351,12 @@ app.get('/api/queue', async (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), restartId: SERVER_RESTART_ID });
+});
+
+// Endpoint to get server restart ID
+app.get('/api/server-restart-id', (req, res) => {
+  res.json({ restartId: SERVER_RESTART_ID });
 });
 
 // API endpoint to get counter staff information
@@ -864,6 +876,46 @@ async function createDefaultAdmin() {
   }
 }
 
+// Function to log out all non-admin users
+async function logoutNonAdminUsers() {
+  try {
+    // Find all non-admin users with counter assignments
+    const nonAdminUsers = await User.find({
+      role: { $ne: 'admin' },
+      counter: { $ne: null }
+    });
+    
+    // Clear counter assignments for all non-admin users
+    for (const user of nonAdminUsers) {
+      const counterId = user.counter;
+      
+      // Clear counter assignment in User model
+      user.counter = null;
+      await user.save();
+      
+      // Clear counter assignment in Counter model
+      await Counter.updateOne(
+        { counterId: parseInt(counterId) },
+        { $set: { staffId: null, staffName: null } }
+      );
+      
+      // Emit staff logout event
+      io.emit('staffLogout', { counterId });
+    }
+    
+    // Get updated counter staff information
+    const counterStaff = await getCounterStaffInfo();
+    
+    // Emit update to all clients
+    io.emit('queueUpdate', { queues, counters, counterStaff });
+    
+    // Log the number of users logged out
+    console.log(`Logged out ${nonAdminUsers.length} non-admin users on application restart`);
+  } catch (error) {
+    // Error handling without logging
+  }
+}
+
 // Function to clean up orphaned counter assignments
 async function cleanupOrphanedCounters() {
   try {
@@ -912,13 +964,18 @@ async function cleanupOrphanedCounters() {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   // Create default admin user
-  createDefaultAdmin();
+  await createDefaultAdmin();
+  
+  // Log out all non-admin users on server start
+  await logoutNonAdminUsers();
   
   // Run initial cleanup of orphaned counter assignments
-  cleanupOrphanedCounters();
+  await cleanupOrphanedCounters();
   
   // Schedule periodic cleanup every 5 minutes
   setInterval(cleanupOrphanedCounters, 5 * 60 * 1000);
+  
+  console.log(`Server started on port ${PORT} with restart ID: ${SERVER_RESTART_ID}`);
 });
