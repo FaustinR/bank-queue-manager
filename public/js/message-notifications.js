@@ -101,8 +101,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update unread badge
     function updateUnreadBadge() {
-        // If unread-messages.js is loaded, it will handle this
-        // This is just a fallback
+        // If update-inbox-badge.js is loaded, use that function
+        if (typeof window.updateInboxBadge === 'function') {
+            window.updateInboxBadge();
+            return;
+        }
+        
+        // Fallback implementation
         fetch('/api/messages/unread')
             .then(response => response.json())
             .then(data => {
@@ -112,6 +117,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const inboxLinks = document.querySelectorAll('a[href="/inbox"]');
                 
                 inboxLinks.forEach(link => {
+                    // Ensure the link has position relative
+                    link.style.position = 'relative';
+                    
                     // Remove any existing badge
                     const existingBadge = link.querySelector('.unread-badge');
                     if (existingBadge) {

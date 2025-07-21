@@ -1,33 +1,53 @@
 // This script can be included on any page to update the inbox badge
-document.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('load', function() {
     // Call immediately and then every 30 seconds
-    updateInboxBadge();
-    setInterval(updateInboxBadge, 30000);
+    setTimeout(function() {
+        updateInboxBadge();
+        setInterval(updateInboxBadge, 30000);
+    }, 500);
 });
 
-function updateInboxBadge() {
+// Also try on DOMContentLoaded for faster loading
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(updateInboxBadge, 200);
+});
+
+// Make the function globally available
+window.updateInboxBadge = function() {
+    // Try both selectors to find the inbox link
+    const inboxItems = document.querySelectorAll('.sidebar-nav li a[href="/inbox"], .nav-links a[href="/inbox"]');
+    
+    if (inboxItems.length === 0) {
+        // Try again in a moment if no inbox links found
+        setTimeout(updateInboxBadge, 500);
+        return;
+    }
+    
     fetch('/api/messages/unread')
         .then(response => response.json())
         .then(data => {
             const unreadCount = data.unreadCount;
             
-            // Find all inbox links in the page
-            const inboxLinks = document.querySelectorAll('a[href="/inbox"]');
-            
-            inboxLinks.forEach(link => {
+            // Update all inbox links found
+            inboxItems.forEach(inboxItem => {
+                // Ensure the link has position relative
+                inboxItem.style.position = 'relative';
+                
                 // Remove any existing badge
-                const existingBadge = link.querySelector('.unread-badge');
+                const existingBadge = inboxItem.querySelector('.unread-badge');
                 if (existingBadge) {
                     existingBadge.remove();
                 }
                 
                 // Get the icon element
-                const iconElement = link.querySelector('.icon') || link;
+                const iconElement = inboxItem.querySelector('.icon');
                 
                 // Remove any existing notification dot
-                const existingDot = link.querySelector('.notification-dot');
-                if (existingDot) {
-                    existingDot.remove();
+                if (iconElement) {
+                    const existingDot = iconElement.querySelector('.notification-dot');
+                    if (existingDot) {
+                        existingDot.remove();
+                    }
                 }
                 
                 // Add badge if there are unread messages
@@ -36,27 +56,38 @@ function updateInboxBadge() {
                     const badge = document.createElement('span');
                     badge.className = 'unread-badge';
                     badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                    link.appendChild(badge);
+                    inboxItem.appendChild(badge);
                     
                     // Add a pulsing dot to make it more noticeable
-                    const notificationDot = document.createElement('span');
-                    notificationDot.className = 'notification-dot';
-                    iconElement.style.position = 'relative';
-                    iconElement.appendChild(notificationDot);
-                    
-                    // Change the icon to indicate new messages
-                    if (iconElement.textContent === '✉️') {
-                        iconElement.textContent = '📬'; // Mailbox with mail icon
+                    if (iconElement) {
+                        const notificationDot = document.createElement('span');
+                        notificationDot.className = 'notification-dot';
+                        iconElement.style.position = 'relative';
+                        iconElement.appendChild(notificationDot);
+                        
+                        // Change the icon to indicate new messages
+                        if (iconElement.textContent === '✉️') {
+                            iconElement.textContent = '📬'; // Mailbox with mail icon
+                        }
                     }
                     
-                    // Add blinking effect to the icon
-                    iconElement.classList.add('blink-icon');
-                    
                     // Make the text red for new messages
-                    const textSpan = link.querySelector('span');
+                    const textSpan = inboxItem.querySelector('span');
                     if (textSpan) {
                         textSpan.style.color = '#f44336';
                         textSpan.style.fontWeight = 'bold';
+                    }
+                } else {
+                    // Reset icon if no unread messages
+                    if (iconElement && iconElement.textContent === '📬') {
+                        iconElement.textContent = '✉️';
+                    }
+                    
+                    // Reset text color
+                    const textSpan = inboxItem.querySelector('span');
+                    if (textSpan) {
+                        textSpan.style.color = '';
+                        textSpan.style.fontWeight = '';
                     }
                 }
             });

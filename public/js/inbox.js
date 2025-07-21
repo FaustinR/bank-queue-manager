@@ -160,6 +160,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     unreadCountBadge.style.display = 'inline';
                 }
+                
+                // Also update the sidebar badge
+                if (typeof window.updateInboxBadge === 'function') {
+                    window.updateInboxBadge();
+                }
             })
             .catch(error => {
                 console.error('Error updating unread count:', error);
@@ -525,4 +530,36 @@ document.addEventListener('DOMContentLoaded', function() {
         loadMessages();
         updateUnreadCount();
     }, 30000);
+    
+    // Debug function to create a test message (can be called from console)
+    window.createTestMessage = function() {
+        if (!currentUserId) {
+            console.error('User ID not available yet');
+            return;
+        }
+        
+        const messageData = {
+            recipientId: currentUserId,
+            subject: 'Test Message',
+            content: 'This is a test message to verify the badge system.'
+        };
+        
+        fetch('/api/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(messageData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Test message created:', data);
+            alert('Test message created. You should see a badge on the inbox link.');
+            // Force update of unread count
+            updateUnreadCount();
+        })
+        .catch(error => {
+            console.error('Error creating test message:', error);
+        });
+    };
 });

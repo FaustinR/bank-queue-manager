@@ -16,6 +16,8 @@
     justify-content: center;
     box-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
     animation: pulse 1.5s infinite;
+    z-index: 100; /* Ensure badge is on top */
+    pointer-events: none; /* Allow clicking through the badge */
 }
 
 /* Notification dot - small pulsing dot on the icon */
