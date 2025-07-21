@@ -88,6 +88,21 @@ async function fetchUserInfo() {
         const response = await fetch('/api/auth/me');
         const data = await response.json();
         
+        // If the user has a counter, ensure it's properly set in the Counter model
+        if (data.user && data.user.counter) {
+            try {
+                await fetch('/api/notify-counter-update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+            } catch (error) {
+                // Silent error handling
+            }
+        }
+        
         if (response.ok && data.user) {
             const userNameElement = document.getElementById('userName');
             userNameElement.textContent = `${data.user.firstName} ${data.user.lastName}`;

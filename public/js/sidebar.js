@@ -9,8 +9,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add click event listener to each link
     sidebarLinks.forEach(link => {
-        // Skip logout link and links with target="_blank"
-        if (link.getAttribute('href') !== '/api/auth/logout' && link.getAttribute('target') !== '_blank') {
+        // For links with target="_blank", add session token to URL
+        if (link.getAttribute('target') === '_blank' && 
+            (link.getAttribute('href') === '/history' || link.getAttribute('href') === '/display')) {
+            link.onclick = function(e) {
+                e.preventDefault();
+                // Open in new tab with session cookie preserved
+                window.open(this.getAttribute('href'), '_blank');
+                return false;
+            };
+        }
+        // Skip logout link and other links with target="_blank"
+        else if (link.getAttribute('href') !== '/api/auth/logout' && link.getAttribute('target') !== '_blank') {
             // Special handling for dashboard link on admin page
             if (link.getAttribute('href') === '/admin' && window.location.pathname === '/admin') {
                 // Handle dashboard link to scroll to top
@@ -88,16 +98,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if we're on a page with a sidebar
     const sidebar = document.querySelector('.sidebar-header h2');
     if (sidebar) {
-        // Get user role
-        fetch('/api/auth/me')
-            .then(response => response.json())
-            .then(data => {
-                if (data.user && data.user.role !== 'admin') {
-                    // Hide the h2 element completely for non-admin users
-                    sidebar.style.display = 'none';
-                }
-            })
-            .catch(error => console.error('Error fetching user info:', error));
+        // Only check user role on admin pages
+        if (window.location.pathname.includes('/admin')) {
+            // Get user role
+            fetch('/api/auth/me')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.user && data.user.role !== 'admin') {
+                        // Hide the h2 element completely for non-admin users
+                        sidebar.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    // If error, just continue without changing anything
+                });
+        }
     }
 });
 

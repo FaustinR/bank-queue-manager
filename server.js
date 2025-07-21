@@ -207,16 +207,19 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Staff routes (require authentication)
-app.get('/display', isAuthenticated, (req, res) => {
+// Staff routes
+// Display and history pages are public
+app.get('/display', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'display.html'));
 });
 
+// Counter pages require authentication
 app.get('/counter/:id', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'counter.html'));
 });
 
-app.get('/history', isAuthenticated, (req, res) => {
+// History page is public
+app.get('/history', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'history.html'));
 });
 
@@ -329,6 +332,7 @@ app.post('/api/ticket', async (req, res) => {
   }
 });
 
+// Public API endpoint for queue data
 app.get('/api/queue', async (req, res) => {
   try {
     // Check if database is empty and reset counter if needed
@@ -691,6 +695,14 @@ app.post('/api/notify-staff-logout', async (req, res) => {
 // API endpoint to clear counter assignment when browser tab is closed
 app.post('/api/clear-counter-assignment', async (req, res) => {
   try {
+    // Check if this is a page refresh
+    const isRefresh = req.headers['x-is-refresh'] === 'true';
+    
+    // If it's a refresh, don't clear the counter
+    if (isRefresh) {
+      return res.status(200).send();
+    }
+    
     // Get user from session
     if (req.session && req.session.userId) {
       const userId = req.session.userId;
@@ -734,6 +746,14 @@ app.post('/api/clear-counter-assignment', async (req, res) => {
 // Also support GET for beacon requests
 app.get('/api/clear-counter-assignment', async (req, res) => {
   try {
+    // Check if this is a page refresh
+    const isRefresh = req.query.isRefresh === 'true';
+    
+    // If it's a refresh, don't clear the counter
+    if (isRefresh) {
+      return res.status(200).send();
+    }
+    
     // Get user from session
     if (req.session && req.session.userId) {
       const userId = req.session.userId;
@@ -765,7 +785,7 @@ app.get('/api/clear-counter-assignment', async (req, res) => {
   }
 });
 
-// API endpoint for ticket history
+// API endpoint for ticket history (public)
 app.get('/api/tickets/history', async (req, res) => {
   try {
     const { status, service, date } = req.query;
@@ -797,7 +817,7 @@ app.get('/api/tickets/history', async (req, res) => {
   }
 });
 
-// Add endpoint to get ticket statistics
+// Add endpoint to get ticket statistics (public)
 app.get('/api/stats', async (req, res) => {
   try {
     const totalTickets = await Ticket.countDocuments();

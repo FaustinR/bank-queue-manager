@@ -146,9 +146,15 @@ router.post('/login', async (req, res) => {
       req.session.id = require('crypto').randomBytes(16).toString('hex');
     }
     
-    // Set the counter in the session if provided
+    // Set the counter in the session
     if (counter) {
       req.session.userCounter = counter;
+      // Also update the user's counter in the database for consistency across tabs
+      user.counter = counter;
+      await user.save();
+    } else if (user.counter) {
+      // If user has a counter in the database but none provided, use that
+      req.session.userCounter = user.counter;
     } else {
       req.session.userCounter = null;
     }
@@ -166,7 +172,7 @@ router.post('/login', async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
-      counter: user.counter
+      counter: req.session.userCounter || user.counter
     };
     
     res.json({ user: userResponse });
@@ -231,14 +237,37 @@ router.get('/me', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    // Return user info (without password)
+    // If the session has a counter but the user doesn't, update the user's counter
+    if (req.session.userCounter && !user.counter) {
+      user.counter = req.session.userCounter;
+      await user.save();
+      
+      // Also update the Counter model
+      const Counter = require('../models/Counter');
+      await Counter.findOneAndUpdate(
+        { counterId: parseInt(req.session.userCounter) },
+        { 
+          staffId: user._id,
+          staffName: `${user.firstName} ${user.lastName}`
+        }
+      );
+    }
+    // If the user has a counter but the session doesn't, update the session
+    else if (user.counter && !req.session.userCounter) {
+      req.session.userCounter = user.counter;
+      req.session.save();
+    }
+    
+    // Use the counter from the database as the source of truth
+    const userCounter = user.counter;
+    
     const userResponse = {
       _id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       role: user.role,
-      counter: user.counter
+      counter: userCounter
     };
     
     res.json({ user: userResponse });

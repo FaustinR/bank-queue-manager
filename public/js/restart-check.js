@@ -1,7 +1,9 @@
 // Check for server restarts
 document.addEventListener('DOMContentLoaded', async function() {
-    // Skip this check on the login page
-    if (window.location.pathname === '/login') {
+    // Skip this check on the login page and public pages
+    if (window.location.pathname === '/login' || 
+        window.location.pathname === '/history' || 
+        window.location.pathname === '/display') {
         return;
     }
     

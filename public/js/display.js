@@ -125,7 +125,7 @@ async function fetchCounterStaff() {
 }
 
 // Check if page is in an iframe and setup close button
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     if (window.self !== window.top) {
         // We're in an iframe
         document.body.classList.add('embedded-display');
@@ -148,8 +148,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Fetch counter staff information immediately
-    fetchCounterStaff();
+    // Fetch initial data including counter staff information
+    try {
+        const response = await fetch('/api/queue');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.counterStaff) {
+                counterStaff = data.counterStaff;
+            }
+            updateDisplay(data);
+        }
+    } catch (error) {
+        // Error handling without logging
+    }
     
     // Refresh counter staff information every 10 seconds
     setInterval(fetchCounterStaff, 10000);
