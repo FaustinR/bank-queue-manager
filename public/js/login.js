@@ -109,6 +109,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show error message
                 loginError.textContent = data.message || 'Invalid email or password';
                 loginError.style.display = 'block';
+                
+                // If the error is about already being logged in at another counter, make it more visible
+                if (data.message && data.message.includes('You are already logged in at Counter')) {
+                    loginError.style.color = '#e74c3c';
+                    loginError.style.fontWeight = 'bold';
+                    loginError.style.padding = '10px';
+                    loginError.style.backgroundColor = '#fff3cd';
+                    loginError.style.border = '1px solid #ffeeba';
+                    loginError.style.borderRadius = '4px';
+                }
             }
         } catch (error) {
             loginError.textContent = 'An error occurred. Please try again.';

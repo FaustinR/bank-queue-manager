@@ -46,21 +46,23 @@ router.post('/login', async (req, res) => {
       }
     }
     
-    // Clear any previous counter assignment
-    if (user.counter) {
-      user.counter = null;
-      await user.save();
-      
-      // Clear user from any counter they might be assigned to
-      const Counter = require('../models/Counter');
-      await Counter.updateMany(
-        { staffId: user._id },
-        { $set: { staffId: null, staffName: null } }
-      );
-    }
+    // We'll keep the user's counter assignment in the database
+    // and only manage it through the session to support multiple sessions
     
     // Assign counter to user if provided
     if (counter) {
+      // Check if user is already logged in at a different counter
+      if (user.sessions && user.sessions.size > 0) {
+        // Get the first counter the user is assigned to
+        const existingCounter = Array.from(user.sessions.values())[0];
+        
+        if (existingCounter && existingCounter !== counter) {
+          return res.status(400).json({ 
+            message: `You are already logged in at Counter ${existingCounter}. Please log out from that counter first or choose No counter.` 
+          });
+        }
+      }
+      
       // Check if counter is already occupied by a REAL staff member
       const Counter = require('../models/Counter');
       const occupiedCounter = await Counter.findOne({ 
@@ -75,33 +77,23 @@ router.post('/login', async (req, res) => {
         });
       }
       
-      // Also check User model as a fallback
-      const occupiedByUser = await User.findOne({ 
-        counter: counter, 
-        _id: { $ne: user._id },
-        firstName: { $ne: null },
-        lastName: { $ne: null }
-      });
-      
-      if (occupiedByUser && occupiedByUser.firstName && occupiedByUser.lastName) {
-        return res.status(400).json({ 
-          message: `Counter ${counter} is already occupied by ${occupiedByUser.firstName} ${occupiedByUser.lastName}. Please select another counter.` 
-        });
-      }
-      
       // Clear any invalid counter assignments before assigning this user
       await Counter.updateOne(
         { counterId: parseInt(counter) },
         { $set: { staffId: null, staffName: null } }
       );
       
-      // Clear any user assignments to this counter
-      await User.updateMany(
-        { counter: counter.toString(), _id: { $ne: user._id } },
-        { $set: { counter: null } }
-      );
+      // Assign the counter to this session
+      if (!req.session.id) {
+        // Generate a session ID if it doesn't exist
+        req.session.id = require('crypto').randomBytes(16).toString('hex');
+      }
       
-      user.counter = counter;
+      // Store the counter in the user's sessions map
+      if (!user.sessions) {
+        user.sessions = new Map();
+      }
+      user.sessions.set(req.session.id, counter);
       await user.save();
       
       try {
@@ -119,8 +111,6 @@ router.post('/login', async (req, res) => {
       
       // Notify all clients about the counter staff update
       try {
-        // Use node-fetch or axios for server-side fetch
-        // This is a server-side request, so we need to use the full URL
         const http = require('http');
         const options = {
           hostname: 'localhost',
@@ -150,10 +140,16 @@ router.post('/login', async (req, res) => {
     // Set session
     req.session.userId = user._id;
     req.session.userRole = user.role;
-    if (user.counter) {
-      req.session.userCounter = user.counter;
+    
+    // Store the session ID
+    if (!req.session.id) {
+      req.session.id = require('crypto').randomBytes(16).toString('hex');
+    }
+    
+    // Set the counter in the session if provided
+    if (counter) {
+      req.session.userCounter = counter;
     } else {
-      // Make sure to remove userCounter from session if user has no counter
       req.session.userCounter = null;
     }
     
@@ -290,44 +286,63 @@ router.get('/logout', async (req, res) => {
     // Get user information before destroying the session
     const userId = req.session.userId;
     const userCounter = req.session.userCounter;
+    const sessionId = req.session.id;
     
-    if (userId) {
-      // Always clear user's counter assignment in User model, even for admin users
-      await User.findByIdAndUpdate(userId, { $set: { counter: null } });
+    if (userId && sessionId) {
+      // Get the user to update their sessions
+      const user = await User.findById(userId);
       
-      // Clear counter assignment in Counter model if the user was assigned to a counter
-      if (userCounter) {
-        const Counter = require('../models/Counter');
-        await Counter.findOneAndUpdate(
-          { counterId: parseInt(userCounter), staffId: userId },
-          { $set: { staffId: null, staffName: null } }
-        );
+      if (user && user.sessions && user.sessions.has(sessionId)) {
+        // Get the counter assigned to this session
+        const sessionCounter = user.sessions.get(sessionId);
         
-        // Notify all clients about the staff logout
-        try {
-          const http = require('http');
-          const options = {
-            hostname: 'localhost',
-            port: process.env.PORT || 3000,
-            path: '/api/notify-staff-logout',
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          };
+        // Remove this session from the user's sessions
+        user.sessions.delete(sessionId);
+        await user.save();
+        
+        // Check if any other session is using this counter
+        let counterInUse = false;
+        for (const [otherSessionId, otherCounter] of user.sessions.entries()) {
+          if (otherCounter === sessionCounter) {
+            counterInUse = true;
+            break;
+          }
+        }
+        
+        // Only clear the counter if no other session is using it
+        if (!counterInUse && sessionCounter) {
+          const Counter = require('../models/Counter');
+          await Counter.findOneAndUpdate(
+            { counterId: parseInt(sessionCounter), staffId: userId },
+            { $set: { staffId: null, staffName: null } }
+          );
           
-          const req = http.request(options, (res) => {
-            // Request completed
-          });
-          
-          req.on('error', (error) => {
+          // Notify all clients about the staff logout for this counter
+          try {
+            const http = require('http');
+            const options = {
+              hostname: 'localhost',
+              port: process.env.PORT || 3000,
+              path: '/api/notify-staff-logout',
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            };
+            
+            const req = http.request(options, (res) => {
+              // Request completed
+            });
+            
+            req.on('error', (error) => {
+              // Error handling without logging
+            });
+            
+            req.write(JSON.stringify({ counterId: sessionCounter }));
+            req.end();
+          } catch (notifyError) {
             // Error handling without logging
-          });
-          
-          req.write(JSON.stringify({ counterId: userCounter }));
-          req.end();
-        } catch (notifyError) {
-          // Error handling without logging
+          }
         }
       }
     }
