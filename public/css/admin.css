@@ -118,6 +118,7 @@ body {
     transition: all 0.3s;
     white-space: nowrap;
     overflow: hidden;
+    position: relative; /* Ensure position relative for badge positioning */
 }
 
 .sidebar.folded .sidebar-nav li a {

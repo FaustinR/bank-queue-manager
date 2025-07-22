@@ -6,8 +6,8 @@
     padding: 2px 6px;
     font-size: 11px;
     position: absolute;
-    right: 15px;
-    top: 50%;
+    right: 10px;
+    top: 30%;
     transform: translateY(-50%);
     min-width: 16px;
     height: 16px;
@@ -18,6 +18,17 @@
     animation: pulse 1.5s infinite;
     z-index: 100; /* Ensure badge is on top */
     pointer-events: none; /* Allow clicking through the badge */
+}
+
+/* Specific adjustment for sidebar inbox badge */
+.sidebar-nav a[href="/inbox"] .unread-badge {
+    right: 15px;
+}
+
+/* Ensure badge is visible when sidebar is folded */
+.sidebar.folded .sidebar-nav a[href="/inbox"] .unread-badge {
+    right: -5px;
+    top: 0;
 }
 
 /* Notification dot - small pulsing dot on the icon */
@@ -31,6 +42,13 @@
     border-radius: 50%;
     animation: pulse 1.5s infinite;
     box-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
+    z-index: 101; /* Ensure it's above other elements */
+}
+
+/* Ensure notification dot is visible when sidebar is folded */
+.sidebar.folded .icon .notification-dot {
+    top: -3px;
+    right: -3px;
 }
 
 /* Blinking effect for inbox icon */

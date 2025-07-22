@@ -24,14 +24,25 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('mouseenter', function(e) {
             if (sidebar.classList.contains('folded')) {
                 // Get the current text from the span (in case it was changed dynamically)
-                const text = link.querySelector('span').textContent.trim();
-                tooltip.textContent = text;
-                tooltip.style.display = 'block';
-                
-                // Position the tooltip next to the link
-                const rect = link.getBoundingClientRect();
-                tooltip.style.top = (rect.top + rect.height/2 - tooltip.offsetHeight/2) + 'px';
-                tooltip.style.left = (rect.right + 10) + 'px';
+                const span = link.querySelector('span');
+                if (span) {
+                    const text = span.textContent.trim();
+                    tooltip.textContent = text;
+                    tooltip.style.display = 'block';
+                    
+                    // For inbox link, check if there's an unread badge and add the count
+                    if (link.getAttribute('href') === '/inbox') {
+                        const badge = link.querySelector('.unread-badge');
+                        if (badge && badge.textContent) {
+                            tooltip.textContent = `Inbox (${badge.textContent} unread)`;
+                        }
+                    }
+                    
+                    // Position the tooltip next to the link
+                    const rect = link.getBoundingClientRect();
+                    tooltip.style.top = (rect.top + rect.height/2 - tooltip.offsetHeight/2) + 'px';
+                    tooltip.style.left = (rect.right + 10) + 'px';
+                }
             }
         });
         

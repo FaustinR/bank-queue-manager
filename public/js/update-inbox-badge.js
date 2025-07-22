@@ -56,6 +56,15 @@ window.updateInboxBadge = function() {
                     const badge = document.createElement('span');
                     badge.className = 'unread-badge';
                     badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    
+                    // Check if this is in the sidebar or elsewhere
+                    const isSidebar = inboxItem.closest('.sidebar-nav') !== null;
+                    if (isSidebar) {
+                        badge.style.right = '15px';
+                    } else {
+                        badge.style.right = '10px';
+                    }
+                    
                     inboxItem.appendChild(badge);
                     
                     // Add a pulsing dot to make it more noticeable
@@ -73,7 +82,7 @@ window.updateInboxBadge = function() {
                     
                     // Make the text red for new messages
                     const textSpan = inboxItem.querySelector('span');
-                    if (textSpan) {
+                    if (textSpan && textSpan.textContent.trim() === 'Inbox') {
                         textSpan.style.color = '#f44336';
                         textSpan.style.fontWeight = 'bold';
                     }
