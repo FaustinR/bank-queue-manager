@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch users list
     fetchUsers();
     
+    // Load connected users
+    loadConnectedUsers();
+    
     // Modal functionality
     const modal = document.getElementById('deleteModal');
     const cancelDelete = document.getElementById('cancelDelete');
@@ -19,7 +22,59 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.classList.remove('show');
         }
     });
+    
+    // Set up socket.io to listen for user connection updates
+    if (typeof io !== 'undefined') {
+        const socket = io();
+        socket.on('userConnectionUpdate', function(data) {
+            // Refresh the users list when a user connects or disconnects
+            fetchUsers();
+            // Reload connected users
+            loadConnectedUsers();
+        });
+    }
 });
+
+// Function to load connected users
+function loadConnectedUsers() {
+    fetch('/api/users/connected')
+        .then(response => response.json())
+        .then(data => {
+            const connectedUsersList = document.getElementById('connectedUsersList');
+            if (connectedUsersList) {
+                if (data.connectedUsers && data.connectedUsers.length > 0) {
+                    connectedUsersList.innerHTML = '';
+                    
+                    data.connectedUsers.forEach(user => {
+                        const userCard = document.createElement('div');
+                        userCard.className = 'connected-user-card';
+                        
+                        let counterBadge = '';
+                        if (user.counter) {
+                            counterBadge = `<span class="counter-badge">Counter ${user.counter}</span>`;
+                        }
+                        
+                        userCard.innerHTML = `
+                            <h3>${user.firstName} ${user.lastName}</h3>
+                            <p>${user.email}</p>
+                            <span class="user-role role-${user.role}">${user.role}</span>
+                            ${counterBadge}
+                        `;
+                        
+                        connectedUsersList.appendChild(userCard);
+                    });
+                } else {
+                    connectedUsersList.innerHTML = '<p>No users currently connected</p>';
+                }
+            }
+        })
+        .catch(error => {
+            const connectedUsersList = document.getElementById('connectedUsersList');
+            if (connectedUsersList) {
+                connectedUsersList.innerHTML = '<p>Error loading connected users</p>';
+            }
+        });
+}
 
 async function fetchUserInfo() {
     try {
@@ -110,12 +165,12 @@ async function fetchUsers() {
             displayUsers(data.users);
         } else {
             document.getElementById('usersTableBody').innerHTML = 
-                `<tr><td colspan="5">Error loading users: ${data.message || 'Unknown error'}</td></tr>`;
+                `<tr><td colspan="6">Error loading users: ${data.message || 'Unknown error'}</td></tr>`;
         }
     } catch (error) {
         console.error('Error fetching users:', error);
         document.getElementById('usersTableBody').innerHTML = 
-            '<tr><td colspan="5">Error loading users. Please try again.</td></tr>';
+            '<tr><td colspan="6">Error loading users. Please try again.</td></tr>';
     }
 }
 
@@ -124,7 +179,7 @@ function displayUsers(users) {
     tableBody.innerHTML = '';
     
     if (users.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5">No users found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6">No users found</td></tr>';
         return;
     }
     
@@ -137,12 +192,18 @@ function displayUsers(users) {
         // Role with styling
         const roleClass = `role-${user.role}`;
         
+        // Connected status with styling - ensure it has a default value
+        const connected = user.connected || 'no';
+        const connectedClass = connected === 'yes' ? 'connected-yes' : 'connected-no';
+        const connectedText = connected === 'yes' ? 'Yes' : 'No';
+        
         // Check if in read-only mode (supervisor)
         if (window.isReadOnly) {
             row.innerHTML = `
                 <td>${user.firstName} ${user.lastName}</td>
                 <td>${user.email}</td>
                 <td><span class="user-role ${roleClass}">${user.role}</span></td>
+                <td><span class="connected-status ${connectedClass}">${connectedText}</span></td>
                 <td>${createdDate}</td>
             `;
         } else {
@@ -150,6 +211,7 @@ function displayUsers(users) {
                 <td>${user.firstName} ${user.lastName}</td>
                 <td>${user.email}</td>
                 <td><span class="user-role ${roleClass}">${user.role}</span></td>
+                <td><span class="connected-status ${connectedClass}">${connectedText}</span></td>
                 <td>${createdDate}</td>
                 <td class="user-actions">
                     <button class="edit-btn" data-id="${user._id}">Edit</button>

@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema({
     of: String,  // Maps session ID to counter ID
     default: () => new Map()
   },
+  connected: {
+    type: String,
+    enum: ['yes', 'no'],
+    default: 'no'
+  },
   createdAt: {
     type: Date,
     default: Date.now

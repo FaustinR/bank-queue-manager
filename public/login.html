@@ -46,7 +46,10 @@
                     
                     <div class="error-message" id="loginError"></div>
                     
-                    <button type="submit" class="auth-button">Login</button>
+                    <button type="submit" class="auth-button" id="loginButton">
+                        Login
+                        <div class="spinner" id="loginSpinner"></div>
+                    </button>
                 </form>
             </div>
             
@@ -56,6 +59,8 @@
         </div>
     </div>
     
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/socket-auth.js"></script>
     <script src="js/login.js"></script>
     <script src="js/sidebar.js"></script>
 </body>

@@ -52,27 +52,29 @@ sessionStore.on('expired', async function(sessionId) {
   try {
     // Find user with this session and clear their counter assignment
     const sessionData = await sessionStore.get(sessionId);
-    if (sessionData && sessionData.userId && sessionData.userCounter) {
-      // Clear counter assignment in User model
-      await User.findByIdAndUpdate(sessionData.userId, { counter: null });
+    if (sessionData && sessionData.userId) {
+      // Clear counter assignment and set connected status to 'no' in User model
+      await User.findByIdAndUpdate(sessionData.userId, { counter: null, connected: 'no' });
       
-      // Clear counter assignment in Counter model
-      await Counter.findOneAndUpdate(
-        { counterId: parseInt(sessionData.userCounter) },
-        { $set: { staffId: null, staffName: null } }
-      );
-      
-      // Notify clients about the staff logout
-      io.emit('staffLogout', { counterId: sessionData.userCounter });
-      
-      // Update counter staff information with IDs
-      const staffInfo = await getCounterStaffInfo();
-      io.emit('queueUpdate', { 
-        queues, 
-        counters, 
-        counterStaff: staffInfo.counterStaff,
-        counterStaffIds: staffInfo.counterStaffIds
-      });
+      if (sessionData.userCounter) {
+        // Clear counter assignment in Counter model
+        await Counter.findOneAndUpdate(
+          { counterId: parseInt(sessionData.userCounter) },
+          { $set: { staffId: null, staffName: null } }
+        );
+        
+        // Notify clients about the staff logout
+        io.emit('staffLogout', { counterId: sessionData.userCounter });
+        
+        // Update counter staff information with IDs
+        const staffInfo = await getCounterStaffInfo();
+        io.emit('queueUpdate', { 
+          queues, 
+          counters, 
+          counterStaff: staffInfo.counterStaff,
+          counterStaffIds: staffInfo.counterStaffIds
+        });
+      }
     }
   } catch (error) {
     // Error handling without logging
@@ -427,10 +429,10 @@ app.get('/api/counters/:id/check', async (req, res) => {
         { $set: { staffId: null, staffName: null } }
       );
       
-      // Also clear any user assignments to this counter
+      // Also clear any user assignments to this counter and set connected status to 'no'
       await User.updateMany(
         { counter: counterId.toString() },
-        { $set: { counter: null } }
+        { $set: { counter: null, connected: 'no' } }
       );
       
       // Return not occupied since we just cleared it
@@ -491,10 +493,10 @@ app.post('/api/counters/:id/clear', async (req, res) => {
       { $set: { staffId: null, staffName: null } }
     );
     
-    // Clear counter assignment in User model
+    // Clear counter assignment in User model and set connected status to 'no'
     await User.updateMany(
       { counter: counterId.toString() },
-      { $set: { counter: null } }
+      { $set: { counter: null, connected: 'no' } }
     );
     
     // Emit staff logout event
@@ -670,8 +672,40 @@ io.on('connection', async (socket) => {
     counterStaffIds: staffInfo.counterStaffIds
   });
   
-  socket.on('disconnect', () => {
-    // Client disconnected
+  // Handle user authentication
+  socket.on('authenticate', async (userId) => {
+    if (userId) {
+      console.log(`User ${userId} authenticated via socket`); // Debug log
+      
+      // Store userId in socket for later reference
+      socket.userId = userId;
+      
+      // Update user's connected status to 'yes'
+      await User.findByIdAndUpdate(userId, { connected: 'yes' });
+      
+      // Emit user connection event
+      io.emit('userConnectionUpdate', { userId, connected: 'yes' });
+    }
+  });
+  
+  socket.on('disconnect', async () => {
+    // If socket had a userId, update the user's connected status
+    if (socket.userId) {
+      // Check if user has other active connections before marking as disconnected
+      const connectedSockets = Array.from(io.sockets.sockets.values())
+        .filter(s => s.userId === socket.userId && s.id !== socket.id);
+      
+      // Only mark as disconnected if this was the last connection for this user
+      if (connectedSockets.length === 0) {
+        console.log(`User ${socket.userId} disconnected (last connection)`); // Debug log
+        await User.findByIdAndUpdate(socket.userId, { connected: 'no' });
+        
+        // Emit user disconnection event
+        io.emit('userConnectionUpdate', { userId: socket.userId, connected: 'no' });
+      } else {
+        console.log(`User ${socket.userId} disconnected (has ${connectedSockets.length} other connections)`); // Debug log
+      }
+    }
   });
 });
 
@@ -705,10 +739,10 @@ app.post('/api/notify-staff-logout', async (req, res) => {
       { $set: { staffId: null, staffName: null } }
     );
     
-    // Clear in User model
+    // Clear in User model and set connected status to 'no'
     await User.updateMany(
       { counter: counterId.toString() },
-      { $set: { counter: null } }
+      { $set: { counter: null, connected: 'no' } }
     );
     
     // Emit staff logout event to all clients
@@ -1001,8 +1035,9 @@ async function cleanupOrphanedCounters() {
       });
       
       if (!counter) {
-        // This is an orphaned assignment in User model, clear it
+        // This is an orphaned assignment in User model, clear it and set connected status to 'no'
         user.counter = null;
+        user.connected = 'no';
         await user.save();
       }
     }

@@ -141,6 +141,10 @@ router.post('/login', async (req, res) => {
     req.session.userId = user._id;
     req.session.userRole = user.role;
     
+    // Set connected status to 'yes'
+    user.connected = 'yes';
+    await user.save();
+    
     // Store the session ID
     if (!req.session.id) {
       req.session.id = require('crypto').randomBytes(16).toString('hex');
@@ -172,7 +176,8 @@ router.post('/login', async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
-      counter: req.session.userCounter || user.counter
+      counter: req.session.userCounter || user.counter,
+      connected: user.connected || 'no'
     };
     
     res.json({ user: userResponse });
@@ -267,7 +272,8 @@ router.get('/me', async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
-      counter: userCounter
+      counter: userCounter,
+      connected: user.connected || 'no'
     };
     
     res.json({ user: userResponse });
@@ -321,12 +327,19 @@ router.get('/logout', async (req, res) => {
       // Get the user to update their sessions
       const user = await User.findById(userId);
       
+      // Set connected status to 'no'
+      if (user) {
+        user.connected = 'no';
+        await user.save();
+      }
+      
       if (user && user.sessions && user.sessions.has(sessionId)) {
         // Get the counter assigned to this session
         const sessionCounter = user.sessions.get(sessionId);
         
-        // Remove this session from the user's sessions
+        // Remove this session from the user's sessions and set connected status to 'no'
         user.sessions.delete(sessionId);
+        user.connected = 'no';
         await user.save();
         
         // Check if any other session is using this counter

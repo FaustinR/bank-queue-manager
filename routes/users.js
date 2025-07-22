@@ -1,15 +1,38 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const { isAdmin } = require('../middleware/auth');
+const { isAdmin, isAuthenticated } = require('../middleware/auth');
 
 // Get all users (admin only)
 router.get('/', isAdmin, async (req, res) => {
   try {
     const users = await User.find().select('-password').sort({ createdAt: -1 });
+    
+    // Make sure connected field is included in the response
+    // If any user doesn't have the connected field, set it to 'no' by default
+    users.forEach(user => {
+      if (!user.connected) {
+        user.connected = 'no';
+      }
+    });
+    
     res.json({ users });
   } catch (error) {
     console.error('Get users error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get connected users (authenticated users only)
+router.get('/connected', isAuthenticated, async (req, res) => {
+  try {
+    const connectedUsers = await User.find({ connected: 'yes' })
+      .select('_id firstName lastName email role counter')
+      .sort({ firstName: 1 });
+    
+    res.json({ connectedUsers });
+  } catch (error) {
+    console.error('Get connected users error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

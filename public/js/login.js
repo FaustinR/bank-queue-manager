@@ -51,9 +51,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = emailInput.value;
         const password = document.getElementById('password').value;
         const counter = counterSelect.value;
+        const loginButton = document.getElementById('loginButton');
         
         // Reset error message
         loginError.style.display = 'none';
+        
+        // Show spinner
+        loginButton.classList.add('loading');
+        loginButton.disabled = true;
         
         // If counter is selected, check if it's occupied by a REAL staff member
         if (counter) {
@@ -103,12 +108,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Error handling without logging
                 }
                 
+                // Authenticate socket with user ID
+                if (data.user && data.user._id) {
+                    authenticateSocket(data.user._id);
+                }
+                
                 // Redirect all users to admin dashboard
                 window.location.href = '/admin';
             } else {
                 // Show error message
                 loginError.textContent = data.message || 'Invalid email or password';
                 loginError.style.display = 'block';
+                
+                // Hide spinner
+                loginButton.classList.remove('loading');
+                loginButton.disabled = false;
                 
                 // If the error is about already being logged in at another counter, make it more visible
                 if (data.message && data.message.includes('You are already logged in at Counter')) {
@@ -123,6 +137,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             loginError.textContent = 'An error occurred. Please try again.';
             loginError.style.display = 'block';
+            
+            // Hide spinner
+            loginButton.classList.remove('loading');
+            loginButton.disabled = false;
         }
     });
 });

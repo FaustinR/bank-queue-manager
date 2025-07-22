@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connected Users - Bank Queue Management</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/users.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
+    <style>
+        .connected-users-section {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        
+        .connected-users-section h2 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .connected-users-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .connected-user-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+            border-radius: 4px;
+            padding: 10px 15px;
+            width: calc(25% - 10px);
+            min-width: 200px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .connected-user-card h3 {
+            color: #2c3e50;
+            font-size: 1rem;
+            margin: 0 0 5px 0;
+        }
+        
+        .connected-user-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .connected-user-card .user-role {
+            display: inline-block;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            color: #495057;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            padding: 2px 6px;
+        }
+        
+        .connected-user-card .counter-badge {
+            display: inline-block;
+            background-color: #007bff;
+            border-radius: 3px;
+            color: white;
+            font-size: 0.8rem;
+            margin-left: 5px;
+            padding: 2px 6px;
+        }
+        
+        .role-admin {
+            background: #dc3545 !important;
+            color: white !important;
+        }
+        
+        .role-supervisor {
+            background: #fd7e14 !important;
+            color: white !important;
+        }
+        
+        .role-employee {
+            background: #20c997 !important;
+            color: white !important;
+        }
+        
+        @media (max-width: 768px) {
+            .connected-user-card {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="sidebar-header">
+                <img src="images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
+                <h2>Bank Queue</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin"><i class="icon">📊</i><span> Dashboard</span></a></li>
+                    <li><a href="/history"><i class="icon">📜</i><span> Ticket History</span></a></li>
+                    <li><a href="/inbox"><i class="icon">✉️</i><span> Inbox</span></a></li>
+                    <li class="admin-only"><a href="/signup"><i class="icon">👤</i><span> Create User</span></a></li>
+                    <li class="admin-only"><a href="/users"><i class="icon">👥</i><span> Manage Users</span></a></li>
+                    <li class="active"><a href="/connected-users"><i class="icon">🟢</i><span> Connected Users</span></a></li>
+                    <li><a href="/" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
+                    <li><a href="/display"><i class="icon">📺</i><span> Display Screen</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Connected Users</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <span class="role-badge" id="userRole">...</span>
+                    <a href="/api/auth/logout" class="header-logout-btn"><img src="images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a>
+                </div>
+            </header>
+            
+            <div class="connected-users-section">
+                <h2>Currently Online</h2>
+                <div class="connected-users-list" id="connectedUsersList">
+                    <p>Loading connected users...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/socket-auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch user info
+            fetchUserInfo();
+            
+            // Load connected users
+            loadConnectedUsers();
+            
+            // Set up socket.io to listen for user connection updates
+            if (typeof io !== 'undefined') {
+                const socket = io();
+                socket.on('userConnectionUpdate', function(data) {
+                    // Reload connected users when there's an update
+                    loadConnectedUsers();
+                });
+            }
+        });
+
+        async function fetchUserInfo() {
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (response.ok && data.user) {
+                    document.getElementById('userName').textContent = `${data.user.firstName} ${data.user.lastName}`;
+                    document.getElementById('userRole').textContent = data.user.role;
+                    
+                    // Hide admin-only items for non-admin users
+                    if (data.user.role !== 'admin') {
+                        document.querySelectorAll('.admin-only').forEach(item => {
+                            item.style.display = 'none';
+                        });
+                        
+                        // Hide the admin panel text
+                        const sidebarHeader = document.querySelector('.sidebar-header h2');
+                        if (sidebarHeader) {
+                            sidebarHeader.textContent = 'Bank Queue';
+                        }
+                    }
+                } else {
+                    // If not authenticated, redirect to login
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+            }
+        }
+
+        // Function to load connected users
+        function loadConnectedUsers() {
+            fetch('/api/users/connected')
+                .then(response => response.json())
+                .then(data => {
+                    const connectedUsersList = document.getElementById('connectedUsersList');
+                    if (connectedUsersList) {
+                        if (data.connectedUsers && data.connectedUsers.length > 0) {
+                            connectedUsersList.innerHTML = '';
+                            
+                            data.connectedUsers.forEach(user => {
+                                const userCard = document.createElement('div');
+                                userCard.className = 'connected-user-card';
+                                
+                                let counterBadge = '';
+                                if (user.counter) {
+                                    counterBadge = `<span class="counter-badge">Counter ${user.counter}</span>`;
+                                }
+                                
+                                userCard.innerHTML = `
+                                    <h3>${user.firstName} ${user.lastName}</h3>
+                                    <p>${user.email}</p>
+                                    <span class="user-role role-${user.role}">${user.role}</span>
+                                    ${counterBadge}
+                                `;
+                                
+                                connectedUsersList.appendChild(userCard);
+                            });
+                        } else {
+                            connectedUsersList.innerHTML = '<p>No users currently connected</p>';
+                        }
+                    }
+                })
+                .catch(error => {
+                    const connectedUsersList = document.getElementById('connectedUsersList');
+                    if (connectedUsersList) {
+                        connectedUsersList.innerHTML = '<p>Error loading connected users</p>';
+                    }
+                });
+        }
+    </script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/logout-handler.js"></script>
+</body>
+</html>

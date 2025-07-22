@@ -8,6 +8,88 @@
     <link rel="stylesheet" href="css/users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
+    <style>
+        .connected-users-section {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        
+        .connected-users-section h2 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .connected-users-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .connected-user-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+            border-radius: 4px;
+            padding: 10px 15px;
+            width: calc(25% - 10px);
+            min-width: 200px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .connected-user-card h3 {
+            color: #2c3e50;
+            font-size: 1rem;
+            margin: 0 0 5px 0;
+        }
+        
+        .connected-user-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .connected-user-card .user-role {
+            display: inline-block;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            padding: 2px 6px;
+        }
+        
+        .connected-user-card .counter-badge {
+            display: inline-block;
+            background-color: #007bff;
+            border-radius: 3px;
+            color: white;
+            font-size: 0.8rem;
+            margin-left: 5px;
+            padding: 2px 6px;
+        }
+        
+        .role-admin {
+            background: #dc3545 !important;
+            color: white !important;
+        }
+        
+        .role-supervisor {
+            background: #fd7e14 !important;
+            color: white !important;
+        }
+        
+        .role-employee {
+            background: #20c997 !important;
+            color: white !important;
+        }
+        
+        @media (max-width: 768px) {
+            .connected-user-card {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="admin-container">
@@ -24,6 +106,7 @@
                 <ul>
                     <li><a href="/admin"><i class="icon">📊</i><span> Dashboard</span></a></li>
                     <li><a href="/history"><i class="icon">📜</i><span> Ticket History</span></a></li>
+                    <li><a href="/inbox"><i class="icon">✉️</i><span> Inbox</span></a></li>
                     <li><a href="/signup"><i class="icon">👤</i><span> Create User</span></a></li>
                     <li class="active"><a href="/users"><i class="icon">👥</i><span> Manage Users</span></a></li>
                     <li><a href="/" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
@@ -47,6 +130,13 @@
                 <a href="/signup" class="add-user-btn">Add New User</a>
             </div>
             
+            <div class="connected-users-section">
+                <h2>Connected Users</h2>
+                <div class="connected-users-list" id="connectedUsersList">
+                    <p>Loading connected users...</p>
+                </div>
+            </div>
+            
             <div class="users-table-container">
                 <table class="users-table">
                     <thead>
@@ -54,6 +144,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Connected</th>
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
@@ -80,11 +171,14 @@
         </div>
     </div>
     
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/socket-auth.js"></script>
     <script src="js/users.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/user-profile-link.js"></script>
     <script src="js/tooltip.js"></script>
     <script src="js/session-timeout.js"></script>
     <script src="js/restart-check.js"></script>
+    <script src="js/logout-handler.js"></script>
 </body>
 </html>

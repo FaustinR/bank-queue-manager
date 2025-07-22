@@ -274,5 +274,25 @@ function handleUrlParameters() {
                 displaySection.scrollIntoView({ behavior: 'smooth' });
             }, 100);
         }
+    } else if (section === 'connected-users') {
+        // Show connected users section
+        const connectedUsersSection = document.getElementById('connectedUsersSection');
+        if (connectedUsersSection) {
+            // Load connected users
+            if (typeof loadConnectedUsers === 'function') {
+                loadConnectedUsers();
+            }
+            
+            // Activate the section
+            document.querySelectorAll('.accordion-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            connectedUsersSection.classList.add('active');
+            
+            // Scroll to the section
+            setTimeout(() => {
+                connectedUsersSection.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
     }
 }

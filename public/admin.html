@@ -9,6 +9,59 @@
     <link rel="stylesheet" href="css/toast-notifications.css">
     <link rel="stylesheet" href="css/notifications.css">
     <link rel="stylesheet" href="css/confirm-dialog.css">
+    <style>
+        .connected-users-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .connected-user-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+            border-radius: 4px;
+            padding: 10px 15px;
+            width: calc(25% - 10px);
+            min-width: 200px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .connected-user-card h3 {
+            color: #2c3e50;
+            font-size: 1rem;
+            margin: 0 0 5px 0;
+        }
+        
+        .connected-user-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .connected-user-card .user-role {
+            display: inline-block;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            padding: 2px 6px;
+        }
+        
+        .connected-user-card .counter-badge {
+            display: inline-block;
+            background-color: #007bff;
+            border-radius: 3px;
+            color: white;
+            font-size: 0.8rem;
+            margin-left: 5px;
+            padding: 2px 6px;
+        }
+        
+        @media (max-width: 768px) {
+            .connected-user-card {
+                width: 100%;
+            }
+        }
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
 </head>
@@ -140,10 +193,24 @@
                     <iframe id="displayScreenFrame" src="/display" width="100%" height="600px" frameborder="0"></iframe>
                 </div>
             </div>
+            
+            <!-- Connected Users section (initially hidden) -->
+            <div class="accordion-section" id="connectedUsersSection">
+                <div class="accordion-header">
+                    <h3>Connected Users</h3>
+                    <span class="accordion-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="accordion-content">
+                    <div class="connected-users-list" id="connectedUsersList">
+                        <p>Loading connected users...</p>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
     
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/socket-auth.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/admin.js"></script>
     <script src="js/sidebar.js"></script>
@@ -153,6 +220,8 @@
     <script src="js/session-handler.js"></script>
     <script src="js/restart-check.js"></script>
     <script src="js/update-inbox-badge.js"></script>
-    <script src="js/message-notifications.js"></script></script>
+    <script src="js/logout-handler.js"></script>
+    <script src="js/message-notifications.js"></script>
+    <script src="js/connected-users.js"></script>
 </body>
 </html>
