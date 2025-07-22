@@ -7,6 +7,52 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup sidebar toggle
     setupSidebarToggle();
     
+    // Check user role and update sidebar accordingly
+    fetch('/api/auth/me')
+        .then(response => response.json())
+        .then(data => {
+            if (data.user) {
+                // For all users, ensure the Users link is visible
+                const usersLinks = document.querySelectorAll('a[href="/users"]');
+                usersLinks.forEach(link => {
+                    const listItem = link.closest('li');
+                    if (listItem) {
+                        listItem.style.display = 'block';
+                    }
+                    link.style.display = 'block';
+                });
+                
+                // Hide Create User link for non-admin users
+                if (data.user.role !== 'admin') {
+                    // Hide the Create User link in sidebar
+                    const signupLinks = document.querySelectorAll('a[href="/signup"]');
+                    signupLinks.forEach(link => {
+                        // Hide the entire list item, not just the link
+                        const listItem = link.closest('li');
+                        if (listItem) {
+                            listItem.style.display = 'none';
+                        } else {
+                            link.style.display = 'none';
+                        }
+                    });
+                    
+                    // Change "Manage Users" to "Users"
+                    usersLinks.forEach(link => {
+                        // Find the text node (which contains "Manage Users")
+                        for (let i = 0; i < link.childNodes.length; i++) {
+                            if (link.childNodes[i].nodeType === Node.TEXT_NODE) {
+                                link.childNodes[i].textContent = ' Users';
+                                break;
+                            }
+                        }
+                    });
+                }
+            }
+        })
+        .catch(error => {
+            // If error, just continue without changing anything
+        });
+    
     // Fix for links opening in new tabs
     
     // Get all links in the sidebar

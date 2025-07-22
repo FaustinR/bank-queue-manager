@@ -41,11 +41,11 @@ async function fetchUserInfo() {
             // Check if user is admin or supervisor
             if (data.user.role === 'admin') {
                 // Admin has full access
-            } else if (data.user.role === 'supervisor') {
-                // Supervisor has read-only access
+            } else if (data.user.role === 'supervisor' || data.user.role === 'employee') {
+                // Supervisor and employee have read-only access
                 const roleElement = document.getElementById('userRole');
-                roleElement.textContent = 'supervisor (read-only)';
-                roleElement.style.backgroundColor = '#fd7e14';
+                roleElement.textContent = `${data.user.role} (read-only)`;
+                roleElement.style.backgroundColor = data.user.role === 'supervisor' ? '#fd7e14' : '#28a745';
                 
                 // Hide the add user button
                 const addUserBtn = document.querySelector('.add-user-btn');
@@ -91,9 +91,6 @@ async function fetchUserInfo() {
                 
                 // Set a global flag for read-only mode
                 window.isReadOnly = true;
-            } else {
-                // Redirect other users
-                window.location.href = '/display';
             }
         } else {
             // If not authenticated, redirect to login

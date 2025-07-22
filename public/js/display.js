@@ -197,9 +197,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (currentUserCounterId) {
         localStorage.setItem('currentUserCounterId', currentUserCounterId);
     }
-    if (window.self !== window.top) {
+    
+    // Check if we're in an iframe or a new tab
+    const isInIframe = window.self !== window.top;
+    
+    if (isInIframe) {
         // We're in an iframe
         document.body.classList.add('embedded-display');
+    } else {
+        // We're in a new tab - hide the message modal
+        const messageModal = document.getElementById('messageModal');
+        if (messageModal) {
+            messageModal.style.display = 'none';
+        }
     }
     
     // Setup close button for counter iframe
@@ -277,6 +287,9 @@ function updateDisplay(data) {
             isCurrentUserCounter = (counterId === currentUserCounterId);
         }
         
+        // Check if we're in an iframe or a new tab
+        const isInIframe = window.self !== window.top;
+        
         // Create the counter HTML
         counterDiv.innerHTML = `
             <h3>Counter ${id}</h3>
@@ -284,7 +297,7 @@ function updateDisplay(data) {
                 ${counterStaff[counterId] ? 
                     `<p class="counter-staff"><strong>Teller:</strong> ${counterStaff[counterId]}</p>` : 
                     '<p class="counter-staff"><strong>Teller:</strong> <span class="not-assigned">Not assigned</span></p>'}
-                ${counterStaff[counterId] && counterStaffIds[counterId] ? 
+                ${(counterStaff[counterId] && counterStaffIds[counterId] && isInIframe) ? 
                     `<button class="message-btn" style="position: relative;" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="${isCurrentUserCounter ? 'fas fa-inbox' : 'fas fa-envelope'}"></i> ${isCurrentUserCounter ? 'Inbox' : 'Message'}</button>` : 
                     ''}
             </div>

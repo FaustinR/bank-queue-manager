@@ -152,9 +152,9 @@ async function fetchUserInfo() {
                 roleElement.textContent = 'employee';
                 roleElement.style.backgroundColor = '#20c997';
                 
-                // Hide signup and users links
-                const restrictedLinks = document.querySelectorAll('a[href="/signup"], a[href="/users"]');
-                restrictedLinks.forEach(link => {
+                // Hide only signup links, keep users link visible
+                const signupLinks = document.querySelectorAll('a[href="/signup"]');
+                signupLinks.forEach(link => {
                     const listItem = link.closest('li');
                     if (listItem) {
                         listItem.style.display = 'none';
@@ -162,6 +162,16 @@ async function fetchUserInfo() {
                         link.style.display = 'none';
                     }
                 });
+                
+                // Change "Manage Users" to "Users"
+                const usersLink = document.querySelector('a[href="/users"]');
+                if (usersLink) {
+                    // Find the span element that contains the text
+                    const spanElement = usersLink.querySelector('span');
+                    if (spanElement) {
+                        spanElement.textContent = ' Users';
+                    }
+                }
             }
         } else {
             // If not authenticated, redirect to login

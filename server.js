@@ -267,7 +267,7 @@ app.get('/signup', isAdmin, isFullAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
 
-app.get('/users', isAdmin, isAdminOrSupervisor, (req, res) => {
+app.get('/users', isAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'users.html'));
 });
 

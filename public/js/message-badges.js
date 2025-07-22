@@ -1,3 +1,13 @@
+// Check if we're in an iframe or a new tab
+const isInIframe = window.self !== window.top;
+
+// If we're in a new tab, don't run this script
+if (!isInIframe) {
+    console.log('Display screen opened in new tab, not showing message badges');
+    // Exit the script
+    throw new Error('Display screen opened in new tab, not showing message badges');
+}
+
 // Variable to store the current user's counter ID
 let currentUserCounterId = null;
 
