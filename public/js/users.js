@@ -119,8 +119,19 @@ async function fetchUserInfo() {
     }
 }
 
+// Store current user ID
+let currentUserId = null;
+
 async function fetchUsers() {
     try {
+        // First get current user ID
+        const currentUserResponse = await fetch('/api/users/connected');
+        const currentUserData = await currentUserResponse.json();
+        if (currentUserResponse.ok && currentUserData.currentUserId) {
+            currentUserId = currentUserData.currentUserId;
+        }
+        
+        // Then get all users
         const response = await fetch('/api/users');
         const data = await response.json();
         
@@ -152,6 +163,12 @@ function displayUsers(users) {
     users.forEach(user => {
         const row = document.createElement('tr');
         
+        // Check if this is the current user
+        const isCurrentUser = String(user._id) === String(currentUserId);
+        if (isCurrentUser) {
+            row.classList.add('current-user-row');
+        }
+        
         // Format date
         const createdDate = new Date(user.createdAt).toLocaleDateString();
         
@@ -161,12 +178,15 @@ function displayUsers(users) {
         // Connected status with styling - ensure it has a default value
         const connected = user.connected || 'no';
         const connectedClass = connected === 'yes' ? 'connected-yes' : 'connected-no';
+        
+        // Add "You" flag for current user (will be used in the name column)
+        const youFlag = isCurrentUser ? '<span class="you-flag">You</span> ' : '';
         const connectedText = connected === 'yes' ? 'Yes' : 'No';
         
         // Check if in read-only mode (supervisor)
         if (window.isReadOnly) {
             row.innerHTML = `
-                <td>${user.firstName} ${user.lastName}</td>
+                <td>${youFlag}${user.firstName} ${user.lastName}</td>
                 <td>${user.email}</td>
                 <td><span class="user-role ${roleClass}">${user.role}</span></td>
                 <td><span class="connected-status ${connectedClass}">${connectedText}</span></td>
@@ -174,7 +194,7 @@ function displayUsers(users) {
             `;
         } else {
             row.innerHTML = `
-                <td>${user.firstName} ${user.lastName}</td>
+                <td>${youFlag}${user.firstName} ${user.lastName}</td>
                 <td>${user.email}</td>
                 <td><span class="user-role ${roleClass}">${user.role}</span></td>
                 <td><span class="connected-status ${connectedClass}">${connectedText}</span></td>

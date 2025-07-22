@@ -200,6 +200,12 @@
     box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3) !important;
 }
 
+/* Current user row in table */
+.current-user-row {
+    background-color: #d1e6ff !important;
+    border-left: 4px solid #007bff !important;
+}
+
 /* You flag styles */
 .you-flag {
     display: inline-block;
@@ -208,7 +214,7 @@
     font-size: 0.8rem !important;
     padding: 3px 8px !important;
     border-radius: 3px !important;
-    margin-left: 5px !important;
+    margin-right: 5px !important;
     vertical-align: middle !important;
     font-weight: bold !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
@@ -320,16 +326,19 @@
 
 /* Filter styles */
 .filter-row th {
-    padding: 5px;
-    background-color: #f8f9fa;
+    padding: 10px 5px;
+    background-color: white;
+    vertical-align: top;
+    border-right: 10px solid white;
 }
 
 .filter-input {
     width: 100%;
-    padding: 5px;
+    padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    margin: 5px 0;
 }
 
 .filter-input:focus {
