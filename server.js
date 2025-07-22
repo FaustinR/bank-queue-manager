@@ -680,13 +680,35 @@ io.on('connection', async (socket) => {
       // Store userId in socket for later reference
       socket.userId = userId;
       
+      try {
+        // Update user's connected status to 'yes'
+        await User.findByIdAndUpdate(userId, { connected: 'yes' });
+        console.log(`Updated user ${userId} connected status to 'yes'`);
+        
+        // Emit user connection event
+        io.emit('userConnectionUpdate', { userId, connected: 'yes' });
+      } catch (error) {
+        console.error(`Error updating user ${userId} connected status:`, error);
+      }
+    }
+  });
+  
+  // Check if there's a session user and mark them as connected
+  if (socket.request && socket.request.session && socket.request.session.userId) {
+    const userId = socket.request.session.userId;
+    socket.userId = userId;
+    
+    try {
       // Update user's connected status to 'yes'
       await User.findByIdAndUpdate(userId, { connected: 'yes' });
+      console.log(`Updated session user ${userId} connected status to 'yes'`);
       
       // Emit user connection event
       io.emit('userConnectionUpdate', { userId, connected: 'yes' });
+    } catch (error) {
+      console.error(`Error updating session user ${userId} connected status:`, error);
     }
-  });
+  }
   
   socket.on('disconnect', async () => {
     // If socket had a userId, update the user's connected status

@@ -26,13 +26,57 @@ router.get('/', isAdmin, async (req, res) => {
 // Get connected users (authenticated users only)
 router.get('/connected', isAuthenticated, async (req, res) => {
   try {
+    console.log('Fetching connected users...');
+    
+    // Debug: Check how many users have connected='yes'
+    const connectedCount = await User.countDocuments({ connected: 'yes' });
+    console.log(`Found ${connectedCount} users with connected='yes'`);
+    
+    // Always mark the current user as connected
+    if (req.session.userId) {
+      await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
+      console.log(`Updated current user ${req.session.userId} to connected='yes'`);
+    }
+    
+    // Get all connected users
     const connectedUsers = await User.find({ connected: 'yes' })
       .select('_id firstName lastName email role counter')
       .sort({ firstName: 1 });
     
-    res.json({ connectedUsers });
+    // Include the current user's ID in the response
+    const currentUserId = req.session.userId;
+    console.log(`Current user ID: ${currentUserId}, Total connected users: ${connectedUsers.length}`);
+    
+    res.json({ connectedUsers, currentUserId });
   } catch (error) {
     console.error('Get connected users error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Mark user as connected (authenticated users only)
+router.post('/mark-connected', isAuthenticated, async (req, res) => {
+  try {
+    // Use the session user ID if no specific user ID is provided
+    const userId = req.body.userId || req.session.userId;
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'No user ID provided' });
+    }
+    
+    // Update user's connected status
+    await User.findByIdAndUpdate(userId, { connected: 'yes' });
+    console.log(`Marked user ${userId} as connected via API`);
+    
+    // Emit user connection event using Socket.io
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('userConnectionUpdate', { userId, connected: 'yes' });
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark connected error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

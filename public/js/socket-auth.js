@@ -28,8 +28,10 @@ function initializeSocket() {
     // Update UI if needed based on user connection status
     console.log(`User ${data.userId} is now ${data.connected}`);
     
-    // You can update UI elements here if needed
-    // For example, update a user list or show online status indicators
+    // If we're on the users page, refresh the connected users list
+    if (window.location.pathname === '/users' && typeof loadConnectedUsers === 'function') {
+      loadConnectedUsers();
+    }
   });
   
   // Handle disconnection
@@ -41,12 +43,30 @@ function initializeSocket() {
 // Fetch current user and authenticate socket
 async function fetchCurrentUser() {
   try {
+    console.log('Fetching current user...');
     const response = await fetch('/api/auth/me');
     const data = await response.json();
     
     if (response.ok && data.user && data.user._id) {
+      console.log('Current user found:', data.user._id);
       // Authenticate socket with user ID
       authenticateSocket(data.user._id);
+      
+      // Also update the user's connected status directly
+      try {
+        await fetch('/api/users/mark-connected', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId: data.user._id })
+        });
+        console.log('User marked as connected via API');
+      } catch (markError) {
+        console.error('Error marking user as connected:', markError);
+      }
+    } else {
+      console.log('No authenticated user found');
     }
   } catch (error) {
     console.error('Error fetching current user:', error);
