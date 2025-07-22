@@ -28,6 +28,14 @@ function getFlagForLanguage(language) {
 const socket = io();
 const counterId = window.location.pathname.split('/').pop();
 
+// Check if we're in an iframe
+const isInIframe = window.self !== window.top;
+
+// Add the in-iframe class if we're in an iframe
+if (isInIframe) {
+    document.body.classList.add('in-iframe');
+}
+
 document.getElementById('counterTitle').textContent = `Counter ${counterId} Management`;
 
 function updateCounter(data) {

@@ -7,6 +7,9 @@
     <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <link rel="stylesheet" href="/css/display.css">
     <link rel="stylesheet" href="/css/embedded-display.css">
+    <link rel="stylesheet" href="/css/notifications.css">
+    <link rel="stylesheet" href="/css/display-message.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="header">
@@ -34,6 +37,46 @@
         <iframe id="counterFrame" src="" width="100%" height="500px" frameborder="0"></iframe>
     </div>
     
+    <!-- Message Modal -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Send Message to Teller</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="messageForm">
+                <input type="hidden" id="tellerId" name="tellerId">
+                <input type="hidden" id="tellerName" name="tellerName">
+                <input type="hidden" id="counterNumber" name="counterNumber">
+                
+                <div class="form-group">
+                    <label for="senderEmail">Your Email:</label>
+                    <input type="email" id="senderEmail" name="senderEmail" placeholder="Enter your email address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="senderName">Your Name:</label>
+                    <input type="text" id="senderName" name="senderName" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="subject">Subject:</label>
+                    <input type="text" id="subject" name="subject" placeholder="Message subject" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="messageContent">Message:</label>
+                    <textarea id="messageContent" name="messageContent" rows="3" placeholder="Type your message here..." required></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="cancelMessage" class="btn-cancel">Cancel</button>
+                    <button type="submit" class="btn-primary">Send Message</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <div class="queue-section">
         <h2>Waiting Queue</h2>
         <div id="queueList">
@@ -43,8 +86,9 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/sounds/notification.js"></script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/display-user.js"></script>
     <script src="/js/display.js"></script>
-    <script src="/js/sidebar.js"></script>
     <script src="/js/restart-check.js"></script>
 </body>
 </html>

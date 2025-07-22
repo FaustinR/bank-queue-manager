@@ -155,3 +155,20 @@ button:disabled:hover {
     margin-right: 5px;
     vertical-align: middle;
 }
+/* Styles for when counter is in an iframe */
+body.in-iframe .sidebar {
+    display: none !important;
+}
+
+body.in-iframe .container {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+body.in-iframe {
+    padding: 0 !important;
+    background: white !important;
+}

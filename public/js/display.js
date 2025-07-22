@@ -53,13 +53,20 @@ if ('speechSynthesis' in window) {
 }
 
 // Function to show counter iframe
+// Function to show counter details
+function showCounterDetails(counterId, counterName) {
+    // Do nothing - we'll use the original showCounterIframe function
+    showCounterIframe(counterId, counterName);
+}
+
+// Function to show counter iframe
 function showCounterIframe(counterId, counterName) {
     const counterContainer = document.getElementById('counterContainer');
     const counterFrame = document.getElementById('counterFrame');
     const counterTitle = document.getElementById('counterTitle');
     
-    // Set the iframe source
-    counterFrame.src = `/counter/${counterId}`;
+    // Set the iframe source with embedded=true parameter
+    counterFrame.src = `/counter/${counterId}?embedded=true`;
     
     // Set the counter title
     counterTitle.textContent = `Counter ${counterId}: ${counterName}`;
@@ -73,8 +80,13 @@ function showCounterIframe(counterId, counterName) {
 
 const socket = io();
 
-// Global variable to store counter staff information
+// Global variables to store counter information
 let counterStaff = {};
+let counterStaffIds = {}; // Store staff IDs for messaging
+
+// Initialize these variables to prevent errors
+if (typeof counterStaff === 'undefined') counterStaff = {};
+if (typeof counterStaffIds === 'undefined') counterStaffIds = {};
 
 // Fetch counter staff information
 async function fetchCounterStaff() {
@@ -87,6 +99,7 @@ async function fetchCounterStaff() {
         
         const data = await response.json();
         counterStaff = data.counterStaff || {};
+        counterStaffIds = data.counterStaffIds || {};
         
         // Force update the display with the latest staff information
         const countersDiv = document.getElementById('counters');
@@ -95,11 +108,29 @@ async function fetchCounterStaff() {
             Array.from(countersDiv.children).forEach(counterDiv => {
                 const counterId = counterDiv.querySelector('h3').textContent.replace('Counter ', '').trim();
                 const staffElement = counterDiv.querySelector('.counter-staff');
+                const staffContainer = counterDiv.querySelector('.counter-staff-container');
                 
                 if (counterStaff[counterId]) {
                     // If staff element exists, update it, otherwise create it
                     if (staffElement) {
                         staffElement.innerHTML = `<strong>Teller:</strong> ${counterStaff[counterId]}`;
+                        
+                        // Add or update message button if not already there
+                        let messageBtn = staffContainer.querySelector('.message-btn');
+                        if (!messageBtn) {
+                            messageBtn = document.createElement('button');
+                            messageBtn.className = 'message-btn';
+                            messageBtn.innerHTML = '<i class="fas fa-envelope"></i> Message';
+                            messageBtn.setAttribute('data-counter', counterId);
+                            messageBtn.setAttribute('data-teller', counterStaff[counterId]);
+                            messageBtn.setAttribute('data-teller-id', counterStaffIds[counterId] || '');
+                            messageBtn.addEventListener('click', openMessageModal);
+                            staffContainer.appendChild(messageBtn);
+                        } else {
+                            // Update data attributes
+                            messageBtn.setAttribute('data-teller', counterStaff[counterId]);
+                            messageBtn.setAttribute('data-teller-id', counterStaffIds[counterId] || '');
+                        }
                     } else {
                         const staffP = document.createElement('p');
                         staffP.className = 'counter-staff';
@@ -110,11 +141,29 @@ async function fetchCounterStaff() {
                         if (counterHeading) {
                             counterHeading.insertAdjacentElement('afterend', staffP);
                         }
+                        
+                        // Add message button
+                        if (staffContainer) {
+                            const messageBtn = document.createElement('button');
+                            messageBtn.className = 'message-btn';
+                            messageBtn.innerHTML = '<i class="fas fa-envelope"></i> Message';
+                            messageBtn.setAttribute('data-counter', counterId);
+                            messageBtn.setAttribute('data-teller', counterStaff[counterId]);
+                            messageBtn.setAttribute('data-teller-id', counterStaffIds[counterId] || '');
+                            messageBtn.addEventListener('click', openMessageModal);
+                            staffContainer.appendChild(messageBtn);
+                        }
                     }
                 } else {
                     // No staff assigned to this counter
                     if (staffElement) {
                         staffElement.innerHTML = `<strong>Teller:</strong> <span class="not-assigned">Not assigned</span>`;
+                        
+                        // Remove message button if it exists
+                        const messageBtn = staffContainer.querySelector('.message-btn');
+                        if (messageBtn) {
+                            messageBtn.remove();
+                        }
                     }
                 }
             });
@@ -156,6 +205,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (data.counterStaff) {
                 counterStaff = data.counterStaff;
             }
+            if (data.counterStaffIds) {
+                counterStaffIds = data.counterStaffIds;
+            }
             updateDisplay(data);
         }
     } catch (error) {
@@ -164,6 +216,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Refresh counter staff information every 10 seconds
     setInterval(fetchCounterStaff, 10000);
+    
+    // Setup message modal event listeners
+    setupMessageModal();
 });
 
 function updateDisplay(data) {
@@ -178,16 +233,28 @@ function updateDisplay(data) {
         const counterDiv = document.createElement('div');
         // Add 'has-waiting' class if there are customers waiting
         counterDiv.className = `counter ${counter.status} ${queueLength > 0 ? 'has-waiting' : ''}`;
-        counterDiv.onclick = () => showCounterIframe(id, counter.name);
+        
+        // Make the counter div clickable but prevent clicks on message button from triggering it
+        counterDiv.addEventListener('click', (e) => {
+            // Don't trigger counter iframe if clicking on message button
+            if (!e.target.closest('.message-btn')) {
+                showCounterIframe(id, counter.name);
+            }
+        });
+        
         // Make sure the ID is a string for comparison with counterStaff
         const counterId = id.toString();
         
+        // Create the counter HTML
         counterDiv.innerHTML = `
             <h3>Counter ${id}</h3>
             <div class="counter-staff-container ${counterStaff[counterId] ? 'has-staff' : 'no-staff'}">
                 ${counterStaff[counterId] ? 
                     `<p class="counter-staff"><strong>Teller:</strong> ${counterStaff[counterId]}</p>` : 
                     '<p class="counter-staff"><strong>Teller:</strong> <span class="not-assigned">Not assigned</span></p>'}
+                ${counterStaff[counterId] && counterStaffIds[counterId] ? 
+                    `<button class="message-btn" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="fas fa-envelope"></i> Message</button>` : 
+                    ''}
             </div>
             <div class="counter-info">
                 <p class="counter-service"><strong>Service:</strong> ${counter.name}</p>
@@ -203,6 +270,12 @@ function updateDisplay(data) {
             </div>
         `;
         countersDiv.appendChild(counterDiv);
+        
+        // Add event listener to message button
+        const messageBtn = counterDiv.querySelector('.message-btn');
+        if (messageBtn) {
+            messageBtn.addEventListener('click', openMessageModal);
+        }
     });
     
     // Update queue - show all queues
@@ -251,6 +324,9 @@ socket.on('queueUpdate', async (data) => {
         // Update counter staff information from the data
         if (data.counterStaff) {
             counterStaff = data.counterStaff;
+        }
+        if (data.counterStaffIds) {
+            counterStaffIds = data.counterStaffIds;
         } else {
             // Fallback to fetching counter staff information
             await fetchCounterStaff();
@@ -416,3 +492,142 @@ socket.on('customerCalled', (data) => {
         nowServing.style.display = 'none';
     }, 10000);
 });
+
+// Message Modal Functions
+async function openMessageModal(e) {
+    e.stopPropagation(); // Prevent counter click event
+    
+    const btn = e.currentTarget;
+    const counterId = btn.getAttribute('data-counter');
+    const tellerName = btn.getAttribute('data-teller');
+    const tellerId = btn.getAttribute('data-teller-id');
+    
+    // Check if we have a valid teller ID
+    if (!tellerId) {
+        window.notifications.error('Error', 'Cannot send message: Teller information is not available');
+        return;
+    }
+    
+    // Set form values
+    document.getElementById('tellerId').value = tellerId;
+    document.getElementById('tellerName').value = tellerName;
+    document.getElementById('counterNumber').value = counterId;
+    document.getElementById('subject').value = `Message from Display Screen - Counter ${counterId}`;
+    
+    // Get current user's email
+    const userEmail = await getCurrentUserEmail();
+    if (userEmail) {
+        document.getElementById('senderEmail').value = userEmail;
+    }
+    
+    // Try to get stored name from localStorage if available
+    const storedName = localStorage.getItem('senderName');
+    if (storedName) {
+        document.getElementById('senderName').value = storedName;
+    }
+    
+    // Show modal
+    const modal = document.getElementById('messageModal');
+    modal.style.display = 'flex';
+}
+
+function closeMessageModal() {
+    const modal = document.getElementById('messageModal');
+    modal.style.display = 'none';
+    
+    // Don't reset email and name fields to preserve them for next time
+    const form = document.getElementById('messageForm');
+    const senderEmail = form.senderEmail.value;
+    const senderName = form.senderName.value;
+    
+    form.reset();
+    
+    // Restore email and name
+    form.senderEmail.value = senderEmail;
+    form.senderName.value = senderName;
+}
+
+function sendMessage(e) {
+    e.preventDefault();
+    
+    const tellerId = document.getElementById('tellerId').value;
+    const tellerName = document.getElementById('tellerName').value;
+    const senderEmail = document.getElementById('senderEmail').value;
+    const senderName = document.getElementById('senderName').value;
+    const subject = document.getElementById('subject').value;
+    const content = document.getElementById('messageContent').value;
+    
+    if (!tellerId || !senderEmail || !senderName || !subject || !content) {
+        window.notifications.error('Error', 'Please fill in all required fields');
+        return;
+    }
+    
+    // Save email and name to localStorage for future use
+    localStorage.setItem('senderEmail', senderEmail);
+    localStorage.setItem('senderName', senderName);
+    
+    // Prepare message data
+    const messageData = {
+        tellerId: tellerId,
+        senderEmail,
+        senderName,
+        subject,
+        content
+    };
+    
+    // Send message using the display-to-teller endpoint
+    fetch('/api/messages/display-to-teller', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(messageData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to send message');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.messageId) {
+            // Close modal
+            closeMessageModal();
+            
+            // Show success message
+            window.notifications.success('Success', `Message sent to ${tellerName}`);
+        } else {
+            window.notifications.error('Error', 'Error sending message: ' + data.message);
+        }
+    })
+    .catch(error => {
+        window.notifications.error('Error', 'Error sending message. Please try again.');
+    });
+}
+
+// Setup message modal event listeners
+function setupMessageModal() {
+    const closeModalBtn = document.querySelector('.close-modal');
+    const cancelMessageBtn = document.getElementById('cancelMessage');
+    const messageForm = document.getElementById('messageForm');
+    
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeMessageModal);
+    }
+    
+    if (cancelMessageBtn) {
+        cancelMessageBtn.addEventListener('click', closeMessageModal);
+    }
+    
+    if (messageForm) {
+        messageForm.addEventListener('submit', sendMessage);
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('messageModal');
+        if (event.target === modal) {
+            closeMessageModal();
+        }
+    });
+}

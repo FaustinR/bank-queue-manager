@@ -190,11 +190,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const isInbox = currentFolder === 'inbox';
         
         currentMessages.forEach(message => {
-            const person = isInbox ? message.sender : message.recipient;
-            if (!person) return;
+            let person, personId, personName;
             
-            const personId = person._id;
-            const personName = `${person.firstName} ${person.lastName}`;
+            // Handle system messages
+            if (isInbox && message.isSystemMessage && message.systemSender) {
+                personId = 'system-' + message.systemSender.toLowerCase().replace(/\s+/g, '-');
+                personName = message.systemSender;
+            } else {
+                person = isInbox ? message.sender : message.recipient;
+                if (!person) return;
+                
+                personId = person._id;
+                personName = `${person.firstName} ${person.lastName}`;
+            }
             
             if (!groupedMessages[personId]) {
                 groupedMessages[personId] = {
@@ -363,7 +371,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const isInbox = currentFolder === 'inbox';
-        const sender = message.sender ? `${message.sender.firstName} ${message.sender.lastName}` : 'Unknown User';
+        let sender;
+        if (message.isSystemMessage && message.systemSender) {
+            sender = message.systemSender;
+        } else {
+            sender = message.sender ? `${message.sender.firstName} ${message.sender.lastName}` : 'Unknown User';
+        }
         const recipient = message.recipient ? `${message.recipient.firstName} ${message.recipient.lastName}` : 'Unknown User';
         
         messageView.innerHTML = `
@@ -385,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             ` : ''}
             <div class="message-actions">
-                ${isInbox ? `
+                ${isInbox && !message.isSystemMessage ? `
                     <button class="btn-reply" data-id="${message._id}">
                         <i class="fas fa-reply"></i> Reply
                     </button>
@@ -546,6 +559,23 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('relatedTicket').value = message.relatedTicket.ticketNumber;
         }
         
+        // Add reply-to header if sender is a temporary user
+        if (message.sender.email && message.sender.role === 'temporary') {
+            // Store the email in a hidden field or data attribute
+            const recipientEmailField = document.getElementById('recipientEmail');
+            if (recipientEmailField) {
+                recipientEmailField.value = message.sender.email;
+            } else {
+                // Create a hidden field if it doesn't exist
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.id = 'recipientEmail';
+                hiddenField.name = 'recipientEmail';
+                hiddenField.value = message.sender.email;
+                document.getElementById('composeForm').appendChild(hiddenField);
+            }
+        }
+        
         // Focus on message content
         document.getElementById('messageContent').focus();
     }
@@ -638,6 +668,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Send message to server
     function sendMessageToServer(messageData) {
+        // Check if we have a recipient email (for temporary users)
+        const recipientEmail = document.getElementById('recipientEmail').value;
+        if (recipientEmail) {
+            messageData.recipientEmail = recipientEmail;
+        }
+        
         fetch('/api/messages', {
             method: 'POST',
             headers: {

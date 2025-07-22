@@ -29,6 +29,14 @@ const messageSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isSystemMessage: {
+    type: Boolean,
+    default: false
+  },
+  systemSender: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

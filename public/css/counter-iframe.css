@@ -1,0 +1,13 @@
+/* Hide sidebar when in iframe */
+body.in-iframe .sidebar {
+    display: none !important;
+}
+
+body.in-iframe .container {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+body.in-iframe .header-bar {
+    padding-left: 20px !important;
+}

@@ -65,9 +65,14 @@ sessionStore.on('expired', async function(sessionId) {
       // Notify clients about the staff logout
       io.emit('staffLogout', { counterId: sessionData.userCounter });
       
-      // Update counter staff information
-      const counterStaff = await getCounterStaffInfo();
-      io.emit('queueUpdate', { queues, counters, counterStaff });
+      // Update counter staff information with IDs
+      const staffInfo = await getCounterStaffInfo();
+      io.emit('queueUpdate', { 
+        queues, 
+        counters, 
+        counterStaff: staffInfo.counterStaff,
+        counterStaffIds: staffInfo.counterStaffIds
+      });
     }
   } catch (error) {
     // Error handling without logging
@@ -220,7 +225,14 @@ app.get('/display', (req, res) => {
 
 // Counter pages require authentication
 app.get('/counter/:id', isAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'counter.html'));
+  // Check if this is an embedded request (from display screen)
+  const isEmbedded = req.query.embedded === 'true' || req.headers.referer?.includes('/display');
+  
+  if (isEmbedded) {
+    res.sendFile(path.join(__dirname, 'public', 'counter-embedded.html'));
+  } else {
+    res.sendFile(path.join(__dirname, 'public', 'counter.html'));
+  }
 });
 
 // History page is public
@@ -329,11 +341,16 @@ app.post('/api/ticket', async (req, res) => {
     
     queues[counterId].push(ticket);
     
-    // Get counter staff information
-    const counterStaff = await getCounterStaffInfo();
+    // Get counter staff information with IDs
+    const staffInfo = await getCounterStaffInfo();
     
     // Broadcast to all displays
-    io.emit('queueUpdate', { queues, counters, counterStaff });
+    io.emit('queueUpdate', { 
+      queues, 
+      counters, 
+      counterStaff: staffInfo.counterStaff,
+      counterStaffIds: staffInfo.counterStaffIds
+    });
     
     res.json(ticket);
   } catch (error) {
@@ -353,10 +370,15 @@ app.get('/api/queue', async (req, res) => {
     // Get fresh data from MongoDB
     await initializeFromDB();
     
-    // Get counter staff information
-    const counterStaff = await getCounterStaffInfo();
+    // Get counter staff information with IDs
+    const staffInfo = await getCounterStaffInfo();
     
-    res.json({ queues, counters, counterStaff });
+    res.json({ 
+      queues, 
+      counters, 
+      counterStaff: staffInfo.counterStaff,
+      counterStaffIds: staffInfo.counterStaffIds
+    });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -372,34 +394,11 @@ app.get('/api/health', (req, res) => {
 // API endpoint to get counter staff information
 app.get('/api/counters/staff', async (req, res) => {
   try {
-    // Get counter staff information directly from Counter model
-    const countersWithStaff = await Counter.find({ staffName: { $ne: null } })
-      .select('counterId staffName');
+    // Get counter staff information with IDs
+    const staffInfo = await getCounterStaffInfo();
     
-    // Create a map of counter ID to staff name
-    const staffMap = {};
-    countersWithStaff.forEach(counter => {
-      // Make sure the counter ID is stored as a string
-      const counterId = counter.counterId.toString();
-      staffMap[counterId] = counter.staffName;
-    });
-    
-    // As a fallback, also check User model for any users with assigned counters
-    // that might not be in the Counter model yet
-    const counterStaff = await User.find({ counter: { $ne: null } })
-      .select('firstName lastName counter');
-    
-    counterStaff.forEach(staff => {
-      // Make sure the counter is stored as a string
-      const counterId = staff.counter.toString();
-      // Only add if not already in the map
-      if (!staffMap[counterId]) {
-        staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
-      }
-    });
-    
-    // Return the staff map
-    res.json({ counterStaff: staffMap });
+    // Return the staff maps
+    res.json(staffInfo);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -533,10 +532,15 @@ app.post('/api/counter/:id/next', async (req, res) => {
         );
       }
       
-      // Get counter staff information
-      const counterStaff = await getCounterStaffInfo();
+      // Get counter staff information with IDs
+      const staffInfo = await getCounterStaffInfo();
       
-      io.emit('queueUpdate', { queues, counters, counterStaff });
+      io.emit('queueUpdate', { 
+        queues, 
+        counters, 
+        counterStaff: staffInfo.counterStaff,
+        counterStaffIds: staffInfo.counterStaffIds
+      });
       io.emit('customerCalled', { 
         customer: nextCustomer, 
         counter: counterId,
@@ -594,10 +598,15 @@ app.post('/api/counter/:id/complete', async (req, res) => {
     counters[counterId].current = null;
     counters[counterId].status = 'available';
     
-    // Get counter staff information
-    const counterStaff = await getCounterStaffInfo();
+    // Get counter staff information with IDs
+    const staffInfo = await getCounterStaffInfo();
     
-    io.emit('queueUpdate', { queues, counters, counterStaff });
+    io.emit('queueUpdate', { 
+      queues, 
+      counters, 
+      counterStaff: staffInfo.counterStaff,
+      counterStaffIds: staffInfo.counterStaffIds
+    });
     
     res.json({ success: true });
   } catch (error) {
@@ -611,20 +620,25 @@ async function getCounterStaffInfo() {
     // Get counter staff information directly from Counter model
     const Counter = require('./models/Counter');
     const countersWithStaff = await Counter.find({ staffName: { $ne: null } })
-      .select('counterId staffName');
+      .select('counterId staffName staffId');
     
-    // Create a map of counter ID to staff name
+    // Create maps of counter ID to staff name and staff ID
     const staffMap = {};
+    const staffIdMap = {};
+    
     countersWithStaff.forEach(counter => {
       // Make sure the counter ID is stored as a string
       const counterId = counter.counterId.toString();
       staffMap[counterId] = counter.staffName;
+      if (counter.staffId) {
+        staffIdMap[counterId] = counter.staffId.toString();
+      }
     });
     
     // As a fallback, also check User model for any users with assigned counters
     // that might not be in the Counter model yet
     const counterStaff = await User.find({ counter: { $ne: null } })
-      .select('firstName lastName counter');
+      .select('_id firstName lastName counter');
     
     counterStaff.forEach(staff => {
       // Make sure the counter is stored as a string
@@ -633,21 +647,28 @@ async function getCounterStaffInfo() {
       if (!staffMap[counterId]) {
         staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
       }
+      // Always add staff ID
+      staffIdMap[counterId] = staff._id.toString();
     });
     
-    return staffMap;
+    return { counterStaff: staffMap, counterStaffIds: staffIdMap };
   } catch (error) {
-    return {};
+    return { counterStaff: {}, counterStaffIds: {} };
   }
 }
 
 // Socket.io connection
 io.on('connection', async (socket) => {
-  // Get counter staff information
-  const counterStaff = await getCounterStaffInfo();
+  // Get counter staff information with IDs
+  const staffInfo = await getCounterStaffInfo();
   
   // Send current state to new client
-  socket.emit('queueUpdate', { queues, counters, counterStaff });
+  socket.emit('queueUpdate', { 
+    queues, 
+    counters, 
+    counterStaff: staffInfo.counterStaff,
+    counterStaffIds: staffInfo.counterStaffIds
+  });
   
   socket.on('disconnect', () => {
     // Client disconnected
@@ -656,11 +677,16 @@ io.on('connection', async (socket) => {
 
 // Emit counter staff update when a user logs in with a counter
 app.post('/api/notify-counter-update', async (req, res) => {
-  // Get updated counter staff information
-  const counterStaff = await getCounterStaffInfo();
+  // Get updated counter staff information with IDs
+  const staffInfo = await getCounterStaffInfo();
   
   // Emit update to all clients with the counter staff information
-  io.emit('queueUpdate', { queues, counters, counterStaff });
+  io.emit('queueUpdate', { 
+    queues, 
+    counters, 
+    counterStaff: staffInfo.counterStaff,
+    counterStaffIds: staffInfo.counterStaffIds
+  });
   
   res.json({ success: true });
 });
@@ -692,11 +718,16 @@ app.post('/api/notify-staff-logout', async (req, res) => {
     await initializeFromDB();
   }
   
-  // Get updated counter staff information
-  const counterStaff = await getCounterStaffInfo();
+  // Get updated counter staff information with IDs
+  const staffInfo = await getCounterStaffInfo();
   
   // Emit update to all clients with the counter staff information
-  io.emit('queueUpdate', { queues, counters, counterStaff });
+  io.emit('queueUpdate', { 
+    queues, 
+    counters, 
+    counterStaff: staffInfo.counterStaff,
+    counterStaffIds: staffInfo.counterStaffIds
+  });
   
   res.json({ success: true });
 });
@@ -736,11 +767,16 @@ app.post('/api/clear-counter-assignment', async (req, res) => {
         // Force refresh of in-memory data
         await initializeFromDB();
         
-        // Get updated counter staff information
-        const counterStaff = await getCounterStaffInfo();
+        // Get updated counter staff information with IDs
+        const staffInfo = await getCounterStaffInfo();
         
         // Emit update to all clients
-        io.emit('queueUpdate', { queues, counters, counterStaff });
+        io.emit('queueUpdate', { 
+          queues, 
+          counters, 
+          counterStaff: staffInfo.counterStaff,
+          counterStaffIds: staffInfo.counterStaffIds
+        });
       }
     }
     
@@ -971,11 +1007,16 @@ async function cleanupOrphanedCounters() {
       }
     }
     
-    // Get updated counter staff information
-    const counterStaff = await getCounterStaffInfo();
+    // Get updated counter staff information with IDs
+    const staffInfo = await getCounterStaffInfo();
     
     // Emit update to all clients
-    io.emit('queueUpdate', { queues, counters, counterStaff });
+    io.emit('queueUpdate', { 
+      queues, 
+      counters, 
+      counterStaff: staffInfo.counterStaff,
+      counterStaffIds: staffInfo.counterStaffIds
+    });
   } catch (error) {
     // Error handling without logging
   }

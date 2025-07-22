@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're in an iframe
+    if (document.body.classList.contains('in-iframe')) {
+        return; // Skip sidebar setup if in iframe
+    }
+    
     // Setup sidebar toggle
     setupSidebarToggle();
     
@@ -118,6 +123,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Setup sidebar toggle functionality
 function setupSidebarToggle() {
+    // Skip if in iframe
+    if (document.body.classList.contains('in-iframe')) {
+        return;
+    }
+    
     const toggleBtn = document.getElementById('sidebarToggle');
     const sidebar = document.querySelector('.sidebar');
     
