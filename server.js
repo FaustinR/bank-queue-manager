@@ -68,8 +68,15 @@ sessionStore.on('expired', async function(sessionId) {
         
         // Update counter staff information with IDs
         const staffInfo = await getCounterStaffInfo();
+        
+        // Create a deep copy of the queues to avoid reference issues
+        const queuesCopy = {};
+        Object.keys(queues).forEach(key => {
+          queuesCopy[key] = [...queues[key]];
+        });
+        
         io.emit('queueUpdate', { 
-          queues, 
+          queues: queuesCopy, 
           counters, 
           counterStaff: staffInfo.counterStaff,
           counterStaffIds: staffInfo.counterStaffIds
@@ -137,6 +144,11 @@ async function initializeFromDB() {
     } else {
       ticketCounter = 0; // Will be incremented to 1 when first ticket is created
     }
+    
+    // Clear existing queues first to prevent duplicates
+    Object.keys(queues).forEach(key => {
+      queues[key] = [];
+    });
     
     // Get waiting tickets and populate queues (latest first)
     const waitingTickets = await Ticket.find({ status: 'waiting' }).sort({ createdAt: -1 });
@@ -346,9 +358,15 @@ app.post('/api/ticket', async (req, res) => {
     // Get counter staff information with IDs
     const staffInfo = await getCounterStaffInfo();
     
+    // Create a deep copy of the queues to avoid reference issues
+    const queuesCopy = {};
+    Object.keys(queues).forEach(key => {
+      queuesCopy[key] = [...queues[key]];
+    });
+    
     // Broadcast to all displays
     io.emit('queueUpdate', { 
-      queues, 
+      queues: queuesCopy, 
       counters, 
       counterStaff: staffInfo.counterStaff,
       counterStaffIds: staffInfo.counterStaffIds
@@ -369,14 +387,20 @@ app.get('/api/queue', async (req, res) => {
       ticketCounter = 0;
     }
     
-    // Get fresh data from MongoDB
+    // Get fresh data from MongoDB - this will clear and repopulate queues
     await initializeFromDB();
     
     // Get counter staff information with IDs
     const staffInfo = await getCounterStaffInfo();
     
+    // Create a deep copy of the queues to avoid reference issues
+    const queuesCopy = {};
+    Object.keys(queues).forEach(key => {
+      queuesCopy[key] = [...queues[key]];
+    });
+    
     res.json({ 
-      queues, 
+      queues: queuesCopy, 
       counters, 
       counterStaff: staffInfo.counterStaff,
       counterStaffIds: staffInfo.counterStaffIds
@@ -537,8 +561,14 @@ app.post('/api/counter/:id/next', async (req, res) => {
       // Get counter staff information with IDs
       const staffInfo = await getCounterStaffInfo();
       
+      // Create a deep copy of the queues to avoid reference issues
+      const queuesCopy = {};
+      Object.keys(queues).forEach(key => {
+        queuesCopy[key] = [...queues[key]];
+      });
+      
       io.emit('queueUpdate', { 
-        queues, 
+        queues: queuesCopy, 
         counters, 
         counterStaff: staffInfo.counterStaff,
         counterStaffIds: staffInfo.counterStaffIds
@@ -603,8 +633,14 @@ app.post('/api/counter/:id/complete', async (req, res) => {
     // Get counter staff information with IDs
     const staffInfo = await getCounterStaffInfo();
     
+    // Create a deep copy of the queues to avoid reference issues
+    const queuesCopy = {};
+    Object.keys(queues).forEach(key => {
+      queuesCopy[key] = [...queues[key]];
+    });
+    
     io.emit('queueUpdate', { 
-      queues, 
+      queues: queuesCopy, 
       counters, 
       counterStaff: staffInfo.counterStaff,
       counterStaffIds: staffInfo.counterStaffIds
@@ -664,9 +700,15 @@ io.on('connection', async (socket) => {
   // Get counter staff information with IDs
   const staffInfo = await getCounterStaffInfo();
   
+  // Create a deep copy of the queues to avoid reference issues
+  const queuesCopy = {};
+  Object.keys(queues).forEach(key => {
+    queuesCopy[key] = [...queues[key]];
+  });
+  
   // Send current state to new client
   socket.emit('queueUpdate', { 
-    queues, 
+    queues: queuesCopy, 
     counters, 
     counterStaff: staffInfo.counterStaff,
     counterStaffIds: staffInfo.counterStaffIds
@@ -736,9 +778,15 @@ app.post('/api/notify-counter-update', async (req, res) => {
   // Get updated counter staff information with IDs
   const staffInfo = await getCounterStaffInfo();
   
+  // Create a deep copy of the queues to avoid reference issues
+  const queuesCopy = {};
+  Object.keys(queues).forEach(key => {
+    queuesCopy[key] = [...queues[key]];
+  });
+  
   // Emit update to all clients with the counter staff information
   io.emit('queueUpdate', { 
-    queues, 
+    queues: queuesCopy, 
     counters, 
     counterStaff: staffInfo.counterStaff,
     counterStaffIds: staffInfo.counterStaffIds
@@ -777,9 +825,15 @@ app.post('/api/notify-staff-logout', async (req, res) => {
   // Get updated counter staff information with IDs
   const staffInfo = await getCounterStaffInfo();
   
+  // Create a deep copy of the queues to avoid reference issues
+  const queuesCopy = {};
+  Object.keys(queues).forEach(key => {
+    queuesCopy[key] = [...queues[key]];
+  });
+  
   // Emit update to all clients with the counter staff information
   io.emit('queueUpdate', { 
-    queues, 
+    queues: queuesCopy, 
     counters, 
     counterStaff: staffInfo.counterStaff,
     counterStaffIds: staffInfo.counterStaffIds
@@ -826,9 +880,15 @@ app.post('/api/clear-counter-assignment', async (req, res) => {
         // Get updated counter staff information with IDs
         const staffInfo = await getCounterStaffInfo();
         
+        // Create a deep copy of the queues to avoid reference issues
+        const queuesCopy = {};
+        Object.keys(queues).forEach(key => {
+          queuesCopy[key] = [...queues[key]];
+        });
+        
         // Emit update to all clients
         io.emit('queueUpdate', { 
-          queues, 
+          queues: queuesCopy, 
           counters, 
           counterStaff: staffInfo.counterStaff,
           counterStaffIds: staffInfo.counterStaffIds
@@ -1067,9 +1127,15 @@ async function cleanupOrphanedCounters() {
     // Get updated counter staff information with IDs
     const staffInfo = await getCounterStaffInfo();
     
+    // Create a deep copy of the queues to avoid reference issues
+    const queuesCopy = {};
+    Object.keys(queues).forEach(key => {
+      queuesCopy[key] = [...queues[key]];
+    });
+    
     // Emit update to all clients
     io.emit('queueUpdate', { 
-      queues, 
+      queues: queuesCopy, 
       counters, 
       counterStaff: staffInfo.counterStaff,
       counterStaffIds: staffInfo.counterStaffIds

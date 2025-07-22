@@ -347,17 +347,22 @@ function updateDisplay(data) {
                         <th>Name</th>
                         <th>Service</th>
                         <th>Counter</th>
+                        <th>Teller</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${allCustomers.map(customer => `
+                    ${allCustomers.map(customer => {
+                        const counterId = customer.counterId.toString();
+                        const tellerName = counterStaff[counterId] || 'Not assigned';
+                        return `
                         <tr>
                             <td>#${customer.number}</td>
                             <td>${customer.customerName}</td>
                             <td>${customer.service}</td>
                             <td>Counter ${customer.counterId}</td>
+                            <td>${tellerName !== 'Not assigned' ? tellerName : '<span class="not-assigned">Not assigned</span>'}</td>
                         </tr>
-                    `).join('')}
+                    `}).join('')}
                 </tbody>
             </table>
         `;
@@ -378,14 +383,14 @@ socket.on('queueUpdate', async (data) => {
             // Fallback to fetching counter staff information
             await fetchCounterStaff();
         }
+        
+        // Update the display with the latest data
         updateDisplay(data);
         
-        // Always fetch counter staff information after a queue update
-        // This ensures we have the latest staff information
+        // Update staff information without updating the display again
         setTimeout(async () => {
             await fetchCounterStaff();
-            updateDisplay(data);
-            // No need to check for unread messages in the display screen
+            // Don't call updateDisplay again to avoid duplicating content
         }, 1000);
     } catch (error) {
         // Still update the display even if there's an error
