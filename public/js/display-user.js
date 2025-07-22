@@ -7,16 +7,8 @@ async function getCurrentUserEmail() {
             return storedEmail;
         }
         
-        // If not in localStorage, try to get from server
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-            const data = await response.json();
-            if (data.user && data.user.email) {
-                localStorage.setItem('senderEmail', data.user.email);
-                return data.user.email;
-            }
-        }
-        
+        // For display screen, we don't need to get from server
+        // Just return empty string and let user enter their email
         return '';
     } catch (error) {
         return '';

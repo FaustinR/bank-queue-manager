@@ -120,6 +120,7 @@ async function fetchCounterStaff() {
                         if (!messageBtn) {
                             messageBtn = document.createElement('button');
                             messageBtn.className = 'message-btn';
+                            messageBtn.style.position = 'relative';
                             messageBtn.innerHTML = '<i class="fas fa-envelope"></i> Message';
                             messageBtn.setAttribute('data-counter', counterId);
                             messageBtn.setAttribute('data-teller', counterStaff[counterId]);
@@ -146,6 +147,7 @@ async function fetchCounterStaff() {
                         if (staffContainer) {
                             const messageBtn = document.createElement('button');
                             messageBtn.className = 'message-btn';
+                            messageBtn.style.position = 'relative';
                             messageBtn.innerHTML = '<i class="fas fa-envelope"></i> Message';
                             messageBtn.setAttribute('data-counter', counterId);
                             messageBtn.setAttribute('data-teller', counterStaff[counterId]);
@@ -173,8 +175,28 @@ async function fetchCounterStaff() {
     }
 }
 
+// Function to get the current user's counter ID
+async function getCurrentUserCounter() {
+    try {
+        const response = await fetch('/api/messages/current-counter');
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        return data.counterId;
+    } catch (error) {
+        console.error('Error getting current user counter:', error);
+        return null;
+    }
+}
+
 // Check if page is in an iframe and setup close button
 document.addEventListener('DOMContentLoaded', async function() {
+    
+    // Get the current user's counter ID and store it in localStorage
+    const currentUserCounterId = await getCurrentUserCounter();
+    if (currentUserCounterId) {
+        localStorage.setItem('currentUserCounterId', currentUserCounterId);
+    }
     if (window.self !== window.top) {
         // We're in an iframe
         document.body.classList.add('embedded-display');
@@ -245,6 +267,16 @@ function updateDisplay(data) {
         // Make sure the ID is a string for comparison with counterStaff
         const counterId = id.toString();
         
+        // Check if this is the current user's counter
+        let isCurrentUserCounter = false;
+        let currentUserCounterId = null;
+        
+        // Try to get the current user's counter ID from localStorage
+        if (localStorage.getItem('currentUserCounterId')) {
+            currentUserCounterId = localStorage.getItem('currentUserCounterId');
+            isCurrentUserCounter = (counterId === currentUserCounterId);
+        }
+        
         // Create the counter HTML
         counterDiv.innerHTML = `
             <h3>Counter ${id}</h3>
@@ -253,7 +285,7 @@ function updateDisplay(data) {
                     `<p class="counter-staff"><strong>Teller:</strong> ${counterStaff[counterId]}</p>` : 
                     '<p class="counter-staff"><strong>Teller:</strong> <span class="not-assigned">Not assigned</span></p>'}
                 ${counterStaff[counterId] && counterStaffIds[counterId] ? 
-                    `<button class="message-btn" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="fas fa-envelope"></i> Message</button>` : 
+                    `<button class="message-btn" style="position: relative;" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="${isCurrentUserCounter ? 'fas fa-inbox' : 'fas fa-envelope'}"></i> ${isCurrentUserCounter ? 'Inbox' : 'Message'}</button>` : 
                     ''}
             </div>
             <div class="counter-info">
@@ -317,6 +349,8 @@ function updateDisplay(data) {
             </table>
         `;
     }
+    
+    // No need to check for unread messages in the display screen
 }
 
 socket.on('queueUpdate', async (data) => {
@@ -338,6 +372,7 @@ socket.on('queueUpdate', async (data) => {
         setTimeout(async () => {
             await fetchCounterStaff();
             updateDisplay(data);
+            // No need to check for unread messages in the display screen
         }, 1000);
     } catch (error) {
         // Still update the display even if there's an error
@@ -508,6 +543,21 @@ async function openMessageModal(e) {
         return;
     }
     
+    // Check if this is the current user's counter
+    try {
+        const response = await fetch('/api/messages/current-counter');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.counterId === counterId) {
+                // This is the current user's counter, navigate to inbox in the main page
+                window.top.location.href = '/inbox';
+                return;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking current counter:', error);
+    }
+    
     // Set form values
     document.getElementById('tellerId').value = tellerId;
     document.getElementById('tellerName').value = tellerName;
@@ -575,6 +625,9 @@ function sendMessage(e) {
         content
     };
     
+    // Log the data being sent for debugging
+    console.log('Sending message data:', messageData);
+    
     // Send message using the display-to-teller endpoint
     fetch('/api/messages/display-to-teller', {
         method: 'POST',
@@ -585,7 +638,14 @@ function sendMessage(e) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Failed to send message');
+            return response.text().then(text => {
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.message || 'Failed to send message');
+                } catch (e) {
+                    throw new Error('Failed to send message: ' + text);
+                }
+            });
         }
         return response.json();
     })
@@ -601,7 +661,8 @@ function sendMessage(e) {
         }
     })
     .catch(error => {
-        window.notifications.error('Error', 'Error sending message. Please try again.');
+        console.error('Error sending message:', error);
+        window.notifications.error('Error', error.message || 'Error sending message. Please try again.');
     });
 }
 
@@ -631,3 +692,7 @@ function setupMessageModal() {
         }
     });
 }
+// Listen for the newMessage socket event and allow badges in the display screen
+socket.on('newMessage', function(data) {
+    // Let the message-badges.js script handle the badges
+});

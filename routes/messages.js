@@ -54,6 +54,64 @@ router.get('/unread', isAuthenticated, async (req, res) => {
   }
 });
 
+// Get current user's counter ID
+router.get('/current-counter', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    // Get the user's counter
+    const user = await User.findById(userId).select('counter');
+    
+    if (!user || !user.counter) {
+      return res.json({ counterId: null });
+    }
+    
+    res.json({ counterId: user.counter });
+  } catch (error) {
+    console.error('Error getting current counter:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get unread message count by counter (public endpoint for display screen)
+router.get('/unread-by-counter', async (req, res) => {
+  try {
+    
+    // Get all users with counters
+    const usersWithCounters = await User.find({ counter: { $ne: null } })
+      .select('_id counter');
+    
+    // Create a map of user IDs to counter IDs
+    const userToCounter = {};
+    usersWithCounters.forEach(user => {
+      userToCounter[user._id.toString()] = user.counter;
+    });
+    
+    // Get all unread messages
+    const unreadMessages = await Message.find({ read: false })
+      .select('recipient');
+    
+    // Count unread messages by counter
+    const unreadByCounter = {};
+    unreadMessages.forEach(message => {
+      const recipientId = message.recipient.toString();
+      const counterId = userToCounter[recipientId];
+      
+      if (counterId) {
+        unreadByCounter[counterId] = (unreadByCounter[counterId] || 0) + 1;
+      }
+    });
+    
+    // No need to add test data anymore
+    // Just return the actual unread messages by counter
+    
+    res.json({ unreadByCounter });
+  } catch (error) {
+    console.error('Error getting unread messages by counter:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get a specific message
 router.get('/:id', isAuthenticated, async (req, res) => {
   try {
@@ -210,6 +268,8 @@ router.post('/display-to-teller', async (req, res) => {
   try {
     const { tellerId, senderEmail, senderName, subject, content } = req.body;
     
+    // Process message data
+    
     if (!tellerId || !senderEmail || !senderName || !subject || !content) {
       return res.status(400).json({ message: 'Teller ID, sender email, sender name, subject and content are required' });
     }
@@ -220,49 +280,65 @@ router.post('/display-to-teller', async (req, res) => {
       return res.status(404).json({ message: 'Teller not found' });
     }
     
-    // Check if a temporary user with this email already exists
-    let sender = await User.findOne({ email: senderEmail, role: 'temporary' });
-    
-    // If not, create a temporary user
-    if (!sender) {
-      sender = new User({
-        firstName: senderName.split(' ')[0] || senderName,
-        lastName: senderName.split(' ').slice(1).join(' ') || '',
-        email: senderEmail,
-        role: 'temporary',
-        password: Math.random().toString(36).substring(2, 15) // Random password, not used for login
+    try {
+      // Check if a temporary user with this email already exists
+      let sender = await User.findOne({ email: senderEmail });
+      
+      // If not, create a temporary user
+      if (!sender) {
+        // Make sure we have a valid firstName and lastName
+        const firstName = senderName.split(' ')[0] || 'Guest';
+        const lastName = senderName.split(' ').slice(1).join(' ') || 'User';
+        
+        sender = new User({
+          firstName,
+          lastName,
+          email: senderEmail,
+          role: 'temporary',
+          password: Math.random().toString(36).substring(2, 15) // Random password, not used for login
+        });
+        
+        await sender.save();
+      }
+      
+      const newMessage = new Message({
+        sender: sender._id,
+        recipient: tellerId,
+        subject,
+        content
       });
       
-      await sender.save();
-    }
-    
-    const newMessage = new Message({
-      sender: sender._id,
-      recipient: tellerId,
-      subject,
-      content
-    });
-    
-    await newMessage.save();
-    
-    // Emit a Socket.IO event to notify the recipient
-    try {
-      const io = req.app.get('io');
-      if (io) {
-        io.emit('newMessage', { 
-          recipientId: tellerId, 
-          messageId: newMessage._id,
-          subject,
-          senderName: senderName
-        });
+      await newMessage.save();
+      
+      // Emit a Socket.IO event to notify the recipient
+      try {
+        const io = req.app.get('io');
+        if (io) {
+          // Get the counter ID for this recipient
+          const recipientUser = await User.findById(tellerId).select('counter');
+          const counterId = recipientUser?.counter || null;
+          
+          io.emit('newMessage', { 
+            recipientId: tellerId, 
+            messageId: newMessage._id,
+            subject,
+            senderName: senderName,
+            counterId: counterId // Include the counter ID
+          });
+        }
+      } catch (socketError) {
+        console.error('Socket error:', socketError);
+        // Continue even if socket notification fails
       }
-    } catch (socketError) {
-      // Continue even if socket notification fails
+      
+      res.status(201).json({ message: 'Message sent successfully', messageId: newMessage._id });
+    } catch (userError) {
+      console.error('User creation error:', userError);
+      return res.status(400).json({ message: 'Error creating user: ' + userError.message });
     }
-    
-    res.status(201).json({ message: 'Message sent successfully', messageId: newMessage._id });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error: ' + error.message });
   }
 });
 

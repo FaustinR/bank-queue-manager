@@ -125,3 +125,20 @@ document.getElementById('completeBtn').addEventListener('click', async () => {
 });
 
 socket.on('queueUpdate', updateCounter);
+// Listen for new messages for this counter
+socket.on('newMessage', function(data) {
+    // Check if this message is for this counter
+    if (data && data.counterId === counterId) {
+        console.log('New message received for counter', counterId);
+        
+        // Show a notification
+        if (window.notifications) {
+            window.notifications.info('New Message', 'You have a new message in your inbox');
+        }
+        
+        // Update the inbox badge
+        if (typeof updateInboxBadge === 'function') {
+            updateInboxBadge();
+        }
+    }
+});
