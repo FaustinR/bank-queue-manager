@@ -8,17 +8,38 @@ function loadConnectedUsers() {
                 if (data.connectedUsers && data.connectedUsers.length > 0) {
                     connectedUsersList.innerHTML = '';
                     
-                    data.connectedUsers.forEach(user => {
+                    // Store the current user's ID from the response
+                    const currentUserId = data.currentUserId;
+                    
+                    // Sort users to put current user first
+                    const sortedUsers = [...data.connectedUsers].sort((a, b) => {
+                        const aIsCurrent = String(a._id) === String(currentUserId);
+                        const bIsCurrent = String(b._id) === String(currentUserId);
+                        
+                        if (aIsCurrent && !bIsCurrent) return -1;
+                        if (!aIsCurrent && bIsCurrent) return 1;
+                        return 0;
+                    });
+                    
+                    sortedUsers.forEach(user => {
                         const userCard = document.createElement('div');
-                        userCard.className = 'connected-user-card';
+                        
+                        // Check if this is the current user - convert both to strings for comparison
+                        const isCurrentUser = String(user._id) === String(currentUserId);
+                        
+                        // Add special class for current user
+                        userCard.className = isCurrentUser ? 'connected-user-card current-user' : 'connected-user-card';
                         
                         let counterBadge = '';
                         if (user.counter) {
                             counterBadge = `<span class="counter-badge">Counter ${user.counter}</span>`;
                         }
                         
+                        // Add "You" flag for current user
+                        const youFlag = isCurrentUser ? '<span class="you-flag">You</span>' : '';
+                        
                         userCard.innerHTML = `
-                            <h3>${user.firstName} ${user.lastName}</h3>
+                            <h3>${user.firstName} ${user.lastName} ${youFlag}</h3>
                             <p>${user.email}</p>
                             <span class="user-role role-${user.role}">${user.role}</span>
                             ${counterBadge}
@@ -27,7 +48,23 @@ function loadConnectedUsers() {
                         connectedUsersList.appendChild(userCard);
                     });
                 } else {
-                    connectedUsersList.innerHTML = '<p>No users currently connected</p>';
+                    // If no connected users but we have a current user ID, show a message
+                    if (data.currentUserId) {
+                        connectedUsersList.innerHTML = '<p>Refreshing connected users...</p>';
+                        // Try to mark the current user as connected
+                        fetch('/api/users/mark-connected', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({})
+                        }).then(() => {
+                            // Reload after a short delay
+                            setTimeout(loadConnectedUsers, 500);
+                        });
+                    } else {
+                        connectedUsersList.innerHTML = '<p>No users currently connected</p>';
+                    }
                 }
             }
         })
@@ -40,8 +77,8 @@ function loadConnectedUsers() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if we're on the admin page
-    if (window.location.pathname === '/admin') {
+    // Check if we're on the admin page or users page
+    if (window.location.pathname === '/admin' || window.location.pathname === '/users') {
         // Set up socket.io to listen for user connection updates
         if (typeof io !== 'undefined') {
             const socket = io();
@@ -51,47 +88,73 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Add a button to show connected users
-        const dashboardStatsSection = document.getElementById('dashboardStatsSection');
-        if (dashboardStatsSection) {
-            const showConnectedUsersBtn = document.createElement('button');
-            showConnectedUsersBtn.className = 'btn btn-primary';
-            showConnectedUsersBtn.style.marginTop = '20px';
-            showConnectedUsersBtn.style.padding = '8px 16px';
-            showConnectedUsersBtn.style.backgroundColor = '#28a745';
-            showConnectedUsersBtn.style.color = 'white';
-            showConnectedUsersBtn.style.border = 'none';
-            showConnectedUsersBtn.style.borderRadius = '4px';
-            showConnectedUsersBtn.style.cursor = 'pointer';
-            showConnectedUsersBtn.innerHTML = '🟢 Show Connected Users';
-            
-            // Add the button to the dashboard stats section
-            dashboardStatsSection.querySelector('.accordion-content').appendChild(showConnectedUsersBtn);
-            
-            // Add click handler for the button
-            showConnectedUsersBtn.addEventListener('click', function() {
-                // Show the connected users section
-                const connectedUsersSection = document.getElementById('connectedUsersSection');
-                if (connectedUsersSection) {
-                    // Load connected users
-                    loadConnectedUsers();
-                    
-                    // Activate the section
-                    document.querySelectorAll('.accordion-section').forEach(section => {
-                        section.classList.remove('active');
-                    });
-                    connectedUsersSection.classList.add('active');
-                    
-                    // Scroll to the section
-                    connectedUsersSection.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
+        // Add a button to show connected users (only on admin page)
+        if (window.location.pathname === '/admin') {
+            const dashboardStatsSection = document.getElementById('dashboardStatsSection');
+            if (dashboardStatsSection) {
+                const showConnectedUsersBtn = document.createElement('button');
+                showConnectedUsersBtn.className = 'btn btn-primary';
+                showConnectedUsersBtn.style.marginTop = '20px';
+                showConnectedUsersBtn.style.padding = '8px 16px';
+                showConnectedUsersBtn.style.backgroundColor = '#28a745';
+                showConnectedUsersBtn.style.color = 'white';
+                showConnectedUsersBtn.style.border = 'none';
+                showConnectedUsersBtn.style.borderRadius = '4px';
+                showConnectedUsersBtn.style.cursor = 'pointer';
+                showConnectedUsersBtn.innerHTML = '🟢 Show Connected Users';
+                
+                // Add the button to the dashboard stats section
+                dashboardStatsSection.querySelector('.accordion-content').appendChild(showConnectedUsersBtn);
+                
+                // Add click handler for the button
+                showConnectedUsersBtn.addEventListener('click', function() {
+                    // Show the connected users section
+                    const connectedUsersSection = document.getElementById('connectedUsersSection');
+                    if (connectedUsersSection) {
+                        // Load connected users
+                        loadConnectedUsers();
+                        
+                        // Activate the section
+                        document.querySelectorAll('.accordion-section').forEach(section => {
+                            section.classList.remove('active');
+                        });
+                        connectedUsersSection.classList.add('active');
+                        
+                        // Scroll to the section
+                        connectedUsersSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            }
         }
         
-        // Load connected users initially if the section is visible
-        const connectedUsersSection = document.getElementById('connectedUsersSection');
-        if (connectedUsersSection && connectedUsersSection.classList.contains('active')) {
-            loadConnectedUsers();
+        // Load connected users initially
+        loadConnectedUsers();
+        
+        // Set up a timer to refresh connected users every 30 seconds
+        setInterval(loadConnectedUsers, 30000);
+        
+        // Set up accordion functionality for users page
+        if (window.location.pathname === '/users') {
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const section = this.parentElement;
+                    
+                    // Toggle active class
+                    section.classList.toggle('active');
+                    
+                    // If this section is now active and it's the connected users section, refresh the list
+                    if (section.classList.contains('active') && section.id === 'connectedUsersSection') {
+                        loadConnectedUsers();
+                    }
+                });
+            });
+            
+            // Make sure the Connected Users section is active by default
+            const connectedUsersSection = document.getElementById('connectedUsersSection');
+            if (connectedUsersSection && !connectedUsersSection.classList.contains('active')) {
+                connectedUsersSection.classList.add('active');
+            }
         }
     }
 });

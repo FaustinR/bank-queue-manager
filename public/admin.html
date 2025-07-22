@@ -24,6 +24,28 @@
             width: calc(25% - 10px);
             min-width: 200px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        /* Style for the current user's card */
+        .connected-user-card.current-user {
+            background-color: #d1e6ff !important; /* Increased opacity blue background */
+            border-left: 4px solid #007bff !important;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3) !important;
+        }
+        
+        /* Style for the "You" flag */
+        .you-flag {
+            display: inline-block;
+            background-color: #007bff !important;
+            color: white !important;
+            font-size: 0.8rem !important;
+            padding: 3px 8px !important;
+            border-radius: 3px !important;
+            margin-left: 5px !important;
+            vertical-align: middle !important;
+            font-weight: bold !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
         }
         
         .connected-user-card h3 {

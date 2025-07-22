@@ -9,145 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
     <style>
-        .connected-users-section {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            padding: 20px;
-        }
-        
-        .connected-users-section h2 {
-            color: #2c3e50;
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-        }
-        
-        .connected-users-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .connected-user-card {
-            background-color: #f8f9fa;
-            border-left: 4px solid #28a745;
-            border-radius: 4px;
-            padding: 10px 15px;
-            width: calc(25% - 10px);
-            min-width: 200px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-        
-        /* Style for the current user's card */
-        .connected-user-card.current-user {
-            background-color: #e8f4ff !important;
-            border-left: 4px solid #007bff !important;
-            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2) !important;
-        }
-        
-        /* Style for the "You" flag */
-        .you-flag {
-            display: inline-block;
-            background-color: #007bff !important;
-            color: white !important;
-            font-size: 0.8rem !important;
-            padding: 3px 8px !important;
-            border-radius: 3px !important;
-            margin-left: 5px !important;
-            vertical-align: middle !important;
-            font-weight: bold !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
-        }
-        
-        .connected-user-card h3 {
-            color: #2c3e50;
-            font-size: 1rem;
-            margin: 0 0 5px 0;
-        }
-        
-        .connected-user-card p {
-            color: #6c757d;
-            font-size: 0.9rem;
-            margin: 0;
-        }
-        
-        .connected-user-card .user-role {
-            display: inline-block;
-            border-radius: 3px;
-            font-size: 0.8rem;
-            margin-top: 5px;
-            padding: 2px 6px;
-        }
-        
-        .connected-user-card .counter-badge {
-            display: inline-block;
-            background-color: #007bff;
-            border-radius: 3px;
-            color: white;
-            font-size: 0.8rem;
-            margin-left: 5px;
-            padding: 2px 6px;
-        }
-        
-        .role-admin {
-            background: #dc3545 !important;
-            color: white !important;
-        }
-        
-        .role-supervisor {
-            background: #fd7e14 !important;
-            color: white !important;
-        }
-        
-        .role-employee {
-            background: #20c997 !important;
-            color: white !important;
-        }
-        
-        @media (max-width: 768px) {
-            .connected-user-card {
-                width: 100%;
-            }
-        }
-        
-        /* Filter styles */
-        .filter-row th {
-            padding: 5px;
-            background-color: #f8f9fa;
-        }
-        
-        .filter-input {
-            width: 100%;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .filter-input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-        }
-        
-        .clear-filters-btn {
-            background: #6c757d;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            margin-left: 10px;
-            transition: all 0.3s;
-        }
-        
-        .clear-filters-btn:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
+        /* All styles moved to users.css */
     </style>
 </head>
 <body>
@@ -190,10 +52,15 @@
                 <button id="clearFiltersBtn" class="clear-filters-btn">Clear Filters</button>
             </div>
             
-            <div class="connected-users-section">
-                <h2>Connected Users</h2>
-                <div class="connected-users-list" id="connectedUsersList">
-                    <p>Loading connected users...</p>
+            <div class="accordion-section active" id="connectedUsersSection">
+                <div class="accordion-header">
+                    <h3>Connected Users</h3>
+                    <span class="accordion-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="accordion-content">
+                    <div class="connected-users-list" id="connectedUsersList">
+                        <p>Loading connected users...</p>
+                    </div>
                 </div>
             </div>
             
@@ -261,5 +128,6 @@
     <script src="js/session-timeout.js"></script>
     <script src="js/restart-check.js"></script>
     <script src="js/logout-handler.js"></script>
+    <script src="js/connected-users.js"></script>
 </body>
 </html>

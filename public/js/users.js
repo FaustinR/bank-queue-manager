@@ -5,12 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch users list
     fetchUsers();
     
-    // Load connected users
-    loadConnectedUsers();
-    
-    // Set up a timer to refresh connected users every 10 seconds
-    setInterval(loadConnectedUsers, 10000);
-    
     // Set up filters
     setupFilters();
     
@@ -44,83 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Store all users for filtering
 let allUsers = [];
 
-// Function to load connected users
-function loadConnectedUsers() {
-    fetch('/api/users/connected')
-        .then(response => response.json())
-        .then(data => {
-            const connectedUsersList = document.getElementById('connectedUsersList');
-            if (connectedUsersList) {
-                if (data.connectedUsers && data.connectedUsers.length > 0) {
-                    connectedUsersList.innerHTML = '';
-                    
-                    // Store the current user's ID from the response
-                    const currentUserId = data.currentUserId;
-                    
-                    // Sort users to put current user first
-                    const sortedUsers = [...data.connectedUsers].sort((a, b) => {
-                        const aIsCurrent = String(a._id) === String(currentUserId);
-                        const bIsCurrent = String(b._id) === String(currentUserId);
-                        
-                        if (aIsCurrent && !bIsCurrent) return -1;
-                        if (!aIsCurrent && bIsCurrent) return 1;
-                        return 0;
-                    });
-                    
-                    sortedUsers.forEach(user => {
-                        const userCard = document.createElement('div');
-                        
-                        // Check if this is the current user - convert both to strings for comparison
-                        const isCurrentUser = String(user._id) === String(currentUserId);
-                        
-                        // Add special class for current user
-                        userCard.className = isCurrentUser ? 'connected-user-card current-user' : 'connected-user-card';
-                        
-                        let counterBadge = '';
-                        if (user.counter) {
-                            counterBadge = `<span class="counter-badge">Counter ${user.counter}</span>`;
-                        }
-                        
-                        // Add "You" flag for current user
-                        const youFlag = isCurrentUser ? '<span class="you-flag">You</span>' : '';
-                        
-                        userCard.innerHTML = `
-                            <h3>${user.firstName} ${user.lastName} ${youFlag}</h3>
-                            <p>${user.email}</p>
-                            <span class="user-role role-${user.role}">${user.role}</span>
-                            ${counterBadge}
-                        `;
-                        
-                        connectedUsersList.appendChild(userCard);
-                    });
-                } else {
-                    // If no connected users but we have a current user ID, show a message
-                    if (data.currentUserId) {
-                        connectedUsersList.innerHTML = '<p>Refreshing connected users...</p>';
-                        // Try to mark the current user as connected
-                        fetch('/api/users/mark-connected', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({})
-                        }).then(() => {
-                            // Reload after a short delay
-                            setTimeout(loadConnectedUsers, 500);
-                        });
-                    } else {
-                        connectedUsersList.innerHTML = '<p>No users currently connected</p>';
-                    }
-                }
-            }
-        })
-        .catch(error => {
-            const connectedUsersList = document.getElementById('connectedUsersList');
-            if (connectedUsersList) {
-                connectedUsersList.innerHTML = '<p>Error loading connected users</p>';
-            }
-        });
-}
+// Function removed - now handled in connected-users.js
 
 async function fetchUserInfo() {
     try {
@@ -416,3 +334,5 @@ function applyFilters() {
     // Display filtered users
     displayUsers(filteredUsers);
 }
+
+// Function removed - now handled in connected-users.js

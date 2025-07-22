@@ -26,16 +26,13 @@ router.get('/', isAdmin, async (req, res) => {
 // Get connected users (authenticated users only)
 router.get('/connected', isAuthenticated, async (req, res) => {
   try {
-    console.log('Fetching connected users...');
     
     // Debug: Check how many users have connected='yes'
     const connectedCount = await User.countDocuments({ connected: 'yes' });
-    console.log(`Found ${connectedCount} users with connected='yes'`);
     
     // Always mark the current user as connected
     if (req.session.userId) {
       await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
-      console.log(`Updated current user ${req.session.userId} to connected='yes'`);
     }
     
     // Get all connected users

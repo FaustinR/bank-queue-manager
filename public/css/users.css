@@ -90,11 +90,114 @@
     font-weight: bold;
 }
 
+/* Accordion styles - matching admin.css */
+.accordion-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.accordion-header {
+    padding: 15px 20px;
+    background: #f5f7fa;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s;
+}
+
+.accordion-header:hover {
+    background: #edf2f7;
+}
+
+.accordion-header h3 {
+    margin: 0;
+    color: #2c5aa0;
+    font-size: 16px;
+}
+
+.accordion-icon {
+    color: #2c5aa0;
+    transition: transform 0.3s;
+}
+
+.accordion-icon i {
+    font-size: 16px;
+}
+
+.accordion-content {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease;
+}
+
+.accordion-section.active .accordion-content {
+    padding: 20px;
+    max-height: 2000px; /* Increased to accommodate connected users */
+}
+
+.accordion-section.active .accordion-icon {
+    transform: rotate(180deg);
+}
+
+/* Connected Users list styles */
+.connected-users-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.connected-user-card {
+    background-color: #f8f9fa;
+    border-left: 4px solid #28a745;
+    border-radius: 4px;
+    padding: 10px 15px;
+    width: calc(25% - 10px);
+    min-width: 200px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.connected-user-card h3 {
+    color: #2c3e50;
+    font-size: 1rem;
+    margin: 0 0 5px 0;
+}
+
+.connected-user-card p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.connected-user-card .user-role {
+    display: inline-block;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    padding: 2px 6px;
+}
+
+.connected-user-card .counter-badge {
+    display: inline-block;
+    background-color: #007bff;
+    border-radius: 3px;
+    color: white;
+    font-size: 0.8rem;
+    margin-left: 5px;
+    padding: 2px 6px;
+}
+
 /* Current user styles */
 .connected-user-card.current-user {
-    background-color: #e8f4ff !important;
+    background-color: #d1e6ff !important; /* Increased opacity blue background */
     border-left: 4px solid #007bff !important;
-    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2) !important;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3) !important;
 }
 
 /* You flag styles */
@@ -215,6 +318,43 @@
     font-size: 0.9em;
 }
 
+/* Filter styles */
+.filter-row th {
+    padding: 5px;
+    background-color: #f8f9fa;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.clear-filters-btn {
+    background: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.3s;
+}
+
+.clear-filters-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
 @media (max-width: 768px) {
     .users-table th,
     .users-table td {
@@ -225,5 +365,9 @@
     .user-actions {
         flex-direction: column;
         gap: 5px;
+    }
+    
+    .connected-user-card {
+        width: 100%;
     }
 }
