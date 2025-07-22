@@ -115,22 +115,27 @@ async function fetchCounterStaff() {
                     if (staffElement) {
                         staffElement.innerHTML = `<strong>Teller:</strong> ${counterStaff[counterId]}`;
                         
-                        // Add or update message button if not already there
-                        let messageBtn = staffContainer.querySelector('.message-btn');
-                        if (!messageBtn) {
-                            messageBtn = document.createElement('button');
-                            messageBtn.className = 'message-btn';
-                            messageBtn.style.position = 'relative';
-                            messageBtn.innerHTML = '<i class="fas fa-envelope"></i> Message';
-                            messageBtn.setAttribute('data-counter', counterId);
-                            messageBtn.setAttribute('data-teller', counterStaff[counterId]);
-                            messageBtn.setAttribute('data-teller-id', counterStaffIds[counterId] || '');
-                            messageBtn.addEventListener('click', openMessageModal);
-                            staffContainer.appendChild(messageBtn);
-                        } else {
-                            // Update data attributes
-                            messageBtn.setAttribute('data-teller', counterStaff[counterId]);
-                            messageBtn.setAttribute('data-teller-id', counterStaffIds[counterId] || '');
+                        // Check if we're in an iframe or a new tab
+                        const isInIframe = window.self !== window.top;
+                        
+                        // Add or update message button if not already there and only if in iframe
+                        if (isInIframe) {
+                            let messageBtn = staffContainer.querySelector('.message-btn');
+                            if (!messageBtn) {
+                                messageBtn = document.createElement('button');
+                                messageBtn.className = 'message-btn';
+                                messageBtn.style.position = 'relative';
+                                messageBtn.innerHTML = '<i class="fas fa-envelope"></i> Message';
+                                messageBtn.setAttribute('data-counter', counterId);
+                                messageBtn.setAttribute('data-teller', counterStaff[counterId]);
+                                messageBtn.setAttribute('data-teller-id', counterStaffIds[counterId] || '');
+                                messageBtn.addEventListener('click', openMessageModal);
+                                staffContainer.appendChild(messageBtn);
+                            } else {
+                                // Update data attributes
+                                messageBtn.setAttribute('data-teller', counterStaff[counterId]);
+                                messageBtn.setAttribute('data-teller-id', counterStaffIds[counterId] || '');
+                            }
                         }
                     } else {
                         const staffP = document.createElement('p');
@@ -143,8 +148,11 @@ async function fetchCounterStaff() {
                             counterHeading.insertAdjacentElement('afterend', staffP);
                         }
                         
-                        // Add message button
-                        if (staffContainer) {
+                        // Check if we're in an iframe or a new tab
+                        const isInIframe = window.self !== window.top;
+                        
+                        // Add message button only if in iframe
+                        if (staffContainer && isInIframe) {
                             const messageBtn = document.createElement('button');
                             messageBtn.className = 'message-btn';
                             messageBtn.style.position = 'relative';
@@ -205,11 +213,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         // We're in an iframe
         document.body.classList.add('embedded-display');
     } else {
-        // We're in a new tab - hide the message modal
+        // We're in a new tab - hide and remove the message modal
         const messageModal = document.getElementById('messageModal');
         if (messageModal) {
             messageModal.style.display = 'none';
+            messageModal.remove(); // Completely remove it from DOM
         }
+        
+        // Remove any message buttons that might have been added
+        const messageButtons = document.querySelectorAll('.message-btn');
+        messageButtons.forEach(btn => btn.remove());
     }
     
     // Setup close button for counter iframe
@@ -316,10 +329,12 @@ function updateDisplay(data) {
         `;
         countersDiv.appendChild(counterDiv);
         
-        // Add event listener to message button
-        const messageBtn = counterDiv.querySelector('.message-btn');
-        if (messageBtn) {
-            messageBtn.addEventListener('click', openMessageModal);
+        // Add event listener to message button only if in iframe
+        if (isInIframe) {
+            const messageBtn = counterDiv.querySelector('.message-btn');
+            if (messageBtn) {
+                messageBtn.addEventListener('click', openMessageModal);
+            }
         }
     });
     

@@ -91,7 +91,14 @@
     <script src="/js/notifications.js"></script>
     <script src="/js/display-user.js"></script>
     <script src="/js/display.js"></script>
-    <script src="/js/message-badges.js"></script>
+    <script>
+        // Only load message-badges.js if we're in an iframe
+        if (window.self !== window.top) {
+            const script = document.createElement('script');
+            script.src = '/js/message-badges.js';
+            document.body.appendChild(script);
+        }
+    </script>
     <script src="/js/restart-check.js"></script>
 </body>
 </html>

@@ -4,6 +4,19 @@ const isInIframe = window.self !== window.top;
 // If we're in a new tab, don't run this script
 if (!isInIframe) {
     console.log('Display screen opened in new tab, not showing message badges');
+    // Exit the script early without throwing an error
+    document.addEventListener('DOMContentLoaded', function() {
+        // Remove any message-related elements
+        const messageButtons = document.querySelectorAll('.message-btn');
+        messageButtons.forEach(btn => btn.remove());
+        
+        // Hide message modal
+        const messageModal = document.getElementById('messageModal');
+        if (messageModal) {
+            messageModal.style.display = 'none';
+            messageModal.remove(); // Completely remove it from DOM
+        }
+    });
     // Exit the script
     throw new Error('Display screen opened in new tab, not showing message badges');
 }
