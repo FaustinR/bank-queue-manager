@@ -63,8 +63,8 @@ function setupAccordions() {
     accordionSections.forEach(section => {
         const header = section.querySelector('.accordion-header');
         
-        // Set initial state - Queue Overview and Service Distribution open by default
-        if (section.id === 'dashboardStatsSection' || section.id === 'serviceDistributionSection') {
+        // Set initial state - Queue Overview, Connected Users, and Service Distribution open by default
+        if (section.id === 'dashboardStatsSection' || section.id === 'connectedUsersSection' || section.id === 'serviceDistributionSection') {
             section.classList.add('active');
         }
         

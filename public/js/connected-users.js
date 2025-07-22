@@ -88,44 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Add a button to show connected users (only on admin page)
-        if (window.location.pathname === '/admin') {
-            const dashboardStatsSection = document.getElementById('dashboardStatsSection');
-            if (dashboardStatsSection) {
-                const showConnectedUsersBtn = document.createElement('button');
-                showConnectedUsersBtn.className = 'btn btn-primary';
-                showConnectedUsersBtn.style.marginTop = '20px';
-                showConnectedUsersBtn.style.padding = '8px 16px';
-                showConnectedUsersBtn.style.backgroundColor = '#28a745';
-                showConnectedUsersBtn.style.color = 'white';
-                showConnectedUsersBtn.style.border = 'none';
-                showConnectedUsersBtn.style.borderRadius = '4px';
-                showConnectedUsersBtn.style.cursor = 'pointer';
-                showConnectedUsersBtn.innerHTML = '🟢 Show Connected Users';
-                
-                // Add the button to the dashboard stats section
-                dashboardStatsSection.querySelector('.accordion-content').appendChild(showConnectedUsersBtn);
-                
-                // Add click handler for the button
-                showConnectedUsersBtn.addEventListener('click', function() {
-                    // Show the connected users section
-                    const connectedUsersSection = document.getElementById('connectedUsersSection');
-                    if (connectedUsersSection) {
-                        // Load connected users
-                        loadConnectedUsers();
-                        
-                        // Activate the section
-                        document.querySelectorAll('.accordion-section').forEach(section => {
-                            section.classList.remove('active');
-                        });
-                        connectedUsersSection.classList.add('active');
-                        
-                        // Scroll to the section
-                        connectedUsersSection.scrollIntoView({ behavior: 'smooth' });
-                    }
-                });
-            }
-        }
+        // Connected Users section is now displayed at the top by default
+        // No need for a button to show it
         
         // Load connected users initially
         loadConnectedUsers();
