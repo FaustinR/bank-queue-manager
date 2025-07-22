@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Users - Bank Queue Management</title>
+    <title>Users - Bank Queue Management</title>
     <link rel="stylesheet" href="css/admin.css">
     <link rel="stylesheet" href="css/users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -89,6 +89,43 @@
                 width: 100%;
             }
         }
+        
+        /* Filter styles */
+        .filter-row th {
+            padding: 5px;
+            background-color: #f8f9fa;
+        }
+        
+        .filter-input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .filter-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        .clear-filters-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+        
+        .clear-filters-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -108,7 +145,7 @@
                     <li><a href="/history"><i class="icon">📜</i><span> Ticket History</span></a></li>
                     <li><a href="/inbox"><i class="icon">✉️</i><span> Inbox</span></a></li>
                     <li><a href="/signup"><i class="icon">👤</i><span> Create User</span></a></li>
-                    <li class="active"><a href="/users"><i class="icon">👥</i><span> Manage Users</span></a></li>
+                    <li class="active"><a href="/users"><i class="icon">👥</i><span> Users</span></a></li>
                     <li><a href="/" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
                     <li><a href="/display"><i class="icon">📺</i><span> Display Screen</span></a></li>
                     <!-- Logout button moved to header -->
@@ -118,7 +155,7 @@
         
         <main class="main-content">
             <header class="content-header">
-                <h1>Manage Users</h1>
+                <h1>Users</h1>
                 <div class="user-info">
                     <span id="userName">Loading...</span>
                     <span class="role-badge" id="userRole">...</span>
@@ -128,6 +165,7 @@
             
             <div class="users-actions">
                 <a href="/signup" class="add-user-btn">Add New User</a>
+                <button id="clearFiltersBtn" class="clear-filters-btn">Clear Filters</button>
             </div>
             
             <div class="connected-users-section">
@@ -148,10 +186,31 @@
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
+                        <tr class="filter-row">
+                            <th><input type="text" class="filter-input" id="nameFilter" placeholder="Filter by name"></th>
+                            <th><input type="text" class="filter-input" id="emailFilter" placeholder="Filter by email"></th>
+                            <th>
+                                <select class="filter-input" id="roleFilter">
+                                    <option value="">All roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="supervisor">Supervisor</option>
+                                    <option value="employee">Employee</option>
+                                </select>
+                            </th>
+                            <th>
+                                <select class="filter-input" id="connectedFilter">
+                                    <option value="">All</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </th>
+                            <th><input type="date" class="filter-input" id="dateFilter"></th>
+                            <th></th>
+                        </tr>
                     </thead>
                     <tbody id="usersTableBody">
                         <tr>
-                            <td colspan="5">Loading users...</td>
+                            <td colspan="6">Loading users...</td>
                         </tr>
                     </tbody>
                 </table>

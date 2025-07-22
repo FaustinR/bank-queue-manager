@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load connected users
     loadConnectedUsers();
     
+    // Set up filters
+    setupFilters();
+    
     // Modal functionality
     const modal = document.getElementById('deleteModal');
     const cancelDelete = document.getElementById('cancelDelete');
@@ -34,6 +37,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Store all users for filtering
+let allUsers = [];
 
 // Function to load connected users
 function loadConnectedUsers() {
@@ -118,19 +124,18 @@ async function fetchUserInfo() {
                     }
                 });
                 
-                // Change "Manage Users" to "Users"
+                // Change "Manage Users" to "Users" if needed
                 const usersLink = document.querySelector('a[href="/users"]');
                 if (usersLink) {
-                    // Find the text node (which contains "Manage Users")
-                    for (let i = 0; i < usersLink.childNodes.length; i++) {
-                        if (usersLink.childNodes[i].nodeType === Node.TEXT_NODE) {
-                            usersLink.childNodes[i].textContent = ' Users';
-                            break;
-                        }
+                    // Find the span element that contains the text
+                    const spanElement = usersLink.querySelector('span');
+                    if (spanElement) {
+                        spanElement.textContent = ' Users';
                     }
                 }
                 
-                // Also change the page title
+                // The page title is already set to 'Users' in the HTML
+                // This code is kept for backward compatibility
                 const pageTitle = document.querySelector('.content-header h1');
                 if (pageTitle && pageTitle.textContent === 'Manage Users') {
                     pageTitle.textContent = 'Users';
@@ -162,7 +167,10 @@ async function fetchUsers() {
         const data = await response.json();
         
         if (response.ok && data.users) {
-            displayUsers(data.users);
+            // Store all users for filtering
+            allUsers = data.users;
+            // Display users (apply any active filters)
+            applyFilters();
         } else {
             document.getElementById('usersTableBody').innerHTML = 
                 `<tr><td colspan="6">Error loading users: ${data.message || 'Unknown error'}</td></tr>`;
@@ -286,4 +294,85 @@ async function deleteUser(userId) {
         console.error('Error deleting user:', error);
         alert('Error deleting user. Please try again.');
     }
+}
+
+// Set up filter event listeners
+function setupFilters() {
+    // Get filter elements
+    const nameFilter = document.getElementById('nameFilter');
+    const emailFilter = document.getElementById('emailFilter');
+    const roleFilter = document.getElementById('roleFilter');
+    const connectedFilter = document.getElementById('connectedFilter');
+    const dateFilter = document.getElementById('dateFilter');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    
+    // Add event listeners for each filter
+    nameFilter.addEventListener('input', applyFilters);
+    emailFilter.addEventListener('input', applyFilters);
+    roleFilter.addEventListener('change', applyFilters);
+    connectedFilter.addEventListener('change', applyFilters);
+    dateFilter.addEventListener('change', applyFilters);
+    
+    // Add event listener for clear filters button
+    clearFiltersBtn.addEventListener('click', clearFilters);
+}
+
+// Clear all filters
+function clearFilters() {
+    // Reset filter inputs
+    document.getElementById('nameFilter').value = '';
+    document.getElementById('emailFilter').value = '';
+    document.getElementById('roleFilter').value = '';
+    document.getElementById('connectedFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    
+    // Apply filters (will show all users since filters are cleared)
+    applyFilters();
+}
+
+// Apply filters to the users list
+function applyFilters() {
+    // Get filter values
+    const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
+    const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
+    const roleFilter = document.getElementById('roleFilter').value;
+    const connectedFilter = document.getElementById('connectedFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    // Filter users based on filter values
+    const filteredUsers = allUsers.filter(user => {
+        // Name filter
+        const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+        if (nameFilter && !fullName.includes(nameFilter)) {
+            return false;
+        }
+        
+        // Email filter
+        if (emailFilter && !user.email.toLowerCase().includes(emailFilter)) {
+            return false;
+        }
+        
+        // Role filter
+        if (roleFilter && user.role !== roleFilter) {
+            return false;
+        }
+        
+        // Connected filter
+        if (connectedFilter && (user.connected || 'no') !== connectedFilter) {
+            return false;
+        }
+        
+        // Date filter
+        if (dateFilter) {
+            const userDate = new Date(user.createdAt).toISOString().split('T')[0];
+            if (userDate !== dateFilter) {
+                return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    // Display filtered users
+    displayUsers(filteredUsers);
 }

@@ -36,14 +36,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
                     
-                    // Change "Manage Users" to "Users"
+                    // We've already changed "Manage Users" to "Users" in the HTML
+                    // This code is kept for backward compatibility with any pages that might still have "Manage Users"
                     usersLinks.forEach(link => {
-                        // Find the text node (which contains "Manage Users")
-                        for (let i = 0; i < link.childNodes.length; i++) {
-                            if (link.childNodes[i].nodeType === Node.TEXT_NODE) {
-                                link.childNodes[i].textContent = ' Users';
-                                break;
-                            }
+                        // Find the span element that contains the text
+                        const spanElement = link.querySelector('span');
+                        if (spanElement) {
+                            spanElement.textContent = ' Users';
                         }
                     });
                 }
