@@ -29,7 +29,12 @@ html::-webkit-scrollbar {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(0.9); /* Added 10% zoom out */
+}
+
+/* Specific container style for signup page */
+.signup-container {
+    transform: translate(-50%, -50%) scale(1.0); /* Reset the scale for signup container */
 }
 
 .auth-card {
@@ -41,7 +46,7 @@ html::-webkit-scrollbar {
 
 /* Specific style for login card */
 .auth-card #loginForm {
-    min-height: 380px; /* Increase the height of the login form to accommodate counter selection */
+    min-height: 280px; /* Reduced height for better visibility on smaller screens */
 }
 
 /* Style for counter dropdown */
@@ -51,30 +56,33 @@ html::-webkit-scrollbar {
     font-weight: 500;
 }
 
-/* Make login form inputs taller */
+/* Make login form inputs more compact */
 .auth-card #loginForm input {
-    padding: 15px;
-    font-size: 16px;
+    padding: 10px;
+    font-size: 15px;
 }
 
 .signup-card {
     max-width: 550px;
     max-height: 95vh; /* Limit height to prevent scrollbar */
+    transform: scale(1.1); /* 10% zoom in for signup page */
+    transform-origin: center top; /* Keep the top centered */
+    margin-bottom: 30px; /* Add some margin to account for increased size */
 }
 
 .auth-header {
     text-align: center;
-    padding: 30px 30px 20px;
+    padding: 20px 30px 15px;
     background: linear-gradient(135deg, #2c5aa0, #1e3d6f);
     color: white;
 }
 
 .auth-logo {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     border: 3px solid white;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .auth-header h1 {
@@ -90,19 +98,19 @@ html::-webkit-scrollbar {
 }
 
 .auth-body {
-    padding: 30px;
+    padding: 20px;
 }
 
-/* Increase spacing for login form */
+/* Reduce spacing for login form */
 .auth-card #loginForm .form-group {
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
-/* Add more space before the login button and make it taller */
+/* Reduce space before the login button and make it more compact */
 .auth-card #loginForm .auth-button {
-    margin-top: 30px;
-    padding: 18px;
-    font-size: 18px;
+    margin-top: 15px;
+    padding: 12px;
+    font-size: 16px;
 }
 
 .form-group {
@@ -217,7 +225,7 @@ input:focus, select:focus {
 
 .auth-footer {
     text-align: center;
-    padding: 15px;
+    padding: 10px;
     border-top: 1px solid #eee;
     color: #666;
     font-size: 12px;
@@ -285,6 +293,7 @@ input:focus, select:focus {
     
     .auth-container {
         padding: 10px;
+        transform: translate(-50%, -50%) scale(0.9); /* Additional zoom out for very small screens */
     }
     
     .auth-header {
