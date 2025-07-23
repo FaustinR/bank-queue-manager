@@ -415,6 +415,32 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Endpoint to manually refresh counter staff information
+app.get('/api/refresh-counters', async (req, res) => {
+  try {
+    // Get updated counter staff information
+    const staffInfo = await getCounterStaffInfo();
+    
+    // Create a deep copy of the queues to avoid reference issues
+    const queuesCopy = {};
+    Object.keys(queues).forEach(key => {
+      queuesCopy[key] = [...queues[key]];
+    });
+    
+    // Emit update to all clients
+    io.emit('queueUpdate', { 
+      queues: queuesCopy, 
+      counters, 
+      counterStaff: staffInfo.counterStaff,
+      counterStaffIds: staffInfo.counterStaffIds
+    });
+    
+    res.json({ success: true, counterStaff: staffInfo.counterStaff });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // No longer needed - server restart ID is accessed directly via global variable
 
 // API endpoint to get counter staff information
@@ -655,42 +681,40 @@ app.post('/api/counter/:id/complete', async (req, res) => {
 // Function to get counter staff information
 async function getCounterStaffInfo() {
   try {
-    // Get counter staff information directly from Counter model
-    const Counter = require('./models/Counter');
-    const countersWithStaff = await Counter.find({ staffName: { $ne: null } })
-      .select('counterId staffName staffId');
+    // First, get all users with assigned counters (including admins)
+    const usersWithCounters = await User.find({ counter: { $ne: null } })
+      .select('_id firstName lastName counter role connected');
     
     // Create maps of counter ID to staff name and staff ID
     const staffMap = {};
     const staffIdMap = {};
     
-    countersWithStaff.forEach(counter => {
-      // Make sure the counter ID is stored as a string
-      const counterId = counter.counterId.toString();
-      staffMap[counterId] = counter.staffName;
-      if (counter.staffId) {
-        staffIdMap[counterId] = counter.staffId.toString();
-      }
-    });
+    // Process all users with counter assignments
+    for (const user of usersWithCounters) {
+      const counterId = user.counter.toString();
+      const fullName = `${user.firstName} ${user.lastName}`;
+      
+      // Add to staff maps
+      staffMap[counterId] = fullName;
+      staffIdMap[counterId] = user._id.toString();
+      
+      // Update the Counter model to ensure it's in sync
+      await Counter.findOneAndUpdate(
+        { counterId: parseInt(counterId) },
+        { 
+          staffId: user._id,
+          staffName: fullName
+        },
+        { upsert: true }
+      );
+    }
     
-    // As a fallback, also check User model for any users with assigned counters
-    // that might not be in the Counter model yet
-    const counterStaff = await User.find({ counter: { $ne: null } })
-      .select('_id firstName lastName counter');
-    
-    counterStaff.forEach(staff => {
-      // Make sure the counter is stored as a string
-      const counterId = staff.counter.toString();
-      // Only add if not already in the map
-      if (!staffMap[counterId]) {
-        staffMap[counterId] = `${staff.firstName} ${staff.lastName}`;
-      }
-      // Always add staff ID
-      staffIdMap[counterId] = staff._id.toString();
-    });
+    // Log the staff map for debugging
+    console.log('Counter staff map:', staffMap);
     
     return { counterStaff: staffMap, counterStaffIds: staffIdMap };
   } catch (error) {
+    console.error('Error in getCounterStaffInfo:', error);
     return { counterStaff: {}, counterStaffIds: {} };
   }
 }
@@ -1078,11 +1102,16 @@ async function createDefaultAdmin() {
 // Function to log out all non-admin users (disabled - counter is now optional)
 async function logoutNonAdminUsers() {
   try {
-    // Counter is now optional for all users, so we don't need to log out non-admin users
-    console.log('Counter is optional for all users - no users logged out on restart');
+    // Set connected status to 'no' for non-admin users
+    await User.updateMany({ role: { $ne: 'admin' } }, { $set: { connected: 'no' } });
+    
+    // For admin users, just update their connected status but keep their counter assignments
+    await User.updateMany({ role: 'admin' }, { $set: { connected: 'yes' } });
+    
+    console.log('Non-admin users logged out, admin users kept connected');
     return;
   } catch (error) {
-    // Error handling without logging
+    console.error('Error in logoutNonAdminUsers:', error);
   }
 }
 

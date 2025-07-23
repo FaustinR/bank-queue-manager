@@ -1,20 +1,44 @@
 // Store all tickets for client-side filtering
 let allTickets = [];
 
+// Store counter staff information
+window.counterStaff = {};
+
 // Initialize socket connection if available
 let socket;
 if (typeof io !== 'undefined') {
     socket = io();
     
     // Listen for queue updates to refresh ticket history
-    socket.on('queueUpdate', function() {
+    socket.on('queueUpdate', async function(data) {
+        // Update counter staff from the data if available
+        if (data && data.counterStaff) {
+            window.counterStaff = data.counterStaff;
+        } else {
+            // Otherwise fetch it
+            await fetchCounterStaff();
+        }
         fetchTicketHistory();
     });
     
     // Listen for specific ticket updates
-    socket.on('ticketUpdated', function() {
+    socket.on('ticketUpdated', async function() {
+        await fetchCounterStaff();
         fetchTicketHistory();
     });
+}
+
+// Function to fetch counter staff information
+async function fetchCounterStaff() {
+    try {
+        const response = await fetch('/api/counters/staff');
+        if (response.ok) {
+            const data = await response.json();
+            window.counterStaff = data.counterStaff || {};
+        }
+    } catch (error) {
+        console.error('Error fetching counter staff:', error);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -24,10 +48,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('embedded-history');
     }
     
-    fetchTicketHistory();
+    // Fetch counter staff information first
+    fetchCounterStaff().then(() => {
+        // Then fetch ticket history
+        fetchTicketHistory();
+    });
     
     // Set up auto-refresh every 30 seconds
-    const refreshInterval = setInterval(fetchTicketHistory, 30000);
+    const refreshInterval = setInterval(async () => {
+        await fetchCounterStaff();
+        fetchTicketHistory();
+    }, 30000);
     
     // Clean up interval when page is unloaded
     window.addEventListener('beforeunload', function() {
@@ -35,11 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     const refreshBtn = document.getElementById('refreshBtn');
-    refreshBtn.addEventListener('click', function() {
+    refreshBtn.addEventListener('click', async function() {
         // Add active class to show button is clicked
         refreshBtn.classList.add('active');
         
         // Fetch data
+        await fetchCounterStaff();
         fetchTicketHistory();
         
         // Remove active class after a short delay
@@ -78,6 +110,11 @@ function setupColumnFilters() {
     
     // Counter filter
     document.getElementById('counterFilter').addEventListener('input', function() {
+        filterTickets();
+    });
+    
+    // Teller filter
+    document.getElementById('tellerFilter').addEventListener('input', function() {
         filterTickets();
     });
     
@@ -145,11 +182,17 @@ function sortTickets(columnIndex, direction) {
                 valueA = a.counterId || 0;
                 valueB = b.counterId || 0;
                 break;
-            case 4: // Status
+            case 4: // Teller
+                valueA = window.counterStaff && window.counterStaff[a.counterId] ? 
+                    window.counterStaff[a.counterId].toLowerCase() : '-';
+                valueB = window.counterStaff && window.counterStaff[b.counterId] ? 
+                    window.counterStaff[b.counterId].toLowerCase() : '-';
+                break;
+            case 5: // Status
                 valueA = a.status.toLowerCase();
                 valueB = b.status.toLowerCase();
                 break;
-            case 5: // Created
+            case 6: // Created
                 valueA = new Date(a.createdAt);
                 valueB = new Date(b.createdAt);
                 break;
@@ -174,6 +217,7 @@ function filterTickets() {
     const customerFilter = document.getElementById('customerFilter').value.toLowerCase();
     const serviceFilter = document.getElementById('serviceColumnFilter').value.toLowerCase();
     const counterFilter = document.getElementById('counterFilter').value.toLowerCase();
+    const tellerFilter = document.getElementById('tellerFilter').value.toLowerCase();
     const statusFilter = document.getElementById('statusColumnFilter').value.toLowerCase();
     const createdFilter = document.getElementById('createdFilter').value.toLowerCase();
     
@@ -207,6 +251,15 @@ function filterTickets() {
     if (counterFilter) {
         filteredTickets = filteredTickets.filter(ticket => 
             String(ticket.counterId).includes(counterFilter));
+    }
+    
+    // Filter by teller
+    if (tellerFilter) {
+        filteredTickets = filteredTickets.filter(ticket => {
+            const tellerName = window.counterStaff && window.counterStaff[ticket.counterId] ? 
+                window.counterStaff[ticket.counterId].toLowerCase() : '-';
+            return tellerName.includes(tellerFilter);
+        });
     }
     
     // Filter by status
@@ -246,7 +299,7 @@ async function fetchTicketHistory() {
         }
     } catch (error) {
         console.error('Error fetching ticket history:', error);
-        document.getElementById('ticketTable').innerHTML = '<tr><td colspan="8">Error loading ticket data</td></tr>';
+        document.getElementById('ticketTable').innerHTML = '<tr><td colspan="9">Error loading ticket data</td></tr>';
     }
 }
 
@@ -255,7 +308,7 @@ function displayTickets(tickets) {
     tableBody.innerHTML = '';
     
     if (tickets.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8">No tickets found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9">No tickets found</td></tr>';
         return;
     }
     
@@ -357,11 +410,18 @@ function displayTickets(tickets) {
             serviceDisplay = ticket.customService;
         }
         
+        // Get teller name for this counter
+        let tellerName = '-';
+        if (window.counterStaff && window.counterStaff[ticket.counterId]) {
+            tellerName = window.counterStaff[ticket.counterId];
+        }
+        
         row.innerHTML = `
             <td>${ticket.ticketNumber}</td>
             <td>${ticket.customerName}</td>
             <td>${serviceDisplay}</td>
             <td>${ticket.counterId || '-'}</td>
+            <td>${tellerName}</td>
             <td>${statusHtml}</td>
             <td>${createdDate}</td>
             <td>${waitTime}</td>

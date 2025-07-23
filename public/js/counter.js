@@ -38,6 +38,50 @@ if (isInIframe) {
 
 document.getElementById('counterTitle').textContent = `Counter ${counterId} Management`;
 
+// Variable to track if this counter belongs to the current user
+let isCurrentUserCounter = false;
+
+// Check if this counter belongs to the current user
+async function checkCurrentUserCounter() {
+    try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.user && data.user.counter) {
+                // Check if the user's counter matches this counter (convert both to strings for comparison)
+                isCurrentUserCounter = String(data.user.counter) === String(counterId);
+                console.log('User counter:', data.user.counter, 'Current counter:', counterId, 'Match:', isCurrentUserCounter);
+                
+                // Update the next button based on whether this is the current user's counter
+                const nextBtn = document.getElementById('nextBtn');
+                if (isCurrentUserCounter) {
+                    // This is the user's counter, enable the button (unless there are no customers)
+                    const queueLength = document.querySelectorAll('#queuePreview .queue-table tbody tr').length;
+                    nextBtn.disabled = queueLength === 0;
+                    nextBtn.title = queueLength === 0 ? 'No customers waiting' : 'Call next customer';
+                    console.log('This is your counter - button enabled if queue has customers');
+                } else {
+                    // Not the user's counter, disable the button
+                    nextBtn.disabled = true;
+                    nextBtn.title = 'You can only call customers for your assigned counter';
+                    console.log('Not your counter - button disabled');
+                }
+            } else {
+                // User doesn't have an assigned counter
+                const nextBtn = document.getElementById('nextBtn');
+                nextBtn.disabled = true;
+                nextBtn.title = 'You need to be assigned to this counter to call customers';
+                console.log('No counter assigned - button disabled');
+            }
+        }
+    } catch (error) {
+        console.error('Error checking current user counter:', error);
+    }
+}
+
+// Check on page load
+checkCurrentUserCounter();
+
 function updateCounter(data) {
     const { queues, counters } = data;
     const counter = counters[counterId];
@@ -63,8 +107,17 @@ function updateCounter(data) {
             document.getElementById('nextBtn').style.display = 'inline-block';
             document.getElementById('completeBtn').style.display = 'none';
             
-            // Enable/disable next button based on queue length
-            document.getElementById('nextBtn').disabled = queue.length === 0;
+            // Enable/disable next button based on queue length and if it's the current user's counter
+            const nextBtn = document.getElementById('nextBtn');
+            if (!isCurrentUserCounter) {
+                nextBtn.disabled = true;
+                nextBtn.title = 'You can only call customers for your assigned counter';
+                console.log('updateCounter: Not your counter - button disabled');
+            } else {
+                nextBtn.disabled = queue.length === 0;
+                nextBtn.title = queue.length === 0 ? 'No customers waiting' : 'Call next customer';
+                console.log('updateCounter: Your counter - button ' + (queue.length === 0 ? 'disabled (no customers)' : 'enabled'));
+            }
         }
     }
     
@@ -106,9 +159,26 @@ function updateCounter(data) {
 
 document.getElementById('nextBtn').addEventListener('click', async () => {
     try {
-        await fetch(`/api/counter/${counterId}/next`, {
-            method: 'POST'
-        });
+        // Double-check that this is the user's assigned counter
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.user && data.user.counter === counterId) {
+                // Get current user info to include in the request
+                const userName = `${data.user.firstName} ${data.user.lastName}`;
+                
+                // Call next customer with teller name
+                await fetch(`/api/counter/${counterId}/next`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tellerName: userName })
+                });
+            } else {
+                alert('You can only call customers for your assigned counter');
+            }
+        }
     } catch (error) {
         console.error('Error calling next customer:', error);
     }
