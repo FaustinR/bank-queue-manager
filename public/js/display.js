@@ -61,6 +61,12 @@ function showCounterDetails(counterId, counterName) {
 
 // Function to show counter iframe
 function showCounterIframe(counterId, counterName) {
+    // Only show counter iframe if we're in an iframe (embedded)
+    const isInIframe = window.self !== window.top;
+    if (!isInIframe) {
+        return; // Do nothing if not in iframe
+    }
+    
     const counterContainer = document.getElementById('counterContainer');
     const counterFrame = document.getElementById('counterFrame');
     const counterTitle = document.getElementById('counterTitle');

@@ -271,6 +271,16 @@ body {
     overflow: hidden;
 }
 
+/* Hide counter management when not in iframe */
+body:not(.embedded-display) .counter-container {
+    display: none !important;
+}
+
+/* Disable counter click when not in iframe */
+body:not(.embedded-display) .counter {
+    cursor: default;
+}
+
 .counter-header {
     display: flex;
     justify-content: space-between;

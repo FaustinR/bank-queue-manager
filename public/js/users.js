@@ -169,8 +169,8 @@ function displayUsers(users) {
             row.classList.add('current-user-row');
         }
         
-        // Format date
-        const createdDate = new Date(user.createdAt).toLocaleDateString();
+        // Format date with time
+        const createdDate = new Date(user.createdAt).toLocaleString();
         
         // Role with styling
         const roleClass = `role-${user.role}`;
