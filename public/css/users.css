@@ -193,6 +193,23 @@
     padding: 2px 6px;
 }
 
+.disconnect-btn {
+    display: inline-block;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.disconnect-btn:hover {
+    background-color: #c82333;
+}
+
 /* Current user styles */
 .connected-user-card.current-user {
     background-color: #d1e6ff !important; /* Increased opacity blue background */

@@ -1,3 +1,26 @@
+// Function to disconnect a user
+function disconnectUser(userId) {
+    if (!userId) return;
+    
+    fetch('/api/users/mark-disconnected', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload connected users
+            loadConnectedUsers();
+        }
+    })
+    .catch(error => {
+        console.error('Error disconnecting user:', error);
+    });
+}
+
 // Function to load connected users
 function loadConnectedUsers() {
     fetch('/api/users/connected')
@@ -38,14 +61,29 @@ function loadConnectedUsers() {
                         // Add "You" flag for current user
                         const youFlag = isCurrentUser ? '<span class="you-flag">You</span>' : '';
                         
+                        // Add disconnect button for admin users (except for themselves)
+                        const disconnectBtn = (!isCurrentUser && window.location.pathname === '/users') ? 
+                            `<button class="disconnect-btn" data-user-id="${user._id}">Disconnect</button>` : '';
+                        
                         userCard.innerHTML = `
                             <h3>${user.firstName} ${user.lastName} ${youFlag}</h3>
                             <p>${user.email}</p>
                             <span class="user-role role-${user.role}">${user.role}</span>
                             ${counterBadge}
+                            ${disconnectBtn}
                         `;
                         
                         connectedUsersList.appendChild(userCard);
+                        
+                        // Add event listener for disconnect button
+                        const disconnectButton = userCard.querySelector('.disconnect-btn');
+                        if (disconnectButton) {
+                            disconnectButton.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                const userId = this.getAttribute('data-user-id');
+                                disconnectUser(userId);
+                            });
+                        }
                     });
                 } else {
                     // If no connected users but we have a current user ID, show a message

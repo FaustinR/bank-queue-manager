@@ -1099,16 +1099,16 @@ async function createDefaultAdmin() {
   }
 }
 
-// Function to log out all non-admin users (disabled - counter is now optional)
+// Function to log out all users on server restart
 async function logoutNonAdminUsers() {
   try {
-    // Set connected status to 'no' for non-admin users
-    await User.updateMany({ role: { $ne: 'admin' } }, { $set: { connected: 'no' } });
+    // Set connected status to 'no' for all users
+    await User.updateMany({}, { $set: { connected: 'no' } });
     
-    // For admin users, just update their connected status but keep their counter assignments
-    await User.updateMany({ role: 'admin' }, { $set: { connected: 'yes' } });
+    // Keep counter assignments for admin users but don't mark them as connected
+    // They will be marked as connected when they actually connect
     
-    console.log('Non-admin users logged out, admin users kept connected');
+    console.log('All users marked as disconnected on server restart');
     return;
   } catch (error) {
     console.error('Error in logoutNonAdminUsers:', error);

@@ -26,10 +26,6 @@ router.get('/', isAdmin, async (req, res) => {
 // Get connected users (authenticated users only)
 router.get('/connected', isAuthenticated, async (req, res) => {
   try {
-    
-    // Debug: Check how many users have connected='yes'
-    const connectedCount = await User.countDocuments({ connected: 'yes' });
-    
     // Always mark the current user as connected
     if (req.session.userId) {
       await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
@@ -74,6 +70,32 @@ router.post('/mark-connected', isAuthenticated, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Mark connected error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Mark user as disconnected (admin only)
+router.post('/mark-disconnected', isAdmin, async (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'No user ID provided' });
+    }
+    
+    // Update user's connected status
+    await User.findByIdAndUpdate(userId, { connected: 'no' });
+    console.log(`Marked user ${userId} as disconnected via API`);
+    
+    // Emit user disconnection event using Socket.io
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('userConnectionUpdate', { userId, connected: 'no' });
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark disconnected error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
