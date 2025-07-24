@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const recipientSelect = document.getElementById('recipient');
     const inboxNavItems = document.querySelectorAll('.inbox-nav li');
     const unreadCountBadge = document.getElementById('unreadCount');
+    const deleteChatBtn = document.getElementById('deleteChatBtn');
     
     let currentFolder = 'inbox';
     let currentMessages = [];
@@ -87,6 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     closeModal.addEventListener('click', closeComposeModal);
     cancelCompose.addEventListener('click', closeComposeModal);
     composeForm.addEventListener('submit', sendMessage);
+    deleteChatBtn.addEventListener('click', deleteSelectedChats);
     
     inboxNavItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -232,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const groupHeader = document.createElement('div');
             groupHeader.className = `message-group-header ${group.hasUnread ? 'has-unread' : ''}`;
             groupHeader.innerHTML = `
+                <input type="checkbox" class="chat-checkbox" data-person-id="${personId}">
                 <div class="group-name">${group.name}</div>
                 <div class="group-count">${messages.length} message${messages.length > 1 ? 's' : ''}</div>
                 <div class="group-toggle"><i class="fas fa-chevron-right"></i></div>
@@ -277,6 +280,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add group container to message list
             messageList.appendChild(groupContainer);
+            
+            // Add event listener to checkbox
+            const checkbox = groupHeader.querySelector('.chat-checkbox');
+            checkbox.addEventListener('change', updateDeleteButtonVisibility);
             
             // Add click event to toggle group
             groupHeader.addEventListener('click', () => {
@@ -736,6 +743,101 @@ document.addEventListener('DOMContentLoaded', function() {
         loadMessages();
         updateUnreadCount();
     }, 30000);
+    
+    // Update delete button visibility based on checkbox selection
+    function updateDeleteButtonVisibility() {
+        const checkedBoxes = document.querySelectorAll('.chat-checkbox:checked');
+        if (checkedBoxes.length > 0) {
+            deleteChatBtn.style.display = 'block';
+        } else {
+            deleteChatBtn.style.display = 'none';
+        }
+    }
+    
+    // Delete selected chats
+    function deleteSelectedChats() {
+        const checkedBoxes = document.querySelectorAll('.chat-checkbox:checked');
+        if (checkedBoxes.length === 0) return;
+        
+        const personIds = Array.from(checkedBoxes).map(cb => cb.dataset.personId);
+        
+        // Create confirmation dialog
+        const confirmDialog = document.createElement('div');
+        confirmDialog.className = 'custom-confirm';
+        confirmDialog.innerHTML = `
+            <div class="custom-confirm-content">
+                <div class="custom-confirm-header">
+                    <h3>Confirm Deletion</h3>
+                </div>
+                <div class="custom-confirm-body">
+                    <p>Are you sure you want to delete ${checkedBoxes.length} chat${checkedBoxes.length > 1 ? 's' : ''}?</p>
+                    <p>This will delete all messages in the selected chat${checkedBoxes.length > 1 ? 's' : ''}.</p>
+                </div>
+                <div class="custom-confirm-footer">
+                    <button class="btn-cancel">Cancel</button>
+                    <button class="btn-confirm">Delete</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(confirmDialog);
+        
+        const cancelBtn = confirmDialog.querySelector('.btn-cancel');
+        const confirmBtn = confirmDialog.querySelector('.btn-confirm');
+        
+        cancelBtn.addEventListener('click', () => {
+            confirmDialog.remove();
+        });
+        
+        confirmBtn.addEventListener('click', () => {
+            confirmDialog.remove();
+            performChatDeletion(personIds);
+        });
+        
+        setTimeout(() => {
+            confirmDialog.classList.add('show');
+        }, 10);
+    }
+    
+    // Perform the actual chat deletion
+    function performChatDeletion(personIds) {
+        fetch('/api/messages/delete-chats', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ personIds, folder: currentFolder })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload messages
+                loadMessages();
+                
+                // Clear message view
+                selectedMessageId = null;
+                messageView.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-envelope"></i>
+                        <p>Select a message to view</p>
+                    </div>
+                `;
+                
+                // Update unread count
+                updateUnreadCount();
+                
+                // Hide delete button
+                deleteChatBtn.style.display = 'none';
+                
+                window.notifications.success('Success', `${personIds.length} chat${personIds.length > 1 ? 's' : ''} deleted successfully`);
+            } else {
+                window.notifications.error('Error', 'Failed to delete chats');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting chats:', error);
+            window.notifications.error('Error', 'Error deleting chats. Please try again.');
+        });
+    }
     
     // Debug function to create a test message (can be called from console)
     window.createTestMessage = function() {

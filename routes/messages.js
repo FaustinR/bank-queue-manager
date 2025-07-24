@@ -250,6 +250,55 @@ router.delete('/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// Delete entire chats
+router.delete('/delete-chats', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const { personIds, folder } = req.body;
+    
+    if (!personIds || !Array.isArray(personIds)) {
+      return res.status(400).json({ message: 'Person IDs array is required' });
+    }
+    
+    let deletedCount = 0;
+    
+    for (const personId of personIds) {
+      let query;
+      
+      // Handle system messages
+      if (personId.startsWith('system-')) {
+        const systemSender = personId.replace('system-', '').replace(/-/g, ' ');
+        query = {
+          recipient: userId,
+          isSystemMessage: true,
+          systemSender: { $regex: new RegExp(systemSender, 'i') }
+        };
+      } else {
+        // Regular user messages
+        if (folder === 'inbox') {
+          query = {
+            recipient: userId,
+            sender: personId
+          };
+        } else {
+          query = {
+            sender: userId,
+            recipient: personId
+          };
+        }
+      }
+      
+      const result = await Message.deleteMany(query);
+      deletedCount += result.deletedCount;
+    }
+    
+    res.json({ success: true, deletedCount });
+  } catch (error) {
+    console.error('Error deleting chats:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all users for message recipients
 router.get('/users/list', isAuthenticated, async (req, res) => {
   try {

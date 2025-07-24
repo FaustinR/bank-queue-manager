@@ -160,7 +160,21 @@ function displayUsers(users) {
         return;
     }
     
-    users.forEach(user => {
+    // Sort users: current user first, then alphabetically by name
+    const sortedUsers = users.sort((a, b) => {
+        const aIsCurrent = String(a._id) === String(currentUserId);
+        const bIsCurrent = String(b._id) === String(currentUserId);
+        
+        if (aIsCurrent && !bIsCurrent) return -1;
+        if (!aIsCurrent && bIsCurrent) return 1;
+        
+        // Both are not current user or both are current user, sort by name
+        const aName = `${a.firstName} ${a.lastName}`.toLowerCase();
+        const bName = `${b.firstName} ${b.lastName}`.toLowerCase();
+        return aName.localeCompare(bName);
+    });
+    
+    sortedUsers.forEach(user => {
         const row = document.createElement('tr');
         
         // Check if this is the current user

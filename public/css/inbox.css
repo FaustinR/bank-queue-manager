@@ -37,6 +37,26 @@
     background-color: #3e8e41;
 }
 
+.delete-chat-btn {
+    margin: 0 15px 20px;
+    padding: 10px 15px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.delete-chat-btn:hover {
+    background-color: #d32f2f;
+}
+
 .inbox-nav {
     list-style: none;
     padding: 0;
@@ -103,6 +123,11 @@
     justify-content: space-between;
     font-weight: 500;
     border-bottom: 1px solid #e0e0e0;
+}
+
+.chat-checkbox {
+    margin-right: 10px;
+    cursor: pointer;
 }
 
 .message-group-header:hover {
