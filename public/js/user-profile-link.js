@@ -12,15 +12,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Create role icon
                     const roleIcon = document.createElement('span');
                     roleIcon.className = `user-role-icon ${data.user.role}`;
+                    roleIcon.style.display = 'inline-block';
+                    roleIcon.style.visibility = 'visible';
                     
-                    // Set icon based on role
+                    // Set icon based on role with cross-browser compatible text
                     if (data.user.role === 'admin') {
-                        roleIcon.textContent = '👑'; // Crown for admin
+                        roleIcon.textContent = 'A'; // A for admin
+                        roleIcon.style.backgroundColor = '#dc3545';
                     } else if (data.user.role === 'supervisor') {
-                        roleIcon.textContent = '⭐'; // Star for supervisor
+                        roleIcon.textContent = 'S'; // S for supervisor
+                        roleIcon.style.backgroundColor = '#fd7e14';
                     } else {
-                        roleIcon.textContent = '👤'; // Person for employee
+                        roleIcon.textContent = 'E'; // E for employee
+                        roleIcon.style.backgroundColor = '#20c997';
                     }
+                    roleIcon.style.fontWeight = 'bold';
+                    roleIcon.style.fontSize = '12px';
+                    roleIcon.style.color = 'white';
+                    roleIcon.style.width = '24px';
+                    roleIcon.style.height = '24px';
+                    roleIcon.style.borderRadius = '50%';
+                    roleIcon.style.textAlign = 'center';
+                    roleIcon.style.lineHeight = '24px';
+                    roleIcon.style.marginRight = '8px';
+                    roleIcon.style.fontSize = '16px';
+                    roleIcon.style.verticalAlign = 'middle';
                     
                     // Get the current text content - extract just the name without counter info
                     let userName = userNameElement.textContent;

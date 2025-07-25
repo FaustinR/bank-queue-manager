@@ -190,12 +190,38 @@ body {
 }
 
 .role-badge {
-    background: #2c5aa0;
-    color: white;
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
     text-transform: capitalize;
+    color: white;
+    font-weight: bold;
+    display: inline-block;
+}
+
+/* Role badge classes for JavaScript */
+.role-badge.role-admin,
+#userRole.role-admin {
+    background: #dc3545 !important;
+    color: white !important;
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
+.role-badge.role-supervisor,
+#userRole.role-supervisor {
+    background: #fd7e14 !important;
+    color: white !important;
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
+.role-badge.role-employee,
+#userRole.role-employee {
+    background: #20c997 !important;
+    color: white !important;
+    display: inline-block !important;
+    visibility: visible !important;
 }
 
 .header-logout-btn {
