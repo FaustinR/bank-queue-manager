@@ -68,11 +68,11 @@ function loadConnectedUsers() {
                         // Add role badge
                         let roleBadge = '';
                         if (user.role === 'admin') {
-                            roleBadge = '<span class="user-role role-admin" style="background-color: #dc3545; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; margin-left: 8px; height: 18px; display: inline-flex; align-items: center;">Admin</span>';
+                            roleBadge = '<span class="user-role role-admin" style="background-color: #dc3545; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;">Admin</span>';
                         } else if (user.role === 'supervisor') {
-                            roleBadge = '<span class="user-role role-supervisor" style="background-color: #fd7e14; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; margin-left: 8px; height: 18px; display: inline-flex; align-items: center;">Supervisor</span>';
+                            roleBadge = '<span class="user-role role-supervisor" style="background-color: #fd7e14; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;">Supervisor</span>';
                         } else {
-                            roleBadge = '<span class="user-role role-employee" style="background-color: #20c997; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; margin-left: 8px; height: 18px; display: inline-flex; align-items: center;">Employee</span>';
+                            roleBadge = '<span class="user-role role-employee" style="background-color: #20c997; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;">Employee</span>';
                         }
                         
                         // Ensure counter badge has same height
@@ -81,9 +81,9 @@ function loadConnectedUsers() {
                         }
                         
                         userCard.innerHTML = `
-                            <h3>${user.firstName} ${user.lastName} ${youFlag}</h3>
-                            <p>${user.email}</p>
-                            <div style="display: flex; gap: 10px; align-items: baseline; margin-top: 8px;">
+                            <h3 style="text-align: left; margin: 0 0 5px 0;">${user.firstName} ${user.lastName} ${youFlag}</h3>
+                            <p style="text-align: left; margin: 0 0 8px 0;">${user.email}</p>
+                            <div style="display: flex; gap: 10px; align-items: baseline; margin-top: 8px; justify-content: flex-start;">
                                 ${roleBadge}
                                 ${counterBadge}
                             </div>

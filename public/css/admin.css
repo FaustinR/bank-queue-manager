@@ -197,6 +197,7 @@ body {
     color: white;
     font-weight: bold;
     display: inline-block;
+    background-color: red;
 }
 
 /* Role badge classes for JavaScript */
