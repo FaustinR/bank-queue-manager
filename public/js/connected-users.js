@@ -17,7 +17,7 @@ function disconnectUser(userId) {
         }
     })
     .catch(error => {
-        console.error('Error disconnecting user:', error);
+        // Error handling without logging
     });
 }
 

@@ -198,7 +198,6 @@ async function getCurrentUserCounter() {
         const data = await response.json();
         return data.counterId;
     } catch (error) {
-        console.error('Error getting current user counter:', error);
         return null;
     }
 }
@@ -594,7 +593,7 @@ async function openMessageModal(e) {
             }
         }
     } catch (error) {
-        console.error('Error checking current counter:', error);
+        // Error handling without logging
     }
     
     // Set form values
@@ -603,16 +602,18 @@ async function openMessageModal(e) {
     document.getElementById('counterNumber').value = counterId;
     document.getElementById('subject').value = `Message from Display Screen - Counter ${counterId}`;
     
-    // Get current user's email
-    const userEmail = await getCurrentUserEmail();
-    if (userEmail) {
-        document.getElementById('senderEmail').value = userEmail;
-    }
-    
-    // Try to get stored name from localStorage if available
-    const storedName = localStorage.getItem('senderName');
-    if (storedName) {
-        document.getElementById('senderName').value = storedName;
+    // Get teller's email and name from the server
+    try {
+        const response = await fetch(`/api/users/${tellerId}/basic`);
+        if (response.ok) {
+            const tellerData = await response.json();
+            document.getElementById('senderEmail').value = tellerData.email || '';
+            document.getElementById('senderName').value = `${tellerData.firstName || ''} ${tellerData.lastName || ''}`.trim();
+        }
+    } catch (error) {
+        // Fallback to teller name from button data
+        document.getElementById('senderEmail').value = '';
+        document.getElementById('senderName').value = tellerName || '';
     }
     
     // Show modal
@@ -624,16 +625,9 @@ function closeMessageModal() {
     const modal = document.getElementById('messageModal');
     modal.style.display = 'none';
     
-    // Don't reset email and name fields to preserve them for next time
+    // Reset the form completely since we're filling with teller info each time
     const form = document.getElementById('messageForm');
-    const senderEmail = form.senderEmail.value;
-    const senderName = form.senderName.value;
-    
     form.reset();
-    
-    // Restore email and name
-    form.senderEmail.value = senderEmail;
-    form.senderName.value = senderName;
 }
 
 function sendMessage(e) {
@@ -651,9 +645,7 @@ function sendMessage(e) {
         return;
     }
     
-    // Save email and name to localStorage for future use
-    localStorage.setItem('senderEmail', senderEmail);
-    localStorage.setItem('senderName', senderName);
+    // No need to save email and name since we're using teller info
     
     // Prepare message data
     const messageData = {
@@ -663,9 +655,6 @@ function sendMessage(e) {
         subject,
         content
     };
-    
-    // Log the data being sent for debugging
-    console.log('Sending message data:', messageData);
     
     // Send message using the display-to-teller endpoint
     fetch('/api/messages/display-to-teller', {
@@ -700,7 +689,6 @@ function sendMessage(e) {
         }
     })
     .catch(error => {
-        console.error('Error sending message:', error);
         window.notifications.error('Error', error.message || 'Error sending message. Please try again.');
     });
 }

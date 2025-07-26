@@ -456,6 +456,27 @@ app.get('/api/counters/staff', async (req, res) => {
   }
 });
 
+// API endpoint to get current user information
+app.get('/api/user/current', async (req, res) => {
+  try {
+    if (req.session && req.session.userId) {
+      const user = await User.findById(req.session.userId).select('firstName lastName email');
+      if (user) {
+        res.json({
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`
+        });
+      } else {
+        res.json({ email: '', name: '' });
+      }
+    } else {
+      res.json({ email: '', name: '' });
+    }
+  } catch (error) {
+    res.json({ email: '', name: '' });
+  }
+});
+
 // API endpoint to check if a counter is occupied
 app.get('/api/counters/:id/check', async (req, res) => {
   try {
@@ -709,12 +730,8 @@ async function getCounterStaffInfo() {
       );
     }
     
-    // Log the staff map for debugging
-    console.log('Counter staff map:', staffMap);
-    
     return { counterStaff: staffMap, counterStaffIds: staffIdMap };
   } catch (error) {
-    console.error('Error in getCounterStaffInfo:', error);
     return { counterStaff: {}, counterStaffIds: {} };
   }
 }
@@ -741,20 +758,18 @@ io.on('connection', async (socket) => {
   // Handle user authentication
   socket.on('authenticate', async (userId) => {
     if (userId) {
-      console.log(`User ${userId} authenticated via socket`); // Debug log
-      
+            
       // Store userId in socket for later reference
       socket.userId = userId;
       
       try {
         // Update user's connected status to 'yes'
         await User.findByIdAndUpdate(userId, { connected: 'yes' });
-        console.log(`Updated user ${userId} connected status to 'yes'`);
         
         // Emit user connection event
         io.emit('userConnectionUpdate', { userId, connected: 'yes' });
       } catch (error) {
-        console.error(`Error updating user ${userId} connected status:`, error);
+        // Error handling without logging
       }
     }
   });
@@ -767,12 +782,11 @@ io.on('connection', async (socket) => {
     try {
       // Update user's connected status to 'yes'
       await User.findByIdAndUpdate(userId, { connected: 'yes' });
-      console.log(`Updated session user ${userId} connected status to 'yes'`);
       
       // Emit user connection event
       io.emit('userConnectionUpdate', { userId, connected: 'yes' });
     } catch (error) {
-      console.error(`Error updating session user ${userId} connected status:`, error);
+      // Error handling without logging
     }
   }
   
@@ -785,13 +799,10 @@ io.on('connection', async (socket) => {
       
       // Only mark as disconnected if this was the last connection for this user
       if (connectedSockets.length === 0) {
-        console.log(`User ${socket.userId} disconnected (last connection)`); // Debug log
         await User.findByIdAndUpdate(socket.userId, { connected: 'no' });
         
         // Emit user disconnection event
         io.emit('userConnectionUpdate', { userId: socket.userId, connected: 'no' });
-      } else {
-        console.log(`User ${socket.userId} disconnected (has ${connectedSockets.length} other connections)`); // Debug log
       }
     }
   });
@@ -1108,10 +1119,9 @@ async function logoutNonAdminUsers() {
     // Keep counter assignments for admin users but don't mark them as connected
     // They will be marked as connected when they actually connect
     
-    console.log('All users marked as disconnected on server restart');
     return;
   } catch (error) {
-    console.error('Error in logoutNonAdminUsers:', error);
+    // Error handling without logging
   }
 }
 
@@ -1188,5 +1198,5 @@ server.listen(PORT, async () => {
   // Schedule periodic cleanup every 5 minutes
   setInterval(cleanupOrphanedCounters, 5 * 60 * 1000);
   
-  console.log(`Server started on port ${PORT} with restart ID: ${SERVER_RESTART_ID}`);
+  console.log(`Server started on port ${PORT}`);
 });

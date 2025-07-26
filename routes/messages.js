@@ -68,7 +68,6 @@ router.get('/current-counter', isAuthenticated, async (req, res) => {
     
     res.json({ counterId: user.counter });
   } catch (error) {
-    console.error('Error getting current counter:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -107,7 +106,6 @@ router.get('/unread-by-counter', async (req, res) => {
     
     res.json({ unreadByCounter });
   } catch (error) {
-    console.error('Error getting unread messages by counter:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -294,7 +292,6 @@ router.delete('/delete-chats', isAuthenticated, async (req, res) => {
     
     res.json({ success: true, deletedCount });
   } catch (error) {
-    console.error('Error deleting chats:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -376,17 +373,14 @@ router.post('/display-to-teller', async (req, res) => {
           });
         }
       } catch (socketError) {
-        console.error('Socket error:', socketError);
         // Continue even if socket notification fails
       }
       
       res.status(201).json({ message: 'Message sent successfully', messageId: newMessage._id });
     } catch (userError) {
-      console.error('User creation error:', userError);
       return res.status(400).json({ message: 'Error creating user: ' + userError.message });
     }
   } catch (error) {
-    console.error('Server error:', error);
     res.status(500).json({ message: 'Server error: ' + error.message });
   }
 });

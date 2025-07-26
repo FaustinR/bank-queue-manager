@@ -179,7 +179,7 @@ async function fetchUserInfo() {
             window.location.href = '/login';
         }
     } catch (error) {
-        console.error('Error fetching user info:', error);
+        // Error handling without logging
     }
 }
 
@@ -201,7 +201,7 @@ async function fetchStats() {
             updateServiceDistribution(data.serviceDistribution);
         }
     } catch (error) {
-        console.error('Error fetching statistics:', error);
+        // Error handling without logging
     }
 }
 

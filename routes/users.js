@@ -18,7 +18,6 @@ router.get('/', isAdmin, async (req, res) => {
     
     res.json({ users });
   } catch (error) {
-    console.error('Get users error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -38,11 +37,10 @@ router.get('/connected', isAuthenticated, async (req, res) => {
     
     // Include the current user's ID in the response
     const currentUserId = req.session.userId;
-    console.log(`Current user ID: ${currentUserId}, Total connected users: ${connectedUsers.length}`);
+
     
     res.json({ connectedUsers, currentUserId });
   } catch (error) {
-    console.error('Get connected users error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -59,7 +57,7 @@ router.post('/mark-connected', isAuthenticated, async (req, res) => {
     
     // Update user's connected status
     await User.findByIdAndUpdate(userId, { connected: 'yes' });
-    console.log(`Marked user ${userId} as connected via API`);
+
     
     // Emit user connection event using Socket.io
     const io = req.app.get('io');
@@ -69,7 +67,6 @@ router.post('/mark-connected', isAuthenticated, async (req, res) => {
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Mark connected error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -85,7 +82,7 @@ router.post('/mark-disconnected', isAdmin, async (req, res) => {
     
     // Update user's connected status
     await User.findByIdAndUpdate(userId, { connected: 'no' });
-    console.log(`Marked user ${userId} as disconnected via API`);
+
     
     // Emit user disconnection event using Socket.io
     const io = req.app.get('io');
@@ -95,7 +92,21 @@ router.post('/mark-disconnected', isAdmin, async (req, res) => {
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Mark disconnected error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get basic user info by ID (public endpoint for display screen)
+router.get('/:id/basic', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('firstName lastName email');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json(user);
+  } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -111,7 +122,6 @@ router.get('/:id', isAdmin, async (req, res) => {
     
     res.json({ user });
   } catch (error) {
-    console.error('Get user error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -158,7 +168,6 @@ router.put('/:id', isAdmin, isFullAdmin, async (req, res) => {
     
     res.json({ message: 'User updated successfully' });
   } catch (error) {
-    console.error('Update user error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -181,7 +190,6 @@ router.delete('/:id', isAdmin, isFullAdmin, async (req, res) => {
     
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error('Delete user error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
