@@ -456,9 +456,7 @@ body {
 
 
 
-.user-role-icon.employee::before {
-    content: '\f007'; /* fas fa-user */
-}
+
 /* Accordion styles */
 .accordion-section {
     background: white;
