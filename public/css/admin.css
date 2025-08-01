@@ -446,31 +446,18 @@ body {
 }
 /* User role icons */
 .user-role-icon {
-    margin-right: 8px;
-    font-size: 16px;
-    vertical-align: middle;
     display: inline-block;
-    width: 24px;
-    height: 24px;
-    text-align: center;
-    line-height: 24px;
-    border-radius: 50%;
-    color: white;
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-style: normal;
 }
 
-.user-role-icon.admin {
-    background-color: #e74c3c; /* Red for admin */
-    content: '👑';
-}
 
-.user-role-icon.supervisor {
-    background-color: #f39c12; /* Orange for supervisor */
-    content: '⭐';
-}
 
-.user-role-icon.employee {
-    background-color: #3498db; /* Blue for employee */
-    content: '👤';
+
+
+.user-role-icon.employee::before {
+    content: '\f007'; /* fas fa-user */
 }
 /* Accordion styles */
 .accordion-section {

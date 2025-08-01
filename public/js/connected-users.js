@@ -65,14 +65,14 @@ function loadConnectedUsers() {
                         const disconnectBtn = (!isCurrentUser && window.location.pathname === '/users') ? 
                             `<button class="disconnect-btn" data-user-id="${user._id}">Disconnect</button>` : '';
                         
-                        // Add role badge
+                        // Add role badge with icons for all roles
                         let roleBadge = '';
                         if (user.role === 'admin') {
-                            roleBadge = '<span class="user-role role-admin" style="background-color: #dc3545; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;">Admin</span>';
+                            roleBadge = '<span class="user-role role-admin" style="background-color: #dc3545; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;"><i class="fas fa-user-shield" style="margin-right: 4px; font-size: 12px;"></i>Admin</span>';
                         } else if (user.role === 'supervisor') {
-                            roleBadge = '<span class="user-role role-supervisor" style="background-color: #fd7e14; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;">Supervisor</span>';
+                            roleBadge = '<span class="user-role role-supervisor" style="background-color: #fd7e14; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;"><i class="fas fa-star" style="margin-right: 4px; font-size: 12px;"></i>Supervisor</span>';
                         } else {
-                            roleBadge = '<span class="user-role role-employee" style="background-color: #20c997; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;">Employee</span>';
+                            roleBadge = '<span class="user-role role-employee" style="background-color: #20c997; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;"><i class="fas fa-user" style="margin-right: 4px; font-size: 12px;"></i>Employee</span>';
                         }
                         
                         // Ensure counter badge has same height

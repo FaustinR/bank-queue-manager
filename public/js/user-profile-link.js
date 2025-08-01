@@ -15,15 +15,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     roleIcon.style.display = 'inline-block';
                     roleIcon.style.visibility = 'visible';
                     
-                    // Set icon based on role with Font Awesome icons
+                    // Show icon for all roles
                     if (data.user.role === 'admin') {
-                        roleIcon.innerHTML = '<i class="fas fa-crown"></i>'; // Crown for admin
+                        roleIcon.innerHTML = '<i class="fas fa-user-shield"></i>'; // Shield for admin
                         roleIcon.style.backgroundColor = '#dc3545';
                     } else if (data.user.role === 'supervisor') {
-                        roleIcon.innerHTML = '<i class="fas fa-clipboard-list"></i>'; // Clipboard for supervisor
+                        roleIcon.innerHTML = '<i class="fas fa-star"></i>'; // Star for supervisor
                         roleIcon.style.backgroundColor = '#fd7e14';
                     } else {
-                        roleIcon.innerHTML = '<i class="fas fa-briefcase"></i>'; // Briefcase for employee
+                        roleIcon.innerHTML = '<i class="fas fa-user"></i>'; // User for employee
                         roleIcon.style.backgroundColor = '#20c997';
                     }
                     roleIcon.style.fontWeight = 'normal';
