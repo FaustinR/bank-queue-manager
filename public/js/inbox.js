@@ -551,8 +551,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Open compose modal
         openComposeModal();
         
-        // Pre-fill recipient
-        document.getElementById('recipient').value = message.sender._id;
+        // Handle temporary users (messages from counters) differently
+        if (message.sender.role === 'temporary') {
+            // For temporary users, show their email in the To field
+            const recipientSelect = document.getElementById('recipient');
+            
+            // Add a temporary option for this user
+            const tempOption = document.createElement('option');
+            tempOption.value = message.sender._id;
+            tempOption.textContent = `${message.sender.firstName} ${message.sender.lastName} (${message.sender.email})`;
+            tempOption.selected = true;
+            recipientSelect.appendChild(tempOption);
+            
+            // Store the email in the hidden field
+            document.getElementById('recipientEmail').value = message.sender.email;
+        } else {
+            // For regular users, select them from the dropdown
+            document.getElementById('recipient').value = message.sender._id;
+        }
         
         // Pre-fill subject with Re: prefix if not already there
         let subject = message.subject;
@@ -564,23 +580,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Pre-fill related ticket if any
         if (message.relatedTicket) {
             document.getElementById('relatedTicket').value = message.relatedTicket.ticketNumber;
-        }
-        
-        // Add reply-to header if sender is a temporary user
-        if (message.sender.email && message.sender.role === 'temporary') {
-            // Store the email in a hidden field or data attribute
-            const recipientEmailField = document.getElementById('recipientEmail');
-            if (recipientEmailField) {
-                recipientEmailField.value = message.sender.email;
-            } else {
-                // Create a hidden field if it doesn't exist
-                const hiddenField = document.createElement('input');
-                hiddenField.type = 'hidden';
-                hiddenField.id = 'recipientEmail';
-                hiddenField.name = 'recipientEmail';
-                hiddenField.value = message.sender.email;
-                document.getElementById('composeForm').appendChild(hiddenField);
-            }
         }
         
         // Focus on message content

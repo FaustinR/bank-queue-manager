@@ -602,18 +602,33 @@ async function openMessageModal(e) {
     document.getElementById('counterNumber').value = counterId;
     document.getElementById('subject').value = `Message from Display Screen - Counter ${counterId}`;
     
-    // Get teller's email and name from the server
+    // Get current user info and populate customer fields
+    try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+            const userData = await response.json();
+            document.getElementById('customerEmail').value = userData.user.email || '';
+            document.getElementById('customerName').value = `${userData.user.firstName || ''} ${userData.user.lastName || ''}`.trim();
+        }
+    } catch (error) {
+        document.getElementById('customerEmail').value = '';
+        document.getElementById('customerName').value = '';
+    }
+    
+    // Get and populate teller information
     try {
         const response = await fetch(`/api/users/${tellerId}/basic`);
         if (response.ok) {
             const tellerData = await response.json();
-            document.getElementById('senderEmail').value = tellerData.email || '';
-            document.getElementById('senderName').value = `${tellerData.firstName || ''} ${tellerData.lastName || ''}`.trim();
+            document.getElementById('tellerEmail').value = tellerData.email || '';
+            document.getElementById('tellerDisplayName').value = `${tellerData.firstName || ''} ${tellerData.lastName || ''}`.trim();
+        } else {
+            document.getElementById('tellerEmail').value = '';
+            document.getElementById('tellerDisplayName').value = tellerName || '';
         }
     } catch (error) {
-        // Fallback to teller name from button data
-        document.getElementById('senderEmail').value = '';
-        document.getElementById('senderName').value = tellerName || '';
+        document.getElementById('tellerEmail').value = '';
+        document.getElementById('tellerDisplayName').value = tellerName || '';
     }
     
     // Show modal
@@ -635,12 +650,12 @@ function sendMessage(e) {
     
     const tellerId = document.getElementById('tellerId').value;
     const tellerName = document.getElementById('tellerName').value;
-    const senderEmail = document.getElementById('senderEmail').value;
-    const senderName = document.getElementById('senderName').value;
+    const customerEmail = document.getElementById('customerEmail').value;
+    const customerName = document.getElementById('customerName').value;
     const subject = document.getElementById('subject').value;
     const content = document.getElementById('messageContent').value;
     
-    if (!tellerId || !senderEmail || !senderName || !subject || !content) {
+    if (!tellerId || !customerEmail || !customerName || !subject || !content) {
         window.notifications.error('Error', 'Please fill in all required fields');
         return;
     }
@@ -650,8 +665,8 @@ function sendMessage(e) {
     // Prepare message data
     const messageData = {
         tellerId: tellerId,
-        senderEmail,
-        senderName,
+        senderEmail: customerEmail,
+        senderName: customerName,
         subject,
         content
     };
