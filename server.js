@@ -790,6 +790,49 @@ io.on('connection', async (socket) => {
     }
   }
   
+  // Voice call handlers
+  socket.on('call-user', (data) => {
+    const targetSocket = Array.from(io.sockets.sockets.values())
+      .find(s => s.userId === data.recipientId);
+    
+    if (targetSocket) {
+      targetSocket.emit('incoming-call', {
+        callerId: socket.userId,
+        callerName: data.callerName,
+        offer: data.offer
+      });
+    }
+  });
+  
+  socket.on('answer-call', (data) => {
+    const targetSocket = Array.from(io.sockets.sockets.values())
+      .find(s => s.userId === data.callerId);
+    
+    if (targetSocket) {
+      targetSocket.emit('call-answered', {
+        answer: data.answer
+      });
+    }
+  });
+  
+  socket.on('ice-candidate', (data) => {
+    const targetSocket = Array.from(io.sockets.sockets.values())
+      .find(s => s.userId === data.targetId);
+    
+    if (targetSocket) {
+      targetSocket.emit('ice-candidate', data.candidate);
+    }
+  });
+  
+  socket.on('end-call', (data) => {
+    const targetSocket = Array.from(io.sockets.sockets.values())
+      .find(s => s.userId === data.targetId);
+    
+    if (targetSocket) {
+      targetSocket.emit('call-ended');
+    }
+  });
+  
   socket.on('disconnect', async () => {
     // If socket had a userId, update the user's connected status
     if (socket.userId) {
