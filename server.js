@@ -810,6 +810,14 @@ io.on('connection', async (socket) => {
 
 // Emit counter staff update when a user logs in with a counter
 app.post('/api/notify-counter-update', async (req, res) => {
+  // Mark the current user as connected immediately
+  if (req.session && req.session.userId) {
+    await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
+    
+    // Emit user connection event
+    io.emit('userConnectionUpdate', { userId: req.session.userId, connected: 'yes' });
+  }
+  
   // Get updated counter staff information with IDs
   const staffInfo = await getCounterStaffInfo();
   
