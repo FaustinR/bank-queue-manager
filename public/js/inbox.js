@@ -1033,8 +1033,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Set initial audio output device for desktop
                 if (remoteAudio.setSinkId && typeof remoteAudio.setSinkId === 'function') {
-                    const deviceId = isSpeakerOn ? 'default' : 'communications';
-                    remoteAudio.setSinkId(deviceId).catch(e => {
+                    // Always start with default device
+                    remoteAudio.setSinkId('default').catch(e => {
                         console.log('Initial setSinkId failed:', e);
                     });
                 }
@@ -1272,8 +1272,21 @@ document.addEventListener('DOMContentLoaded', function() {
         cleanup();
     }
     
+    // Get available audio devices
+    async function getAudioDevices() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+            console.log('Available audio outputs:', audioOutputs.map(d => ({ id: d.deviceId, label: d.label })));
+            return audioOutputs;
+        } catch (error) {
+            console.log('Could not enumerate devices:', error);
+            return [];
+        }
+    }
+    
     // Toggle speaker mode
-    function toggleSpeaker() {
+    async function toggleSpeaker() {
         const remoteAudio = document.getElementById('remoteAudio');
         const speakerBtn = document.getElementById('toggleSpeaker');
         
@@ -1287,24 +1300,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 }).catch(e => console.log('Play failed:', e));
             }
             
-            // Desktop/Laptop: Use setSinkId for audio output device selection
+            // Get available audio devices and select appropriate one
             if (remoteAudio.setSinkId && typeof remoteAudio.setSinkId === 'function') {
-                // Try to set to default speakers when speaker mode is on
-                const deviceId = isSpeakerOn ? 'default' : 'communications';
-                remoteAudio.setSinkId(deviceId)
-                    .then(() => {
-                        console.log(`Audio output set to: ${isSpeakerOn ? 'speakers' : 'communications'}`);
-                    })
-                    .catch(e => {
-                        console.log('setSinkId failed, using volume control:', e);
-                        // Fallback to volume control if setSinkId fails
-                    });
+                const devices = await getAudioDevices();
+                let targetDeviceId = 'default';
+                
+                if (isSpeakerOn) {
+                    // Look for Bluetooth or external speakers
+                    const bluetoothDevice = devices.find(d => 
+                        d.label.toLowerCase().includes('bluetooth') ||
+                        d.label.toLowerCase().includes('speaker') ||
+                        d.label.toLowerCase().includes('wireless')
+                    );
+                    
+                    if (bluetoothDevice) {
+                        targetDeviceId = bluetoothDevice.deviceId;
+                        console.log('Using Bluetooth/Speaker device:', bluetoothDevice.label);
+                    } else {
+                        targetDeviceId = 'default';
+                        console.log('Using default audio device');
+                    }
+                } else {
+                    // Use communications device or default
+                    targetDeviceId = 'communications';
+                }
+                
+                try {
+                    await remoteAudio.setSinkId(targetDeviceId);
+                    console.log(`Audio output set to device: ${targetDeviceId}`);
+                } catch (e) {
+                    console.log('setSinkId failed, trying default:', e);
+                    try {
+                        await remoteAudio.setSinkId('default');
+                    } catch (e2) {
+                        console.log('Default setSinkId also failed:', e2);
+                    }
+                }
             }
             
-            // Update volume for speaker mode (higher for speakers, lower for headphones)
-            remoteAudio.volume = isSpeakerOn ? 1.0 : 0.7;
+            // Update volume for speaker mode
+            remoteAudio.volume = 1.0; // Always use full volume
             
-            // Force audio context resume (for some browsers)
+            // Force audio context resume
             if (window.AudioContext || window.webkitAudioContext) {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioContext.state === 'suspended') {
@@ -1314,16 +1351,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            // Force audio to play again
+            remoteAudio.play().catch(e => console.log('Audio replay failed:', e));
+            
             // Update button appearance
             if (speakerBtn) {
                 speakerBtn.classList.toggle('active', isSpeakerOn);
                 speakerBtn.innerHTML = `<i class="fas fa-volume-${isSpeakerOn ? 'up' : 'down'}"></i>`;
-                speakerBtn.title = isSpeakerOn ? 'Switch to Headphones' : 'Switch to Speakers';
+                speakerBtn.title = isSpeakerOn ? 'Using Speakers/Bluetooth' : 'Using Default Audio';
             }
             
             // Visual feedback
             window.notifications?.info('Audio Output', 
-                isSpeakerOn ? 'Switched to Speakers' : 'Switched to Headphones/Earpiece'
+                isSpeakerOn ? 'Switched to Speakers/Bluetooth' : 'Switched to Default Audio'
             );
         }
     }
@@ -1393,6 +1433,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(() => {
                 console.log('Remote description set for answer');
                 updateCallUI('connected');
+                
+                // Ensure audio plays after connection is established
+                setTimeout(() => {
+                    const remoteAudio = document.getElementById('remoteAudio');
+                    if (remoteAudio && remoteAudio.srcObject) {
+                        remoteAudio.play().catch(e => console.log('Audio play failed:', e));
+                    }
+                }, 200);
             })
             .catch(error => {
                 console.error('Error handling call answer:', error);
