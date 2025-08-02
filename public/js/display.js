@@ -269,6 +269,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Setup message modal event listeners
     setupMessageModal();
+    
+    // Authenticate socket for calls
+    try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+            const userData = await response.json();
+            socket.emit('authenticate', userData.user._id);
+        }
+    } catch (error) {
+        // Error handling without logging
+    }
 });
 
 function updateDisplay(data) {
@@ -316,7 +327,10 @@ function updateDisplay(data) {
                     `<p class="counter-staff"><strong>Teller:</strong> ${counterStaff[counterId]}</p>` : 
                     '<p class="counter-staff"><strong>Teller:</strong> <span class="not-assigned">Not assigned</span></p>'}
                 ${(counterStaff[counterId] && counterStaffIds[counterId] && isInIframe) ? 
-                    `<button class="message-btn" style="position: relative;" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="${isCurrentUserCounter ? 'fas fa-inbox' : 'fas fa-envelope'}"></i> ${isCurrentUserCounter ? 'Inbox' : 'Message'}</button>` : 
+                    `<div class="counter-actions">
+                        <button class="message-btn" style="position: relative;" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="${isCurrentUserCounter ? 'fas fa-inbox' : 'fas fa-envelope'}"></i> ${isCurrentUserCounter ? 'Inbox' : 'Message'}</button>
+                        ${!isCurrentUserCounter ? `<button class="call-btn" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="fas fa-phone"></i> Call</button>` : ''}
+                    </div>` : 
                     ''}
             </div>
             <div class="counter-info">
@@ -334,11 +348,16 @@ function updateDisplay(data) {
         `;
         countersDiv.appendChild(counterDiv);
         
-        // Add event listener to message button only if in iframe
+        // Add event listeners to buttons only if in iframe
         if (isInIframe) {
             const messageBtn = counterDiv.querySelector('.message-btn');
             if (messageBtn) {
                 messageBtn.addEventListener('click', openMessageModal);
+            }
+            
+            const callBtn = counterDiv.querySelector('.call-btn');
+            if (callBtn) {
+                callBtn.addEventListener('click', initiateCall);
             }
         }
     });
@@ -737,4 +756,183 @@ function setupMessageModal() {
 // Listen for the newMessage socket event and allow badges in the display screen
 socket.on('newMessage', function(data) {
     // Let the message-badges.js script handle the badges
+});
+
+// Call functionality
+let localStream = null;
+let remoteStream = null;
+let peerConnection = null;
+let currentCall = null;
+
+const servers = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' }
+    ]
+};
+
+async function initiateCall(e) {
+    e.stopPropagation();
+    
+    const btn = e.currentTarget;
+    const tellerId = btn.getAttribute('data-teller-id');
+    const tellerName = btn.getAttribute('data-teller');
+    
+    if (!tellerId) {
+        window.notifications.error('Error', 'Cannot call: Teller information not available');
+        return;
+    }
+    
+    try {
+        // Get current user info
+        const response = await fetch('/api/auth/me');
+        if (!response.ok) {
+            window.notifications.error('Error', 'Please log in to make calls');
+            return;
+        }
+        
+        const userData = await response.json();
+        const callerName = `${userData.user.firstName} ${userData.user.lastName}`;
+        
+        // Get user media
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // Create peer connection
+        peerConnection = new RTCPeerConnection(servers);
+        
+        // Add local stream
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+        
+        // Handle remote stream
+        peerConnection.ontrack = (event) => {
+            remoteStream = event.streams[0];
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio) {
+                remoteAudio.srcObject = remoteStream;
+            }
+        };
+        
+        // Handle ICE candidates
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('ice-candidate', {
+                    targetId: tellerId,
+                    candidate: event.candidate
+                });
+            }
+        };
+        
+        // Create offer
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        
+        // Send call request
+        socket.emit('call-user', {
+            recipientId: tellerId,
+            callerName: callerName,
+            offer: offer
+        });
+        
+        currentCall = { recipientId: tellerId, recipientName: tellerName };
+        showCallModal('outgoing', tellerName);
+        
+    } catch (error) {
+        window.notifications.error('Error', 'Failed to start call: ' + error.message);
+        cleanupCall();
+    }
+}
+
+function showCallModal(type, name) {
+    // Create call modal if it doesn't exist
+    let callModal = document.getElementById('callModal');
+    if (!callModal) {
+        callModal = document.createElement('div');
+        callModal.id = 'callModal';
+        callModal.className = 'modal';
+        callModal.innerHTML = `
+            <div class="modal-content call-modal">
+                <div class="call-info">
+                    <div class="call-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="call-name" id="callName"></div>
+                    <div class="call-status" id="callStatus"></div>
+                </div>
+                <div class="call-controls">
+                    <button id="endCallBtn" class="end-call-btn">
+                        <i class="fas fa-phone-slash"></i>
+                    </button>
+                </div>
+                <audio id="remoteAudio" autoplay></audio>
+            </div>
+        `;
+        document.body.appendChild(callModal);
+        
+        // Add event listener for end call
+        document.getElementById('endCallBtn').addEventListener('click', endCall);
+    }
+    
+    document.getElementById('callName').textContent = name;
+    document.getElementById('callStatus').textContent = type === 'outgoing' ? 'Calling...' : 'Incoming call';
+    callModal.style.display = 'flex';
+}
+
+function endCall() {
+    if (currentCall) {
+        socket.emit('end-call', { targetId: currentCall.recipientId });
+    }
+    cleanupCall();
+    hideCallModal();
+}
+
+function cleanupCall() {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    currentCall = null;
+}
+
+function hideCallModal() {
+    const callModal = document.getElementById('callModal');
+    if (callModal) {
+        callModal.style.display = 'none';
+    }
+}
+
+// Socket event listeners for calls
+socket.on('call-failed', (data) => {
+    window.notifications.error('Call Failed', data.reason);
+    cleanupCall();
+    hideCallModal();
+});
+
+socket.on('call-answered', async (data) => {
+    try {
+        await peerConnection.setRemoteDescription(data.answer);
+        document.getElementById('callStatus').textContent = 'Connected';
+    } catch (error) {
+        window.notifications.error('Error', 'Failed to connect call');
+        endCall();
+    }
+});
+
+socket.on('ice-candidate', async (candidate) => {
+    try {
+        if (peerConnection) {
+            await peerConnection.addIceCandidate(candidate);
+        }
+    } catch (error) {
+        console.error('Error adding ICE candidate:', error);
+    }
+});
+
+socket.on('call-ended', () => {
+    cleanupCall();
+    hideCallModal();
 });

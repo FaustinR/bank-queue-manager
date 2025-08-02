@@ -137,13 +137,12 @@ router.post('/login', async (req, res) => {
       }
     }
     
+    // Set connected status to 'yes' immediately in database
+    await User.findByIdAndUpdate(user._id, { connected: 'yes' });
+    
     // Set session
     req.session.userId = user._id;
     req.session.userRole = user.role;
-    
-    // Set connected status to 'yes'
-    user.connected = 'yes';
-    await user.save();
     
     // Store the session ID
     if (!req.session.id) {
@@ -154,8 +153,7 @@ router.post('/login', async (req, res) => {
     if (counter) {
       req.session.userCounter = counter;
       // Also update the user's counter in the database for consistency across tabs
-      user.counter = counter;
-      await user.save();
+      await User.findByIdAndUpdate(user._id, { counter: counter });
     } else if (user.counter) {
       // If user has a counter in the database but none provided, use that
       req.session.userCounter = user.counter;
@@ -177,7 +175,7 @@ router.post('/login', async (req, res) => {
       email: user.email,
       role: user.role,
       counter: req.session.userCounter || user.counter,
-      connected: user.connected || 'no'
+      connected: 'yes'
     };
     
     res.json({ user: userResponse });

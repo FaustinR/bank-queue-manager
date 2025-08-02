@@ -780,11 +780,11 @@ io.on('connection', async (socket) => {
   socket.on('authenticate', async (userId) => {
     if (userId) {
       socket.userId = userId.toString();
+      socket.isAuthenticated = true;
       console.log('Socket authenticated:', socket.id, 'for user:', socket.userId);
       
       try {
         await User.findByIdAndUpdate(userId, { connected: 'yes' });
-        io.emit('userConnectionUpdate', { userId, connected: 'yes' });
         socket.emit('authenticated', { userId: socket.userId });
       } catch (error) {
         console.error('Authentication error:', error);
@@ -795,23 +795,44 @@ io.on('connection', async (socket) => {
 
   
   // Voice call handlers
-  socket.on('call-user', (data) => {
-    console.log('Call attempt from', socket.userId, 'to', data.recipientId);
-    console.log('Connected sockets:', Array.from(io.sockets.sockets.values()).map(s => ({ id: s.id, userId: s.userId })));
-    
-    const targetSocket = Array.from(io.sockets.sockets.values())
-      .find(s => String(s.userId) === String(data.recipientId));
-    
-    if (targetSocket) {
-      console.log('Target socket found, sending call to', targetSocket.userId);
-      targetSocket.emit('incoming-call', {
-        callerId: socket.userId,
-        callerName: data.callerName,
-        offer: data.offer
-      });
-    } else {
-      console.log('Target socket not found for user', data.recipientId);
-      socket.emit('call-failed', { reason: 'User not connected' });
+  socket.on('call-user', async (data) => {
+    try {
+      console.log('Call attempt from', socket.userId, 'to', data.recipientId);
+      
+      // Check if target user is connected in database
+      const targetUser = await User.findById(data.recipientId).select('firstName lastName connected');
+      
+      if (!targetUser) {
+        console.log('Target user not found:', data.recipientId);
+        return socket.emit('call-failed', { reason: 'User not found' });
+      }
+      
+      console.log('Target user found:', targetUser.firstName, targetUser.lastName, 'Connected:', targetUser.connected);
+      
+      if (targetUser.connected !== 'yes') {
+        return socket.emit('call-failed', { reason: `${targetUser.firstName} ${targetUser.lastName} is not connected` });
+      }
+      
+      // Find target socket
+      const allSockets = Array.from(io.sockets.sockets.values());
+      console.log('All authenticated sockets:', allSockets.map(s => ({ id: s.id, userId: s.userId, isAuth: s.isAuthenticated })));
+      
+      const targetSocket = allSockets.find(s => s.isAuthenticated && String(s.userId) === String(data.recipientId));
+      
+      if (targetSocket) {
+        console.log('Target socket found, sending call to:', targetSocket.userId);
+        targetSocket.emit('incoming-call', {
+          callerId: socket.userId,
+          callerName: data.callerName,
+          offer: data.offer
+        });
+      } else {
+        console.log('No authenticated socket found for user:', data.recipientId);
+        socket.emit('call-failed', { reason: `${targetUser.firstName} ${targetUser.lastName} is not connected` });
+      }
+    } catch (error) {
+      console.error('Call handler error:', error);
+      socket.emit('call-failed', { reason: 'Call failed - please try again' });
     }
   });
   

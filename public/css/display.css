@@ -408,18 +408,19 @@ body:not(.embedded-display) .counter {
     color: white !important;
     border: none;
     border-radius: 3px;
-    padding: 2px 4px;
+    padding: 3px 6px;
     font-size: 9px;
     cursor: pointer;
     display: inline-block;
     position: relative;
     white-space: nowrap;
-    margin-top: 3px;
-    min-width: 40px;
-    max-width: 100px;
+    min-width: 45px;
     text-align: center;
     line-height: 1.2;
     box-shadow: 0 1px 3px rgba(0, 123, 255, 0.3);
+    vertical-align: middle;
+    height: 26px;
+    box-sizing: border-box;
 }
 
 /* Badge for message button */
@@ -466,9 +467,9 @@ body:not(.embedded-display) .counter {
     
     .message-btn {
         font-size: 8px;
-        padding: 2px 3px;
-        max-width: 100px;
+        padding: 2px 4px;
         min-width: 35px;
+        height: 22px;
     }
     
     .message-btn .unread-badge {
@@ -507,4 +508,109 @@ body:not(.embedded-display) .counter {
     margin-top: 15px;
     font-style: italic;
     color: #ffd700;
+}
+
+/* Counter Actions Container */
+.counter-actions {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    align-items: baseline;
+    margin-top: 3px;
+}
+
+/* Call Button */
+.call-btn {
+    background-color: #28a745 !important;
+    color: white !important;
+    border: none;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 9px;
+    cursor: pointer;
+    display: inline-block;
+    white-space: nowrap;
+    min-width: 45px;
+    text-align: center;
+    line-height: 1.2;
+    box-shadow: 0 1px 3px rgba(40, 167, 69, 0.3);
+    vertical-align: middle;
+    height: 26px;
+    box-sizing: border-box;
+}
+
+.call-btn:hover {
+    background-color: #218838 !important;
+}
+
+/* Call Modal */
+.call-modal {
+    background-color: #2c3e50;
+    color: white;
+    text-align: center;
+    max-width: 300px;
+    border-radius: 15px;
+}
+
+.call-info {
+    padding: 20px;
+}
+
+.call-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #34495e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 30px;
+    color: #ecf0f1;
+}
+
+.call-name {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.call-status {
+    font-size: 14px;
+    color: #bdc3c7;
+    margin-bottom: 20px;
+}
+
+.call-controls {
+    padding: 20px;
+    border-top: 1px solid #34495e;
+}
+
+.end-call-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #e74c3c;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.end-call-btn:hover {
+    background-color: #c0392b;
+}
+
+@media (max-width: 768px) {
+    .counter-actions {
+        gap: 2px;
+    }
+    
+    .call-btn {
+        font-size: 8px;
+        padding: 2px 4px;
+        min-width: 35px;
+        height: 22px;
+    }
 }
