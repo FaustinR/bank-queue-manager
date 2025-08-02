@@ -965,21 +965,27 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Starting call to:', userName);
         currentCallUserId = userId;
         
-        navigator.mediaDevices.getUserMedia({ audio: true })
+        navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            }
+        })
             .then(stream => {
-                console.log('Got local media stream');
+                console.log('Got local media stream with tracks:', stream.getTracks().map(t => t.kind));
                 localStream = stream;
                 createPeerConnection();
                 
                 localStream.getTracks().forEach(track => {
-                    console.log('Adding local track:', track.kind);
+                    console.log('Adding local track:', track.kind, 'enabled:', track.enabled);
                     peerConnection.addTrack(track, localStream);
                 });
                 
                 return peerConnection.createOffer({ offerToReceiveAudio: true });
             })
             .then(offer => {
-                console.log('Created offer');
+                console.log('Created offer with audio:', offer.sdp.includes('m=audio'));
                 return peerConnection.setLocalDescription(offer);
             })
             .then(() => {
@@ -1013,12 +1019,38 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         peerConnection.ontrack = event => {
-            console.log('Received remote track:', event.track.kind);
+            console.log('Received remote track:', event.track.kind, event.streams.length);
             remoteStream = event.streams[0];
             const remoteAudio = document.getElementById('remoteAudio');
             if (remoteAudio) {
+                console.log('Setting srcObject for remote audio');
                 remoteAudio.srcObject = remoteStream;
-                remoteAudio.play().catch(e => console.log('Audio play failed:', e));
+                remoteAudio.volume = isSpeakerOn ? 1.0 : 0.7;
+                remoteAudio.muted = false;
+                
+                // Debug stream info
+                console.log('Remote stream tracks:', remoteStream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
+                
+                // Set initial audio output device for desktop
+                if (remoteAudio.setSinkId && typeof remoteAudio.setSinkId === 'function') {
+                    const deviceId = isSpeakerOn ? 'default' : 'communications';
+                    remoteAudio.setSinkId(deviceId).catch(e => {
+                        console.log('Initial setSinkId failed:', e);
+                    });
+                }
+                
+                // Force play after a short delay
+                setTimeout(() => {
+                    const playPromise = remoteAudio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('Remote audio started playing successfully');
+                        }).catch(e => {
+                            console.log('Auto-play failed:', e);
+                            remoteAudio.dataset.needsPlay = 'true';
+                        });
+                    }
+                }, 100);
             }
         };
         
@@ -1057,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </button>
                     `}
                 </div>
-                <audio id="remoteAudio" autoplay></audio>
+                <audio id="remoteAudio" autoplay playsinline controls style="width:100%; margin-top:10px;"></audio>
             </div>
         `;
         
@@ -1110,6 +1142,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 updateCallUI('connected');
+                
+                // Mobile audio fix - ensure remote audio plays after user interaction
+                setTimeout(() => {
+                    const remoteAudio = document.getElementById('remoteAudio');
+                    if (remoteAudio && remoteAudio.srcObject) {
+                        remoteAudio.play().catch(e => console.log('Remote audio play failed:', e));
+                    }
+                }, 500);
             })
             .catch(error => {
                 console.error('Error answering call:', error);
@@ -1240,20 +1280,51 @@ document.addEventListener('DOMContentLoaded', function() {
         if (remoteAudio) {
             isSpeakerOn = !isSpeakerOn;
             
-            // Set audio output device (speaker vs earpiece)
-            if (remoteAudio.setSinkId) {
-                remoteAudio.setSinkId(isSpeakerOn ? 'default' : '')
-                    .catch(e => console.log('setSinkId not supported'));
+            // Ensure audio is playing (mobile fix)
+            if (remoteAudio.dataset.needsPlay === 'true') {
+                remoteAudio.play().then(() => {
+                    remoteAudio.dataset.needsPlay = 'false';
+                }).catch(e => console.log('Play failed:', e));
             }
             
-            // Update volume for speaker mode
-            remoteAudio.volume = isSpeakerOn ? 1.0 : 0.8;
+            // Desktop/Laptop: Use setSinkId for audio output device selection
+            if (remoteAudio.setSinkId && typeof remoteAudio.setSinkId === 'function') {
+                // Try to set to default speakers when speaker mode is on
+                const deviceId = isSpeakerOn ? 'default' : 'communications';
+                remoteAudio.setSinkId(deviceId)
+                    .then(() => {
+                        console.log(`Audio output set to: ${isSpeakerOn ? 'speakers' : 'communications'}`);
+                    })
+                    .catch(e => {
+                        console.log('setSinkId failed, using volume control:', e);
+                        // Fallback to volume control if setSinkId fails
+                    });
+            }
+            
+            // Update volume for speaker mode (higher for speakers, lower for headphones)
+            remoteAudio.volume = isSpeakerOn ? 1.0 : 0.7;
+            
+            // Force audio context resume (for some browsers)
+            if (window.AudioContext || window.webkitAudioContext) {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log('Audio context resumed');
+                    });
+                }
+            }
             
             // Update button appearance
             if (speakerBtn) {
                 speakerBtn.classList.toggle('active', isSpeakerOn);
                 speakerBtn.innerHTML = `<i class="fas fa-volume-${isSpeakerOn ? 'up' : 'down'}"></i>`;
+                speakerBtn.title = isSpeakerOn ? 'Switch to Headphones' : 'Switch to Speakers';
             }
+            
+            // Visual feedback
+            window.notifications?.info('Audio Output', 
+                isSpeakerOn ? 'Switched to Speakers' : 'Switched to Headphones/Earpiece'
+            );
         }
     }
     
