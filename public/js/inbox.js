@@ -23,18 +23,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Connect to Socket.IO for real-time notifications
     const socket = io();
     
-    // Authenticate socket connection when user ID is available
+    // Handle socket connection
     socket.on('connect', () => {
         console.log('Socket connected:', socket.id);
-        // Wait a bit for currentUserId to be loaded, then authenticate
-        setTimeout(() => {
-            if (currentUserId) {
-                console.log('Authenticating socket with user ID:', currentUserId);
-                socket.emit('authenticate', currentUserId);
-            } else {
-                console.log('No currentUserId available for authentication');
-            }
-        }, 1000);
+        // Authenticate if we already have user ID
+        if (currentUserId) {
+            console.log('Authenticating socket with existing user ID:', currentUserId);
+            socket.emit('authenticate', currentUserId);
+        }
     });
     
     socket.on('authenticated', (data) => {
@@ -68,21 +64,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Auto-authenticate every 2 seconds until authenticated
-    const authInterval = setInterval(() => {
+    // Simple authentication check
+    window.ensureAuthenticated = function() {
         if (currentUserId && socket.connected && !socket.authenticated) {
-            console.log('Auto authenticating...');
+            console.log('Ensuring authentication...');
             socket.emit('authenticate', currentUserId);
-        } else if (socket.authenticated) {
-            clearInterval(authInterval);
         }
-    }, 2000);
+    };
     
     // Track authentication status
     socket.on('authenticated', (data) => {
         console.log('Socket authenticated for user:', data.userId);
         socket.authenticated = true;
-        clearInterval(authInterval);
     });
     
     // Expose force auth function
@@ -177,17 +170,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('userRole').textContent = data.user.role;
                 currentUserId = data.user._id;
                 
-                // Authenticate socket connection now that we have user ID
-                if (socket.connected) {
-                    console.log('Authenticating socket immediately with user ID:', currentUserId);
-                    socket.emit('authenticate', currentUserId);
-                } else {
-                    console.log('Socket not connected yet, will authenticate on connect');
-                }
+                // Authenticate socket connection immediately
+                console.log('User ID loaded:', currentUserId);
+                authenticateSocket();
             })
             .catch(error => {
                 console.error('Authentication error:', error);
             });
+    }
+    
+    // Authenticate socket with retry logic
+    function authenticateSocket() {
+        if (!currentUserId) {
+            console.log('No user ID available for authentication');
+            return;
+        }
+        
+        if (socket.connected) {
+            console.log('Authenticating socket with user ID:', currentUserId);
+            socket.emit('authenticate', currentUserId);
+        } else {
+            console.log('Socket not connected, waiting...');
+            // Wait for socket to connect
+            socket.on('connect', () => {
+                console.log('Socket connected, authenticating with user ID:', currentUserId);
+                socket.emit('authenticate', currentUserId);
+            });
+        }
     }
     
     // Load users for recipient dropdown
@@ -482,6 +491,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button class="btn-reply" data-id="${message._id}">
                         <i class="fas fa-reply"></i> Reply
                     </button>
+                    <button class="btn-call" data-user-id="${message.sender._id}" data-user-name="${sender}">
+                        <i class="fas fa-phone"></i> Call
+                    </button>
                 ` : ''}
                 <button class="btn-delete" data-id="${message._id}">
                     <i class="fas fa-trash"></i> Delete
@@ -509,7 +521,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-
+        const callBtn = messageView.querySelector('.btn-call');
+        if (callBtn) {
+            callBtn.addEventListener('click', () => {
+                const userId = callBtn.dataset.userId;
+                const userName = callBtn.dataset.userName;
+                startCall(userId, userName);
+            });
+        }
     }
     
     // Mark message as read
@@ -914,6 +933,283 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
 
+    
+    // Voice call functionality
+    let localStream = null;
+    let remoteStream = null;
+    let peerConnection = null;
+    let isCallActive = false;
+    let currentCallUserId = null;
+    
+    const configuration = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+    };
+    
+    // Start a voice call
+    function startCall(userId, userName) {
+        if (isCallActive) {
+            window.notifications.error('Call Error', 'A call is already in progress');
+            return;
+        }
+        
+        console.log('Starting call to:', userName);
+        currentCallUserId = userId;
+        
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                console.log('Got local media stream');
+                localStream = stream;
+                createPeerConnection();
+                
+                localStream.getTracks().forEach(track => {
+                    console.log('Adding local track:', track.kind);
+                    peerConnection.addTrack(track, localStream);
+                });
+                
+                return peerConnection.createOffer({ offerToReceiveAudio: true });
+            })
+            .then(offer => {
+                console.log('Created offer');
+                return peerConnection.setLocalDescription(offer);
+            })
+            .then(() => {
+                console.log('Set local description, sending call');
+                socket.emit('call-user', {
+                    recipientId: userId,
+                    callerName: document.getElementById('userName').textContent,
+                    offer: peerConnection.localDescription
+                });
+                
+                showCallUI('outgoing', userName);
+                isCallActive = true;
+            })
+            .catch(error => {
+                console.error('Error starting call:', error);
+                window.notifications.error('Call Error', 'Could not access microphone');
+            });
+    }
+    
+    // Create peer connection
+    function createPeerConnection() {
+        peerConnection = new RTCPeerConnection(configuration);
+        
+        peerConnection.onicecandidate = event => {
+            if (event.candidate && currentCallUserId) {
+                socket.emit('ice-candidate', {
+                    targetId: currentCallUserId,
+                    candidate: event.candidate
+                });
+            }
+        };
+        
+        peerConnection.ontrack = event => {
+            console.log('Received remote track:', event.track.kind);
+            remoteStream = event.streams[0];
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio) {
+                remoteAudio.srcObject = remoteStream;
+                remoteAudio.play().catch(e => console.log('Audio play failed:', e));
+            }
+        };
+        
+        peerConnection.onconnectionstatechange = () => {
+            console.log('Connection state:', peerConnection.connectionState);
+        };
+    }
+    
+    // Show call UI
+    function showCallUI(type, userName) {
+        const callUI = document.createElement('div');
+        callUI.id = 'callUI';
+        callUI.className = 'call-ui';
+        callUI.innerHTML = `
+            <div class="call-container">
+                <div class="call-info">
+                    <div class="call-status">${type === 'incoming' ? 'Incoming call from' : 'Calling'}</div>
+                    <div class="call-user">${userName}</div>
+                </div>
+                <div class="call-controls">
+                    ${type === 'incoming' ? `
+                        <button id="answerCall" class="call-btn answer">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button id="rejectCall" class="call-btn reject">
+                            <i class="fas fa-phone-slash"></i>
+                        </button>
+                    ` : `
+                        <button id="endCall" class="call-btn end">
+                            <i class="fas fa-phone-slash"></i>
+                        </button>
+                    `}
+                </div>
+                <audio id="remoteAudio" autoplay></audio>
+            </div>
+        `;
+        
+        document.body.appendChild(callUI);
+        
+        // Add event listeners
+        const answerBtn = document.getElementById('answerCall');
+        const rejectBtn = document.getElementById('rejectCall');
+        const endBtn = document.getElementById('endCall');
+        
+        if (answerBtn) {
+            answerBtn.addEventListener('click', answerCall);
+        }
+        
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', endCall);
+        }
+        
+        if (endBtn) {
+            endBtn.addEventListener('click', endCall);
+        }
+    }
+    
+    // Answer incoming call
+    function answerCall() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                localStream = stream;
+                
+                // Add local tracks to peer connection
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+                
+                // Create answer after adding tracks
+                return peerConnection.createAnswer();
+            })
+            .then(answer => {
+                return peerConnection.setLocalDescription(answer);
+            })
+            .then(() => {
+                socket.emit('answer-call', {
+                    callerId: currentCallUserId,
+                    answer: peerConnection.localDescription
+                });
+                
+                updateCallUI('connected');
+            })
+            .catch(error => {
+                console.error('Error answering call:', error);
+                endCall();
+            });
+    }
+    
+    // Update call UI
+    function updateCallUI(status) {
+        const callStatus = document.querySelector('.call-status');
+        const callControls = document.querySelector('.call-controls');
+        
+        if (callStatus) {
+            callStatus.textContent = status === 'connected' ? 'Connected' : 'Calling...';
+        }
+        
+        if (callControls && status === 'connected') {
+            callControls.innerHTML = `
+                <button id="endCall" class="call-btn end">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
+            `;
+            
+            document.getElementById('endCall').addEventListener('click', endCall);
+        }
+    }
+    
+    // End call
+    function endCall() {
+        if (currentCallUserId) {
+            socket.emit('end-call', { targetId: currentCallUserId });
+        }
+        
+        cleanup();
+    }
+    
+    // Cleanup call resources
+    function cleanup() {
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+        
+        const callUI = document.getElementById('callUI');
+        if (callUI) {
+            callUI.remove();
+        }
+        
+        isCallActive = false;
+        currentCallUserId = null;
+        remoteStream = null;
+    }
+    
+    // Socket event handlers for voice calls
+    socket.on('incoming-call', (data) => {
+        if (isCallActive) {
+            socket.emit('call-failed', { reason: 'User is busy' });
+            return;
+        }
+        
+        console.log('Incoming call from:', data.callerName);
+        currentCallUserId = data.callerId;
+        createPeerConnection();
+        
+        peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
+            .then(() => {
+                console.log('Remote description set for incoming call');
+                showCallUI('incoming', data.callerName);
+                isCallActive = true;
+            })
+            .catch(error => {
+                console.error('Error handling incoming call:', error);
+                endCall();
+            });
+    });
+    
+    socket.on('call-answered', (data) => {
+        console.log('Call answered, setting remote description');
+        peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer))
+            .then(() => {
+                console.log('Remote description set for answer');
+                updateCallUI('connected');
+            })
+            .catch(error => {
+                console.error('Error handling call answer:', error);
+                endCall();
+            });
+    });
+    
+    socket.on('ice-candidate', (candidate) => {
+        if (peerConnection && peerConnection.remoteDescription) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+                .catch(error => {
+                    console.error('Error adding ICE candidate:', error);
+                });
+        } else {
+            console.log('Queuing ICE candidate until remote description is set');
+            // Queue the candidate for later if remote description isn't set yet
+            setTimeout(() => {
+                if (peerConnection && peerConnection.remoteDescription) {
+                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+                        .catch(error => {
+                            console.error('Error adding queued ICE candidate:', error);
+                        });
+                }
+            }, 1000);
+        }
+    });
+    
+    socket.on('call-ended', () => {
+        cleanup();
+    });
     
     // Debug function to create a test message (can be called from console)
     window.createTestMessage = function() {

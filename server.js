@@ -420,6 +420,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Debug endpoint to check connected sockets
+app.get('/api/debug/sockets', (req, res) => {
+  const sockets = Array.from(io.sockets.sockets.values()).map(s => ({
+    id: s.id,
+    userId: s.userId,
+    connected: s.connected
+  }));
+  res.json({ sockets, count: sockets.length });
+});
+
 
 
 
@@ -770,17 +780,67 @@ io.on('connection', async (socket) => {
   socket.on('authenticate', async (userId) => {
     if (userId) {
       socket.userId = userId.toString();
+      console.log('Socket authenticated:', socket.id, 'for user:', socket.userId);
       
       try {
         await User.findByIdAndUpdate(userId, { connected: 'yes' });
         io.emit('userConnectionUpdate', { userId, connected: 'yes' });
+        socket.emit('authenticated', { userId: socket.userId });
       } catch (error) {
-        // Error handling without logging
+        console.error('Authentication error:', error);
       }
     }
   });
   
 
+  
+  // Voice call handlers
+  socket.on('call-user', (data) => {
+    console.log('Call attempt from', socket.userId, 'to', data.recipientId);
+    console.log('Connected sockets:', Array.from(io.sockets.sockets.values()).map(s => ({ id: s.id, userId: s.userId })));
+    
+    const targetSocket = Array.from(io.sockets.sockets.values())
+      .find(s => String(s.userId) === String(data.recipientId));
+    
+    if (targetSocket) {
+      console.log('Target socket found, sending call to', targetSocket.userId);
+      targetSocket.emit('incoming-call', {
+        callerId: socket.userId,
+        callerName: data.callerName,
+        offer: data.offer
+      });
+    } else {
+      console.log('Target socket not found for user', data.recipientId);
+      socket.emit('call-failed', { reason: 'User not connected' });
+    }
+  });
+  
+  socket.on('answer-call', (data) => {
+    const targetSocket = Array.from(io.sockets.sockets.values())
+      .find(s => String(s.userId) === String(data.callerId));
+    
+    if (targetSocket) {
+      targetSocket.emit('call-answered', { answer: data.answer });
+    }
+  });
+  
+  socket.on('ice-candidate', (data) => {
+    const targetSocket = Array.from(io.sockets.sockets.values())
+      .find(s => String(s.userId) === String(data.targetId));
+    
+    if (targetSocket) {
+      targetSocket.emit('ice-candidate', data.candidate);
+    }
+  });
+  
+  socket.on('end-call', (data) => {
+    const targetSocket = Array.from(io.sockets.sockets.values())
+      .find(s => String(s.userId) === String(data.targetId));
+    
+    if (targetSocket) {
+      targetSocket.emit('call-ended');
+    }
+  });
   
   socket.on('disconnect', async () => {
     // If socket had a userId, update the user's connected status

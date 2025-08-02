@@ -1,5 +1,5 @@
-/* Voice Call Modal Styles */
-.call-modal {
+/* Voice Call UI Styles */
+.call-ui {
     position: fixed;
     top: 0;
     left: 0;
@@ -7,41 +7,34 @@
     height: 100%;
     background: rgba(0, 0, 0, 0.8);
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     z-index: 10000;
 }
 
-.call-modal-content {
+.call-container {
     background: white;
-    padding: 30px;
-    border-radius: 15px;
+    border-radius: 20px;
+    padding: 40px;
     text-align: center;
-    min-width: 300px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    min-width: 300px;
 }
 
 .call-info {
     margin-bottom: 30px;
 }
 
-.call-icon {
-    font-size: 48px;
-    color: #28a745;
-    margin-bottom: 15px;
-    animation: pulse 2s infinite;
+.call-status {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 10px;
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-.call-info p {
-    font-size: 18px;
-    margin: 0;
-    color: #333;
+.call-user {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c5aa0;
 }
 
 .call-controls {
@@ -50,36 +43,35 @@
     gap: 20px;
 }
 
-.btn-answer {
+.call-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.call-btn.answer {
     background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
-    cursor: pointer;
-    transition: background 0.3s;
 }
 
-.btn-answer:hover {
+.call-btn.answer:hover {
     background: #218838;
+    transform: scale(1.1);
 }
 
-.btn-end-call {
+.call-btn.reject,
+.call-btn.end {
     background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
-    cursor: pointer;
-    transition: background 0.3s;
 }
 
-.btn-end-call:hover {
+.call-btn.reject:hover,
+.call-btn.end:hover {
     background: #c82333;
+    transform: scale(1.1);
 }
 
 .btn-call {
@@ -89,8 +81,9 @@
     padding: 8px 12px;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 14px;
     margin-left: 10px;
-    transition: background 0.3s;
+    transition: background-color 0.3s;
 }
 
 .btn-call:hover {
@@ -99,4 +92,8 @@
 
 .btn-call i {
     margin-right: 5px;
+}
+
+#remoteAudio {
+    display: none;
 }
