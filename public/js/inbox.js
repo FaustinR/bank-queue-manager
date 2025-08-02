@@ -940,6 +940,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let peerConnection = null;
     let isCallActive = false;
     let currentCallUserId = null;
+    let isSpeakerOn = false;
+    let isCallMinimized = false;
     
     const configuration = {
         iceServers: [
@@ -950,9 +952,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start a voice call
     function startCall(userId, userName) {
-        if (isCallActive) {
+        if (isCallActive && !isCallMinimized) {
             window.notifications.error('Call Error', 'A call is already in progress');
             return;
+        }
+        
+        // If there's a minimized call, end it first
+        if (isCallMinimized) {
+            cleanup();
         }
         
         console.log('Starting call to:', userName);
@@ -1027,6 +1034,11 @@ document.addEventListener('DOMContentLoaded', function() {
         callUI.className = 'call-ui';
         callUI.innerHTML = `
             <div class="call-container">
+                <div class="call-header">
+                    <button id="minimizeCall" class="minimize-btn">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
                 <div class="call-info">
                     <div class="call-status">${type === 'incoming' ? 'Incoming call from' : 'Calling'}</div>
                     <div class="call-user">${userName}</div>
@@ -1055,6 +1067,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const answerBtn = document.getElementById('answerCall');
         const rejectBtn = document.getElementById('rejectCall');
         const endBtn = document.getElementById('endCall');
+        const minimizeBtn = document.getElementById('minimizeCall');
         
         if (answerBtn) {
             answerBtn.addEventListener('click', answerCall);
@@ -1066,6 +1079,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (endBtn) {
             endBtn.addEventListener('click', endCall);
+        }
+        
+        if (minimizeBtn) {
+            minimizeBtn.addEventListener('click', minimizeCall);
         }
     }
     
@@ -1100,6 +1117,88 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
+    // Minimize call
+    function minimizeCall() {
+        const callUI = document.getElementById('callUI');
+        if (callUI) {
+            callUI.style.display = 'none';
+            isCallMinimized = true;
+            showMinimizedCallIndicator();
+        }
+    }
+    
+    // Show minimized call indicator
+    function showMinimizedCallIndicator() {
+        const indicator = document.createElement('div');
+        indicator.id = 'minimizedCallIndicator';
+        indicator.className = 'minimized-call-indicator';
+        indicator.innerHTML = `
+            <i class="fas fa-phone"></i>
+            <span>Call in progress</span>
+        `;
+        makeDraggable(indicator);
+        document.body.appendChild(indicator);
+    }
+    
+    // Make element draggable
+    function makeDraggable(element) {
+        let isDragging = false;
+        let hasDragged = false;
+        let startX, startY, initialX, initialY;
+        
+        element.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            hasDragged = false;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = element.offsetLeft;
+            initialY = element.offsetTop;
+            element.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+                    hasDragged = true;
+                    element.style.left = (initialX + deltaX) + 'px';
+                    element.style.top = (initialY + deltaY) + 'px';
+                    element.style.right = 'auto';
+                }
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                element.style.cursor = 'pointer';
+                
+                if (!hasDragged) {
+                    restoreCall();
+                }
+            }
+        });
+    }
+    
+    // Restore call from minimized state
+    function restoreCall() {
+        const callUI = document.getElementById('callUI');
+        const indicator = document.getElementById('minimizedCallIndicator');
+        
+        if (callUI) {
+            callUI.style.display = 'flex';
+        }
+        
+        if (indicator) {
+            indicator.remove();
+        }
+        
+        isCallMinimized = false;
+    }
+    
     // Update call UI
     function updateCallUI(status) {
         const callStatus = document.querySelector('.call-status');
@@ -1111,11 +1210,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (callControls && status === 'connected') {
             callControls.innerHTML = `
+                <button id="toggleSpeaker" class="call-btn speaker ${isSpeakerOn ? 'active' : ''}">
+                    <i class="fas fa-volume-up"></i>
+                </button>
                 <button id="endCall" class="call-btn end">
                     <i class="fas fa-phone-slash"></i>
                 </button>
             `;
             
+            document.getElementById('toggleSpeaker').addEventListener('click', toggleSpeaker);
             document.getElementById('endCall').addEventListener('click', endCall);
         }
     }
@@ -1127,6 +1230,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         cleanup();
+    }
+    
+    // Toggle speaker mode
+    function toggleSpeaker() {
+        const remoteAudio = document.getElementById('remoteAudio');
+        const speakerBtn = document.getElementById('toggleSpeaker');
+        
+        if (remoteAudio) {
+            isSpeakerOn = !isSpeakerOn;
+            
+            // Set audio output device (speaker vs earpiece)
+            if (remoteAudio.setSinkId) {
+                remoteAudio.setSinkId(isSpeakerOn ? 'default' : '')
+                    .catch(e => console.log('setSinkId not supported'));
+            }
+            
+            // Update volume for speaker mode
+            remoteAudio.volume = isSpeakerOn ? 1.0 : 0.8;
+            
+            // Update button appearance
+            if (speakerBtn) {
+                speakerBtn.classList.toggle('active', isSpeakerOn);
+                speakerBtn.innerHTML = `<i class="fas fa-volume-${isSpeakerOn ? 'up' : 'down'}"></i>`;
+            }
+        }
     }
     
     // Cleanup call resources
@@ -1142,20 +1270,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const callUI = document.getElementById('callUI');
+        const indicator = document.getElementById('minimizedCallIndicator');
+        
         if (callUI) {
             callUI.remove();
+        }
+        
+        if (indicator) {
+            indicator.remove();
         }
         
         isCallActive = false;
         currentCallUserId = null;
         remoteStream = null;
+        isSpeakerOn = false;
+        isCallMinimized = false;
     }
     
     // Socket event handlers for voice calls
     socket.on('incoming-call', (data) => {
-        if (isCallActive) {
+        if (isCallActive && !isCallMinimized) {
             socket.emit('call-failed', { reason: 'User is busy' });
             return;
+        }
+        
+        // If there's a minimized call, end it first
+        if (isCallMinimized) {
+            cleanup();
         }
         
         console.log('Incoming call from:', data.callerName);
@@ -1167,6 +1308,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Remote description set for incoming call');
                 showCallUI('incoming', data.callerName);
                 isCallActive = true;
+                isCallMinimized = false;
             })
             .catch(error => {
                 console.error('Error handling incoming call:', error);
@@ -1208,7 +1350,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     socket.on('call-ended', () => {
+        console.log('Call ended by other party');
         cleanup();
+    });
+    
+    socket.on('call-ended-disconnect', (data) => {
+        if (data.userId === currentCallUserId) {
+            console.log('Call ended due to disconnect');
+            cleanup();
+        }
     });
     
     // Debug function to create a test message (can be called from console)

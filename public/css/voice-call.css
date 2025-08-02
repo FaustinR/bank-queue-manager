@@ -19,6 +19,29 @@
     text-align: center;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     min-width: 300px;
+    position: relative;
+}
+
+.call-header {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.minimize-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.minimize-btn:hover {
+    background: #5a6268;
 }
 
 .call-info {
@@ -63,6 +86,24 @@
     transform: scale(1.1);
 }
 
+.call-btn.speaker {
+    background: #6c757d;
+}
+
+.call-btn.speaker:hover {
+    background: #5a6268;
+    transform: scale(1.1);
+}
+
+.call-btn.speaker.active {
+    background: #007bff;
+}
+
+.call-btn.speaker.active:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
 .call-btn.reject,
 .call-btn.end {
     background: #dc3545;
@@ -96,4 +137,40 @@
 
 #remoteAudio {
     display: none;
+}
+
+.minimized-call-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 25px;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    animation: pulse 2s infinite;
+    user-select: none;
+    transition: transform 0.2s ease;
+}
+
+.minimized-call-indicator:hover {
+    background: #218838;
+    transform: scale(1.05);
+}
+
+.minimized-call-indicator:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }

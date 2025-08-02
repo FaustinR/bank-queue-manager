@@ -851,6 +851,9 @@ io.on('connection', async (socket) => {
       
       // Only mark as disconnected if this was the last connection for this user
       if (connectedSockets.length === 0) {
+        // Notify any ongoing calls that this user disconnected
+        socket.broadcast.emit('call-ended-disconnect', { userId: socket.userId });
+        
         await User.findByIdAndUpdate(socket.userId, { connected: 'no' });
         
         // Emit user disconnection event
@@ -1190,6 +1193,21 @@ async function logoutNonAdminUsers() {
 // Function to clean up orphaned counter assignments
 async function cleanupOrphanedCounters() {
   try {
+    // Clear counter assignments for disconnected users
+    await User.updateMany(
+      { connected: 'no', counter: { $ne: null } },
+      { $set: { counter: null } }
+    );
+    
+    // Clear Counter model assignments for disconnected users
+    const disconnectedUsers = await User.find({ connected: 'no' }).select('_id');
+    const disconnectedUserIds = disconnectedUsers.map(u => u._id);
+    
+    await Counter.updateMany(
+      { staffId: { $in: disconnectedUserIds } },
+      { $set: { staffId: null, staffName: null } }
+    );
+    
     // Get all counters with staff assigned
     const countersWithStaff = await Counter.find({ staffId: { $ne: null } });
     
@@ -1223,6 +1241,7 @@ async function cleanupOrphanedCounters() {
         await user.save();
       }
     }
+    
     
     // Get updated counter staff information with IDs
     const staffInfo = await getCounterStaffInfo();
