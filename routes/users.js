@@ -27,6 +27,7 @@ router.get('/connected', isAuthenticated, async (req, res) => {
   try {
     // Always mark the current user as connected
     if (req.session.userId) {
+      console.log('Marking user as connected:', req.session.userId);
       await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
     }
     
@@ -37,10 +38,12 @@ router.get('/connected', isAuthenticated, async (req, res) => {
     
     // Include the current user's ID in the response
     const currentUserId = req.session.userId;
-
+    
+    console.log('Connected users found:', connectedUsers.length);
     
     res.json({ connectedUsers, currentUserId });
   } catch (error) {
+    console.error('Error in /connected endpoint:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -55,9 +58,11 @@ router.post('/mark-connected', isAuthenticated, async (req, res) => {
       return res.status(400).json({ message: 'No user ID provided' });
     }
     
+    console.log('Force marking user as connected:', userId);
+    
     // Update user's connected status
-    await User.findByIdAndUpdate(userId, { connected: 'yes' });
-
+    const result = await User.findByIdAndUpdate(userId, { connected: 'yes' }, { new: true });
+    console.log('User update result:', result ? 'success' : 'failed');
     
     // Emit user connection event using Socket.io
     const io = req.app.get('io');
@@ -65,8 +70,9 @@ router.post('/mark-connected', isAuthenticated, async (req, res) => {
       io.emit('userConnectionUpdate', { userId, connected: 'yes' });
     }
     
-    res.json({ success: true });
+    res.json({ success: true, userId, updated: !!result });
   } catch (error) {
+    console.error('Error marking user as connected:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -10,10 +10,13 @@ const connectDB = require('./config/db');
 const Ticket = require('./models/Ticket');
 const Counter = require('./models/Counter');
 const User = require('./models/User');
+
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const messageRoutes = require('./routes/messages');
 const { isAuthenticated, isAdmin, isStaff } = require('./middleware/auth');
+
+
 
 // Load environment variables
 dotenv.config();
@@ -297,6 +300,8 @@ app.get('/inbox', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'inbox.html'));
 });
 
+
+
 // No debug pages
 
 // API endpoints
@@ -414,6 +419,10 @@ app.get('/api/queue', async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+
+
+
 
 // Endpoint to manually refresh counter staff information
 app.get('/api/refresh-counters', async (req, res) => {
@@ -564,10 +573,10 @@ app.post('/api/counters/:id/clear', async (req, res) => {
       { $set: { staffId: null, staffName: null } }
     );
     
-    // Clear counter assignment in User model and set connected status to 'no'
+    // Clear counter assignment in User model
     await User.updateMany(
       { counter: counterId.toString() },
-      { $set: { counter: null, connected: 'no' } }
+      { $set: { counter: null } }
     );
     
     // Emit staff logout event
@@ -738,6 +747,8 @@ async function getCounterStaffInfo() {
 
 // Socket.io connection
 io.on('connection', async (socket) => {
+
+  
   // Get counter staff information with IDs
   const staffInfo = await getCounterStaffInfo();
   
@@ -755,18 +766,13 @@ io.on('connection', async (socket) => {
     counterStaffIds: staffInfo.counterStaffIds
   });
   
-  // Handle user authentication
+  // Handle authentication
   socket.on('authenticate', async (userId) => {
     if (userId) {
-            
-      // Store userId in socket for later reference
-      socket.userId = userId;
+      socket.userId = userId.toString();
       
       try {
-        // Update user's connected status to 'yes'
         await User.findByIdAndUpdate(userId, { connected: 'yes' });
-        
-        // Emit user connection event
         io.emit('userConnectionUpdate', { userId, connected: 'yes' });
       } catch (error) {
         // Error handling without logging
@@ -774,64 +780,7 @@ io.on('connection', async (socket) => {
     }
   });
   
-  // Check if there's a session user and mark them as connected
-  if (socket.request && socket.request.session && socket.request.session.userId) {
-    const userId = socket.request.session.userId;
-    socket.userId = userId;
-    
-    try {
-      // Update user's connected status to 'yes'
-      await User.findByIdAndUpdate(userId, { connected: 'yes' });
-      
-      // Emit user connection event
-      io.emit('userConnectionUpdate', { userId, connected: 'yes' });
-    } catch (error) {
-      // Error handling without logging
-    }
-  }
-  
-  // Voice call handlers
-  socket.on('call-user', (data) => {
-    const targetSocket = Array.from(io.sockets.sockets.values())
-      .find(s => s.userId === data.recipientId);
-    
-    if (targetSocket) {
-      targetSocket.emit('incoming-call', {
-        callerId: socket.userId,
-        callerName: data.callerName,
-        offer: data.offer
-      });
-    }
-  });
-  
-  socket.on('answer-call', (data) => {
-    const targetSocket = Array.from(io.sockets.sockets.values())
-      .find(s => s.userId === data.callerId);
-    
-    if (targetSocket) {
-      targetSocket.emit('call-answered', {
-        answer: data.answer
-      });
-    }
-  });
-  
-  socket.on('ice-candidate', (data) => {
-    const targetSocket = Array.from(io.sockets.sockets.values())
-      .find(s => s.userId === data.targetId);
-    
-    if (targetSocket) {
-      targetSocket.emit('ice-candidate', data.candidate);
-    }
-  });
-  
-  socket.on('end-call', (data) => {
-    const targetSocket = Array.from(io.sockets.sockets.values())
-      .find(s => s.userId === data.targetId);
-    
-    if (targetSocket) {
-      targetSocket.emit('call-ended');
-    }
-  });
+
   
   socket.on('disconnect', async () => {
     // If socket had a userId, update the user's connected status
@@ -855,7 +804,9 @@ io.on('connection', async (socket) => {
 app.post('/api/notify-counter-update', async (req, res) => {
   // Mark the current user as connected immediately
   if (req.session && req.session.userId) {
-    await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
+    console.log('Marking user as connected via counter update:', req.session.userId);
+    const result = await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
+    console.log('Counter update - user marked as connected:', !!result);
     
     // Emit user connection event
     io.emit('userConnectionUpdate', { userId: req.session.userId, connected: 'yes' });
@@ -895,10 +846,10 @@ app.post('/api/notify-staff-logout', async (req, res) => {
       { $set: { staffId: null, staffName: null } }
     );
     
-    // Clear in User model and set connected status to 'no'
+    // Clear in User model
     await User.updateMany(
       { counter: counterId.toString() },
-      { $set: { counter: null, connected: 'no' } }
+      { $set: { counter: null } }
     );
     
     // Emit staff logout event to all clients
@@ -1207,9 +1158,8 @@ async function cleanupOrphanedCounters() {
       });
       
       if (!counter) {
-        // This is an orphaned assignment in User model, clear it and set connected status to 'no'
+        // This is an orphaned assignment in User model, clear it
         user.counter = null;
-        user.connected = 'no';
         await user.save();
       }
     }
