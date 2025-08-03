@@ -776,19 +776,35 @@ io.on('connection', async (socket) => {
     counterStaffIds: staffInfo.counterStaffIds
   });
   
-  // Handle authentication
+  // Handle authentication with improved error handling
   socket.on('authenticate', async (userId) => {
     if (userId) {
       socket.userId = userId.toString();
       socket.isAuthenticated = true;
-      console.log('Socket authenticated:', socket.id, 'for user:', socket.userId);
+      console.log('=== SOCKET AUTHENTICATED ===');
+      console.log('Socket:', socket.id, 'User:', socket.userId);
       
       try {
-        await User.findByIdAndUpdate(userId, { connected: 'yes' });
-        socket.emit('authenticated', { userId: socket.userId });
+        // Verify user exists before updating
+        const user = await User.findById(userId);
+        if (user) {
+          await User.findByIdAndUpdate(userId, { connected: 'yes' }, { new: true });
+          console.log('User connected:', `${user.firstName} ${user.lastName}`);
+          socket.emit('authenticated', { userId: socket.userId });
+          
+          // Broadcast user connection update
+          io.emit('userConnectionUpdate', { userId: socket.userId, connected: 'yes' });
+        } else {
+          console.log('User not found for authentication:', userId);
+          socket.emit('authentication-failed', { reason: 'User not found' });
+        }
       } catch (error) {
         console.error('Authentication error:', error);
+        socket.emit('authentication-failed', { reason: 'Authentication failed' });
       }
+    } else {
+      console.log('No userId provided for authentication');
+      socket.emit('authentication-failed', { reason: 'No user ID provided' });
     }
   });
   
@@ -797,38 +813,74 @@ io.on('connection', async (socket) => {
   // Voice call handlers
   socket.on('call-user', async (data) => {
     try {
-      console.log('Call attempt from', socket.userId, 'to', data.recipientId);
+      console.log('=== CALL ATTEMPT ===');
+      console.log('From socket:', socket.id, 'userId:', socket.userId);
+      console.log('To user:', data.recipientId);
       
-      // Check if target user is connected in database
+      if (!socket.userId || !socket.isAuthenticated) {
+        console.log('Caller not authenticated');
+        return socket.emit('call-failed', { reason: 'You must be logged in to make calls' });
+      }
+      
       const targetUser = await User.findById(data.recipientId).select('firstName lastName connected');
       
       if (!targetUser) {
-        console.log('Target user not found:', data.recipientId);
+        console.log('Target user not found in database');
         return socket.emit('call-failed', { reason: 'User not found' });
       }
       
-      console.log('Target user found:', targetUser.firstName, targetUser.lastName, 'Connected:', targetUser.connected);
+      console.log('Target user:', targetUser.firstName, targetUser.lastName, 'Connected:', targetUser.connected);
       
-      if (targetUser.connected !== 'yes') {
+      // Double-check user connection by looking for active sockets
+      const userSockets = Array.from(io.sockets.sockets.values())
+        .filter(s => String(s.userId) === String(data.recipientId) && s.isAuthenticated);
+      
+      if (targetUser.connected !== 'yes' && userSockets.length === 0) {
+        console.log('Target user not connected - DB status:', targetUser.connected, 'Active sockets:', userSockets.length);
         return socket.emit('call-failed', { reason: `${targetUser.firstName} ${targetUser.lastName} is not connected` });
       }
       
-      // Find target socket
+      // If DB says not connected but we have active sockets, update DB
+      if (targetUser.connected !== 'yes' && userSockets.length > 0) {
+        console.log('Updating user connection status in DB');
+        await User.findByIdAndUpdate(data.recipientId, { connected: 'yes' });
+      }
+      
+      // Find all authenticated sockets for the target user
       const allSockets = Array.from(io.sockets.sockets.values());
-      console.log('All authenticated sockets:', allSockets.map(s => ({ id: s.id, userId: s.userId, isAuth: s.isAuthenticated })));
+      const targetSockets = allSockets.filter(s => 
+        String(s.userId) === String(data.recipientId) && 
+        s.isAuthenticated && 
+        s.connected
+      );
       
-      const targetSocket = allSockets.find(s => s.isAuthenticated && String(s.userId) === String(data.recipientId));
+      console.log('=== TARGET SOCKETS FOUND ===');
+      console.log('Count:', targetSockets.length);
+      targetSockets.forEach(s => {
+        console.log(`Socket ${s.id}: userId=${s.userId}, auth=${s.isAuthenticated}, connected=${s.connected}`);
+      });
       
-      if (targetSocket) {
-        console.log('Target socket found, sending call to:', targetSocket.userId);
-        targetSocket.emit('incoming-call', {
+      if (targetSockets.length > 0) {
+        console.log('=== SENDING CALL TO ALL TARGET SOCKETS ===');
+        
+        const callData = {
           callerId: socket.userId,
           callerName: data.callerName,
+          callerEmail: data.callerEmail,
           offer: data.offer
+        };
+        
+        // Send to all authenticated sockets of the target user
+        targetSockets.forEach(targetSocket => {
+          console.log('Sending to socket:', targetSocket.id);
+          targetSocket.emit('incoming-call', callData);
         });
+        
+        console.log('incoming-call events sent to', targetSockets.length, 'sockets');
       } else {
-        console.log('No authenticated socket found for user:', data.recipientId);
-        socket.emit('call-failed', { reason: `${targetUser.firstName} ${targetUser.lastName} is not connected` });
+        console.log('=== NO TARGET SOCKETS AVAILABLE ===');
+        console.log('Looking for userId:', data.recipientId);
+        socket.emit('call-failed', { reason: `${targetUser.firstName} ${targetUser.lastName} is not available for calls right now` });
       }
     } catch (error) {
       console.error('Call handler error:', error);
@@ -837,30 +889,39 @@ io.on('connection', async (socket) => {
   });
   
   socket.on('answer-call', (data) => {
-    const targetSocket = Array.from(io.sockets.sockets.values())
-      .find(s => String(s.userId) === String(data.callerId));
+    const targetSockets = Array.from(io.sockets.sockets.values())
+      .filter(s => String(s.userId) === String(data.callerId) && s.isAuthenticated && s.connected);
     
-    if (targetSocket) {
+    targetSockets.forEach(targetSocket => {
       targetSocket.emit('call-answered', { answer: data.answer });
-    }
+    });
   });
   
   socket.on('ice-candidate', (data) => {
-    const targetSocket = Array.from(io.sockets.sockets.values())
-      .find(s => String(s.userId) === String(data.targetId));
+    const targetSockets = Array.from(io.sockets.sockets.values())
+      .filter(s => String(s.userId) === String(data.targetId) && s.isAuthenticated && s.connected);
     
-    if (targetSocket) {
+    targetSockets.forEach(targetSocket => {
       targetSocket.emit('ice-candidate', data.candidate);
-    }
+    });
   });
   
   socket.on('end-call', (data) => {
-    const targetSocket = Array.from(io.sockets.sockets.values())
-      .find(s => String(s.userId) === String(data.targetId));
+    const targetSockets = Array.from(io.sockets.sockets.values())
+      .filter(s => String(s.userId) === String(data.targetId) && s.isAuthenticated && s.connected);
     
-    if (targetSocket) {
+    targetSockets.forEach(targetSocket => {
       targetSocket.emit('call-ended');
-    }
+    });
+  });
+  
+  socket.on('call-declined', (data) => {
+    const targetSockets = Array.from(io.sockets.sockets.values())
+      .filter(s => String(s.userId) === String(data.callerId) && s.isAuthenticated && s.connected);
+    
+    targetSockets.forEach(targetSocket => {
+      targetSocket.emit('call-declined');
+    });
   });
   
   socket.on('disconnect', async () => {

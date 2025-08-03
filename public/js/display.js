@@ -1,3 +1,36 @@
+// Notification sound function
+function playNotificationSound() {
+    try {
+        // Create audio context for better browser compatibility
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (error) {
+        console.log('Could not play notification sound:', error);
+        // Fallback: try to use HTML5 audio if available
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+            audio.volume = 0.3;
+            audio.play().catch(() => {});
+        } catch (e) {
+            console.log('Fallback audio also failed:', e);
+        }
+    }
+}
+
 // Text-to-speech function with language support
 function speak(text, language) {
     if ('speechSynthesis' in window) {
@@ -270,16 +303,48 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Setup message modal event listeners
     setupMessageModal();
     
-    // Authenticate socket for calls
-    try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-            const userData = await response.json();
-            socket.emit('authenticate', userData.user._id);
+    // Authenticate socket for calls immediately with retry mechanism
+    let authRetries = 0;
+    const maxAuthRetries = 3;
+    
+    const authenticateSocket = async () => {
+        try {
+            const response = await fetch('/api/auth/me');
+            if (response.ok) {
+                const userData = await response.json();
+                console.log('Authenticating socket with user ID:', userData.user._id);
+                socket.emit('authenticate', userData.user._id);
+                
+                // Store user ID globally for call handling
+                window.currentUserId = userData.user._id;
+                
+                return true;
+            } else {
+                console.log('User not authenticated, cannot make calls');
+                return false;
+            }
+        } catch (error) {
+            console.log('Error authenticating socket:', error);
+            return false;
         }
-    } catch (error) {
-        // Error handling without logging
-    }
+    };
+    
+    const tryAuthenticate = async () => {
+        const success = await authenticateSocket();
+        if (!success && authRetries < maxAuthRetries) {
+            authRetries++;
+            console.log(`Authentication retry ${authRetries}/${maxAuthRetries}`);
+            setTimeout(tryAuthenticate, 1000 * authRetries);
+        }
+    };
+    
+    await tryAuthenticate();
+    
+    // Wait for authentication confirmation with timeout
+    socket.on('authenticated', (data) => {
+        console.log('Socket authentication confirmed for user:', data.userId);
+        window.socketAuthenticated = true;
+    });
 });
 
 function updateDisplay(data) {
@@ -652,12 +717,12 @@ async function openMessageModal(e) {
     
     // Show modal
     const modal = document.getElementById('messageModal');
-    modal.style.display = 'flex';
+    modal.classList.add('show');
 }
 
 function closeMessageModal() {
     const modal = document.getElementById('messageModal');
-    modal.style.display = 'none';
+    modal.classList.remove('show');
     
     // Reset the form completely since we're filling with teller info each time
     const form = document.getElementById('messageForm');
@@ -777,12 +842,20 @@ async function initiateCall(e) {
     const tellerId = btn.getAttribute('data-teller-id');
     const tellerName = btn.getAttribute('data-teller');
     
+    console.log('Initiating call to:', tellerName, 'ID:', tellerId);
+    
     if (!tellerId) {
         window.notifications.error('Error', 'Cannot call: Teller information not available');
         return;
     }
     
     try {
+        // Check if socket is connected and authenticated
+        if (!socket.connected) {
+            window.notifications.error('Error', 'Connection lost. Please refresh the page.');
+            return;
+        }
+        
         // Get current user info
         const response = await fetch('/api/auth/me');
         if (!response.ok) {
@@ -793,11 +866,64 @@ async function initiateCall(e) {
         const userData = await response.json();
         const callerName = `${userData.user.firstName} ${userData.user.lastName}`;
         
-        // Get user media
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Caller:', callerName, 'calling:', tellerName);
         
-        // Create peer connection
-        peerConnection = new RTCPeerConnection(servers);
+        // Ensure socket is authenticated before making call
+        if (!window.socketAuthenticated) {
+            console.log('Re-authenticating socket before call');
+            socket.emit('authenticate', userData.user._id);
+            
+            // Wait for authentication with timeout
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Authentication timeout'));
+                }, 5000);
+                
+                const onAuth = () => {
+                    clearTimeout(timeout);
+                    socket.off('authenticated', onAuth);
+                    resolve();
+                };
+                
+                socket.on('authenticated', onAuth);
+            });
+        }
+        
+        // Get user media with enhanced settings and browser compatibility
+        const mediaConstraints = {
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 44100
+            }
+        };
+        
+        // Handle different browser implementations
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        } else if (navigator.getUserMedia) {
+            localStream = await new Promise((resolve, reject) => {
+                navigator.getUserMedia(mediaConstraints, resolve, reject);
+            });
+        } else {
+            throw new Error('getUserMedia not supported in this browser');
+        }
+        
+        const localAudio = document.getElementById('localAudio');
+        if (localAudio) {
+            localAudio.srcObject = localStream;
+        }
+        
+        // Create peer connection with STUN servers for better connectivity
+        peerConnection = new RTCPeerConnection({
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ],
+            iceCandidatePoolSize: 10
+        });
         
         // Add local stream
         localStream.getTracks().forEach(track => {
@@ -806,16 +932,27 @@ async function initiateCall(e) {
         
         // Handle remote stream
         peerConnection.ontrack = (event) => {
+            console.log('Received remote stream');
             remoteStream = event.streams[0];
             const remoteAudio = document.getElementById('remoteAudio');
             if (remoteAudio) {
                 remoteAudio.srcObject = remoteStream;
+                remoteAudio.volume = 1.0;
+                // Use promise-based play for better browser compatibility
+                remoteAudio.play().catch(e => {
+                    console.log('Audio play failed, trying user interaction:', e);
+                    // Some browsers require user interaction
+                    document.addEventListener('click', () => {
+                        remoteAudio.play().catch(console.error);
+                    }, { once: true });
+                });
             }
         };
         
         // Handle ICE candidates
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
+                console.log('Sending ICE candidate');
                 socket.emit('ice-candidate', {
                     targetId: tellerId,
                     candidate: event.candidate
@@ -823,59 +960,150 @@ async function initiateCall(e) {
             }
         };
         
-        // Create offer
-        const offer = await peerConnection.createOffer();
+        // Handle connection state changes
+        peerConnection.onconnectionstatechange = () => {
+            console.log('Connection state:', peerConnection.connectionState);
+            if (peerConnection.connectionState === 'failed') {
+                window.notifications.error('Error', 'Call connection failed');
+                endCall();
+            }
+        };
+        
+        // Create offer with better codec preferences
+        const offer = await peerConnection.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: false
+        });
         await peerConnection.setLocalDescription(offer);
         
-        // Send call request
+        console.log('Sending call request to:', tellerId);
+        
+        // Send call request with caller info
         socket.emit('call-user', {
             recipientId: tellerId,
             callerName: callerName,
+            callerId: userData.user._id,
+            callerEmail: userData.user.email,
             offer: offer
         });
         
+        console.log('Call request sent');
+        
         currentCall = { recipientId: tellerId, recipientName: tellerName };
-        showCallModal('outgoing', tellerName);
+        showCallModal('outgoing', tellerName, { email: '' });
         
     } catch (error) {
+        console.error('Call initiation error:', error);
         window.notifications.error('Error', 'Failed to start call: ' + error.message);
         cleanupCall();
     }
 }
 
-function showCallModal(type, name) {
-    // Create call modal if it doesn't exist
-    let callModal = document.getElementById('callModal');
-    if (!callModal) {
-        callModal = document.createElement('div');
-        callModal.id = 'callModal';
-        callModal.className = 'modal';
-        callModal.innerHTML = `
-            <div class="modal-content call-modal">
-                <div class="call-info">
-                    <div class="call-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="call-name" id="callName"></div>
-                    <div class="call-status" id="callStatus"></div>
-                </div>
-                <div class="call-controls">
-                    <button id="endCallBtn" class="end-call-btn">
-                        <i class="fas fa-phone-slash"></i>
-                    </button>
-                </div>
-                <audio id="remoteAudio" autoplay></audio>
-            </div>
-        `;
-        document.body.appendChild(callModal);
-        
-        // Add event listener for end call
-        document.getElementById('endCallBtn').addEventListener('click', endCall);
+function showCallModal(type, name, userInfo = {}) {
+    console.log('showCallModal called with:', type, name, userInfo);
+    
+    // Remove any existing modal first to prevent conflicts
+    const existingModal = document.getElementById('callModal');
+    if (existingModal) {
+        existingModal.remove();
     }
     
-    document.getElementById('callName').textContent = name;
-    document.getElementById('callStatus').textContent = type === 'outgoing' ? 'Calling...' : 'Incoming call';
+    console.log('Creating new call modal');
+    const callModal = document.createElement('div');
+    callModal.id = 'callModal';
+    callModal.className = 'modal';
+    callModal.innerHTML = `
+        <div class="modal-content call-modal">
+            <div class="call-info">
+                <div class="call-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="call-name" id="callName">${name}</div>
+                <div class="call-email" id="callEmail">${userInfo.email || ''}</div>
+                <div class="call-status" id="callStatus"></div>
+            </div>
+            <div class="call-controls" id="callControls">
+            </div>
+            <div class="call-header">
+                <button id="minimizeCallBtn" class="minimize-btn">
+                    <i class="fas fa-minus"></i>
+                </button>
+            </div>
+            <audio id="remoteAudio" autoplay playsinline></audio>
+            <audio id="localAudio" muted autoplay playsinline></audio>
+        </div>
+    `;
+    
+    // Append to body immediately
+    document.body.appendChild(callModal);
+    
+    const controlsDiv = document.getElementById('callControls');
+    
+    if (type === 'incoming') {
+        console.log('Setting up incoming call UI');
+        document.getElementById('callStatus').textContent = 'Incoming call';
+        controlsDiv.innerHTML = `
+            <button id="acceptCallBtn" class="accept-call-btn">
+                <i class="fas fa-phone"></i> Accept
+            </button>
+            <button id="declineCallBtn" class="decline-call-btn">
+                <i class="fas fa-phone-slash"></i> Decline
+            </button>
+        `;
+        
+        // Add event listeners with error handling
+        const acceptBtn = document.getElementById('acceptCallBtn');
+        const declineBtn = document.getElementById('declineCallBtn');
+        
+        if (acceptBtn) acceptBtn.addEventListener('click', acceptCall);
+        if (declineBtn) declineBtn.addEventListener('click', declineCall);
+    } else {
+        console.log('Setting up outgoing call UI');
+        document.getElementById('callStatus').textContent = 'Calling...';
+        controlsDiv.innerHTML = `
+            <button id="endCallBtn" class="end-call-btn">
+                <i class="fas fa-phone-slash"></i> End Call
+            </button>
+        `;
+        
+        const endBtn = document.getElementById('endCallBtn');
+        if (endBtn) endBtn.addEventListener('click', endCall);
+    }
+    
+    // Add minimize button listener
+    const minimizeBtn = document.getElementById('minimizeCallBtn');
+    if (minimizeBtn) minimizeBtn.addEventListener('click', minimizeCall);
+    
+    // Force show the modal with multiple methods for browser compatibility
+    console.log('Showing modal with multiple methods');
+    
+    // Method 1: CSS classes
+    callModal.classList.add('show');
+    
+    // Method 2: Inline styles as backup
     callModal.style.display = 'flex';
+    callModal.style.visibility = 'visible';
+    callModal.style.opacity = '1';
+    callModal.style.zIndex = '10000';
+    callModal.style.position = 'fixed';
+    callModal.style.top = '0';
+    callModal.style.left = '0';
+    callModal.style.width = '100%';
+    callModal.style.height = '100%';
+    callModal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    callModal.style.alignItems = 'center';
+    callModal.style.justifyContent = 'center';
+    
+    console.log('Modal created and should be visible');
+    
+    // Verify modal is visible after a short delay
+    setTimeout(() => {
+        const modal = document.getElementById('callModal');
+        if (modal) {
+            const computedStyle = window.getComputedStyle(modal);
+            console.log('Modal verification - Display:', computedStyle.display, 'Visibility:', computedStyle.visibility, 'Opacity:', computedStyle.opacity);
+        }
+    }, 50);
 }
 
 function endCall() {
@@ -886,23 +1114,96 @@ function endCall() {
     hideCallModal();
 }
 
+function minimizeCall() {
+    const callModal = document.getElementById('callModal');
+    if (callModal) {
+        callModal.classList.add('minimized');
+        
+        let indicator = document.getElementById('callIndicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'callIndicator';
+            indicator.className = 'call-indicator';
+            indicator.innerHTML = `
+                <i class="fas fa-phone"></i>
+                <span>Call in progress</span>
+                <button onclick="restoreCall()"><i class="fas fa-expand"></i></button>
+            `;
+            document.body.appendChild(indicator);
+        }
+    }
+}
+
+function restoreCall() {
+    const callModal = document.getElementById('callModal');
+    const indicator = document.getElementById('callIndicator');
+    
+    if (callModal) {
+        callModal.classList.remove('minimized');
+    }
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
 function cleanupCall() {
+    console.log('Cleaning up call resources');
+    
+    // Stop all media tracks
     if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
+        localStream.getTracks().forEach(track => {
+            track.stop();
+            console.log('Stopped track:', track.kind);
+        });
         localStream = null;
     }
+    
+    if (remoteStream) {
+        remoteStream.getTracks().forEach(track => {
+            track.stop();
+        });
+        remoteStream = null;
+    }
+    
+    // Close peer connection
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
+        console.log('Peer connection closed');
     }
+    
+    // Clear audio elements
+    const remoteAudio = document.getElementById('remoteAudio');
+    const localAudio = document.getElementById('localAudio');
+    if (remoteAudio) {
+        remoteAudio.srcObject = null;
+        remoteAudio.pause();
+    }
+    if (localAudio) {
+        localAudio.srcObject = null;
+        localAudio.pause();
+    }
+    
+    // Remove call indicator
+    const indicator = document.getElementById('callIndicator');
+    if (indicator) indicator.remove();
+    
+    // Clear call data
     currentCall = null;
+    window.incomingCallData = null;
+    
+    console.log('Call cleanup completed');
 }
 
 function hideCallModal() {
     const callModal = document.getElementById('callModal');
     if (callModal) {
+        callModal.classList.remove('show', 'minimized');
         callModal.style.display = 'none';
     }
+    
+    const indicator = document.getElementById('callIndicator');
+    if (indicator) indicator.remove();
 }
 
 // Socket event listeners for calls
@@ -912,11 +1213,19 @@ socket.on('call-failed', (data) => {
     hideCallModal();
 });
 
+socket.on('call-declined', () => {
+    window.notifications.info('Call Declined', 'The user declined your call');
+    cleanupCall();
+    hideCallModal();
+});
+
 socket.on('call-answered', async (data) => {
     try {
+        console.log('Call answered by recipient');
         await peerConnection.setRemoteDescription(data.answer);
         document.getElementById('callStatus').textContent = 'Connected';
     } catch (error) {
+        console.error('Error connecting call:', error);
         window.notifications.error('Error', 'Failed to connect call');
         endCall();
     }
@@ -933,6 +1242,245 @@ socket.on('ice-candidate', async (candidate) => {
 });
 
 socket.on('call-ended', () => {
+    console.log('Call ended by remote party');
     cleanupCall();
     hideCallModal();
 });
+
+// Handle socket reconnection
+socket.on('connect', () => {
+    console.log('Socket connected/reconnected');
+    // Re-authenticate if we have user ID
+    if (window.currentUserId) {
+        console.log('Re-authenticating after reconnection');
+        socket.emit('authenticate', window.currentUserId);
+    }
+});
+
+socket.on('disconnect', () => {
+    console.log('Socket disconnected');
+    window.socketAuthenticated = false;
+    // Clean up any ongoing calls
+    if (currentCall || window.incomingCallData) {
+        cleanupCall();
+        hideCallModal();
+        window.notifications.info('Connection Lost', 'Call ended due to connection loss');
+    }
+});
+
+// Handle call-related disconnections
+socket.on('call-ended-disconnect', (data) => {
+    if (currentCall && currentCall.recipientId === data.userId) {
+        console.log('Call ended due to user disconnection');
+        cleanupCall();
+        hideCallModal();
+        window.notifications.info('Call Ended', 'The other party disconnected');
+    }
+});
+
+// Handle incoming calls with better error handling and browser compatibility
+socket.on('incoming-call', async (data) => {
+    try {
+        console.log('=== INCOMING CALL RECEIVED ===');
+        console.log('Caller:', data.callerName);
+        console.log('Caller Email:', data.callerEmail);
+        console.log('Caller ID:', data.callerId);
+        
+        // Prevent multiple incoming calls
+        if (window.incomingCallData || currentCall) {
+            console.log('Already in a call, declining new incoming call');
+            socket.emit('call-declined', { callerId: data.callerId });
+            return;
+        }
+        
+        window.incomingCallData = data;
+        
+        // Play notification sound if available
+        try {
+            playNotificationSound();
+        } catch (e) {
+            console.log('Could not play notification sound:', e);
+        }
+        
+        // Force show the modal with multiple attempts for browser compatibility
+        console.log('Showing call modal...');
+        showCallModal('incoming', data.callerName, { email: data.callerEmail });
+        
+        // Ensure modal is visible with fallback methods
+        setTimeout(() => {
+            const modal = document.getElementById('callModal');
+            if (modal) {
+                console.log('Modal classes:', modal.className);
+                console.log('Modal display:', window.getComputedStyle(modal).display);
+                
+                // Force visibility if not showing
+                if (!modal.classList.contains('show') || window.getComputedStyle(modal).display === 'none') {
+                    console.log('Forcing modal visibility');
+                    modal.classList.add('show');
+                    modal.style.display = 'flex';
+                    modal.style.visibility = 'visible';
+                    modal.style.opacity = '1';
+                    modal.style.zIndex = '10000';
+                }
+            } else {
+                console.error('Call modal not found in DOM');
+                // Try to create modal again
+                showCallModal('incoming', data.callerName, { email: data.callerEmail });
+            }
+        }, 100);
+        
+        // Auto-decline after 30 seconds if not answered
+        setTimeout(() => {
+            if (window.incomingCallData && window.incomingCallData.callerId === data.callerId) {
+                console.log('Auto-declining call after timeout');
+                declineCall();
+            }
+        }, 30000);
+        
+    } catch (error) {
+        console.error('Error handling incoming call:', error);
+        // Decline the call if there's an error
+        if (data && data.callerId) {
+            socket.emit('call-declined', { callerId: data.callerId });
+        }
+    }
+});
+
+// Function to accept incoming call with better error handling
+async function acceptCall() {
+    try {
+        const data = window.incomingCallData;
+        if (!data) {
+            console.error('No incoming call data available');
+            return;
+        }
+        
+        console.log('Accepting call from:', data.callerName);
+        
+        // Get user media with enhanced settings and browser compatibility
+        const mediaConstraints = {
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 44100
+            }
+        };
+        
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        } else if (navigator.getUserMedia) {
+            localStream = await new Promise((resolve, reject) => {
+                navigator.getUserMedia(mediaConstraints, resolve, reject);
+            });
+        } else {
+            throw new Error('getUserMedia not supported in this browser');
+        }
+        
+        const localAudio = document.getElementById('localAudio');
+        if (localAudio) {
+            localAudio.srcObject = localStream;
+        }
+        
+        // Create peer connection with multiple STUN servers
+        peerConnection = new RTCPeerConnection({
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ],
+            iceCandidatePoolSize: 10
+        });
+        
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+        
+        peerConnection.ontrack = (event) => {
+            console.log('Received remote stream in accept call');
+            remoteStream = event.streams[0];
+            const remoteAudio = document.getElementById('remoteAudio');
+            if (remoteAudio) {
+                remoteAudio.srcObject = remoteStream;
+                remoteAudio.volume = 1.0;
+                remoteAudio.play().catch(e => {
+                    console.log('Audio play failed, trying user interaction:', e);
+                    document.addEventListener('click', () => {
+                        remoteAudio.play().catch(console.error);
+                    }, { once: true });
+                });
+            }
+        };
+        
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                console.log('Sending ICE candidate from accept call');
+                socket.emit('ice-candidate', {
+                    targetId: data.callerId,
+                    candidate: event.candidate
+                });
+            }
+        };
+        
+        // Handle connection state changes
+        peerConnection.onconnectionstatechange = () => {
+            console.log('Accept call - Connection state:', peerConnection.connectionState);
+            if (peerConnection.connectionState === 'failed') {
+                window.notifications.error('Error', 'Call connection failed');
+                endCall();
+            }
+        };
+        
+        await peerConnection.setRemoteDescription(data.offer);
+        const answer = await peerConnection.createAnswer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: false
+        });
+        await peerConnection.setLocalDescription(answer);
+        
+        console.log('Sending answer to caller');
+        socket.emit('answer-call', {
+            callerId: data.callerId,
+            answer: answer
+        });
+        
+        currentCall = { recipientId: data.callerId, recipientName: data.callerName };
+        
+        // Update UI
+        const statusElement = document.getElementById('callStatus');
+        if (statusElement) {
+            statusElement.textContent = 'Connected';
+        }
+        
+        const controlsDiv = document.getElementById('callControls');
+        if (controlsDiv) {
+            controlsDiv.innerHTML = `
+                <button id="endCallBtn" class="end-call-btn">
+                    <i class="fas fa-phone-slash"></i> End Call
+                </button>
+            `;
+            const endBtn = document.getElementById('endCallBtn');
+            if (endBtn) endBtn.addEventListener('click', endCall);
+        }
+        
+        window.incomingCallData = null;
+        console.log('Call accepted successfully');
+        
+    } catch (error) {
+        console.error('Error accepting call:', error);
+        window.notifications.error('Error', 'Failed to accept call: ' + error.message);
+        declineCall();
+    }
+}
+
+// Function to decline incoming call
+function declineCall() {
+    console.log('Declining call');
+    const data = window.incomingCallData;
+    if (data) {
+        socket.emit('call-declined', { callerId: data.callerId });
+        window.incomingCallData = null;
+    }
+    cleanupCall();
+    hideCallModal();
+}
