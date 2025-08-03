@@ -1055,8 +1055,8 @@ function showCallModal(type, name, userInfo = {}) {
         const acceptBtn = document.getElementById('acceptCallBtn');
         const declineBtn = document.getElementById('declineCallBtn');
         
-        if (acceptBtn) acceptBtn.addEventListener('click', acceptCall);
-        if (declineBtn) declineBtn.addEventListener('click', declineCall);
+        if (acceptBtn) acceptBtn.onclick = acceptCall;
+        if (declineBtn) declineBtn.onclick = declineCall;
     } else {
         console.log('Setting up outgoing call UI');
         document.getElementById('callStatus').textContent = 'Calling...';
@@ -1067,12 +1067,30 @@ function showCallModal(type, name, userInfo = {}) {
         `;
         
         const endBtn = document.getElementById('endCallBtn');
-        if (endBtn) endBtn.addEventListener('click', endCall);
+        if (endBtn) endBtn.onclick = endCall;
     }
     
-    // Add minimize button listener
+    // Add minimize button listener with proper event handling and debugging
     const minimizeBtn = document.getElementById('minimizeCallBtn');
-    if (minimizeBtn) minimizeBtn.addEventListener('click', minimizeCall);
+    console.log('Minimize button found:', !!minimizeBtn);
+    if (minimizeBtn) {
+        minimizeBtn.onclick = function(e) {
+            console.log('Minimize button clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            minimizeCall();
+        };
+        // Also add as event listener as backup
+        minimizeBtn.addEventListener('click', function(e) {
+            console.log('Minimize button clicked via addEventListener!');
+            e.preventDefault();
+            e.stopPropagation();
+            minimizeCall();
+        });
+        console.log('Minimize button event handlers attached');
+    } else {
+        console.error('Minimize button not found!');
+    }
     
     // Force show the modal with multiple methods for browser compatibility
     console.log('Showing modal with multiple methods');
@@ -1115,22 +1133,36 @@ function endCall() {
 }
 
 function minimizeCall() {
+    console.log('minimizeCall function called');
     const callModal = document.getElementById('callModal');
+    console.log('Call modal found:', !!callModal);
     if (callModal) {
-        callModal.classList.add('minimized');
+        // Remove show class and force hide with important styles
+        callModal.classList.remove('show');
+        callModal.style.setProperty('display', 'none', 'important');
+        callModal.style.setProperty('visibility', 'hidden', 'important');
+        callModal.style.setProperty('opacity', '0', 'important');
+        console.log('Call modal hidden');
         
         let indicator = document.getElementById('callIndicator');
         if (!indicator) {
+            console.log('Creating call indicator');
             indicator = document.createElement('div');
             indicator.id = 'callIndicator';
-            indicator.className = 'call-indicator';
+            indicator.className = 'call-indicator draggable';
             indicator.innerHTML = `
-                <i class="fas fa-phone"></i>
-                <span>Call in progress</span>
+                <div class="drag-handle">
+                    <i class="fas fa-phone"></i>
+                    <span>Call in progress</span>
+                </div>
                 <button onclick="restoreCall()"><i class="fas fa-expand"></i></button>
             `;
             document.body.appendChild(indicator);
+            makeDraggable(indicator);
+            console.log('Call indicator created and made draggable');
         }
+    } else {
+        console.error('Call modal not found for minimizing');
     }
 }
 
@@ -1139,10 +1171,93 @@ function restoreCall() {
     const indicator = document.getElementById('callIndicator');
     
     if (callModal) {
-        callModal.classList.remove('minimized');
+        callModal.classList.add('show');
+        callModal.style.setProperty('display', 'flex', 'important');
+        callModal.style.setProperty('visibility', 'visible', 'important');
+        callModal.style.setProperty('opacity', '1', 'important');
     }
     if (indicator) {
         indicator.remove();
+    }
+}
+
+// Make element draggable
+function makeDraggable(element) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    const dragHandle = element.querySelector('.drag-handle') || element;
+    
+    dragHandle.onmousedown = dragMouseDown;
+    dragHandle.style.cursor = 'move';
+    
+    // Also support touch events for mobile
+    dragHandle.ontouchstart = dragTouchStart;
+    
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Disable text selection during drag
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+        
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+    
+    function dragTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        pos3 = touch.clientX;
+        pos4 = touch.clientY;
+        document.ontouchend = closeDragElement;
+        document.ontouchmove = elementTouchDrag;
+    }
+    
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        updatePosition();
+    }
+    
+    function elementTouchDrag(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        pos1 = pos3 - touch.clientX;
+        pos2 = pos4 - touch.clientY;
+        pos3 = touch.clientX;
+        pos4 = touch.clientY;
+        updatePosition();
+    }
+    
+    function updatePosition() {
+        const newTop = element.offsetTop - pos2;
+        const newLeft = element.offsetLeft - pos1;
+        
+        // Keep within viewport bounds with margin
+        const margin = 10;
+        const maxTop = window.innerHeight - element.offsetHeight - margin;
+        const maxLeft = window.innerWidth - element.offsetWidth - margin;
+        
+        element.style.top = Math.max(margin, Math.min(newTop, maxTop)) + 'px';
+        element.style.left = Math.max(margin, Math.min(newLeft, maxLeft)) + 'px';
+    }
+    
+    function closeDragElement() {
+        // Re-enable text selection
+        document.body.style.userSelect = '';
+        document.body.style.webkitUserSelect = '';
+        
+        document.onmouseup = null;
+        document.onmousemove = null;
+        document.ontouchend = null;
+        document.ontouchmove = null;
     }
 }
 
@@ -1198,7 +1313,7 @@ function cleanupCall() {
 function hideCallModal() {
     const callModal = document.getElementById('callModal');
     if (callModal) {
-        callModal.classList.remove('show', 'minimized');
+        callModal.classList.remove('show');
         callModal.style.display = 'none';
     }
     
@@ -1460,7 +1575,7 @@ async function acceptCall() {
                 </button>
             `;
             const endBtn = document.getElementById('endCallBtn');
-            if (endBtn) endBtn.addEventListener('click', endCall);
+            if (endBtn) endBtn.onclick = endCall;
         }
         
         window.incomingCallData = null;

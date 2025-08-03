@@ -763,17 +763,14 @@ body:not(.embedded-display) .counter {
     background: rgba(255,255,255,0.3);
 }
 
-/* Minimized modal */
-.modal.minimized {
-    display: none !important;
-}
+/* Remove minimized class as we handle it differently */
 
-/* Call indicator */
+/* Call indicator - draggable */
 .call-indicator {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: #2c3e50;
+    background: #28a745;
     color: white;
     padding: 10px 15px;
     border-radius: 25px;
@@ -783,6 +780,28 @@ body:not(.embedded-display) .counter {
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     z-index: 9999;
     animation: pulse 2s infinite;
+    user-select: none;
+    width: 200px;
+    height: 50px;
+    resize: none;
+    overflow: hidden;
+}
+
+.call-indicator.draggable {
+    cursor: move;
+}
+
+.call-indicator .drag-handle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: move;
+    flex: 1;
+    pointer-events: auto;
+    -webkit-user-drag: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 .call-indicator button {
@@ -793,6 +812,7 @@ body:not(.embedded-display) .counter {
     padding: 5px;
     border-radius: 3px;
     transition: background 0.3s;
+    flex-shrink: 0;
 }
 
 .call-indicator button:hover {
