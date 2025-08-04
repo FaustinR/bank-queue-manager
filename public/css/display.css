@@ -700,8 +700,8 @@ body:not(.embedded-display) .counter {
 
 .call-controls {
     display: flex;
-    gap: 15px;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .accept-call-btn, .decline-call-btn, .end-call-btn {
@@ -715,6 +715,8 @@ body:not(.embedded-display) .counter {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 120px;
+    justify-content: center;
 }
 
 .accept-call-btn {
