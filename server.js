@@ -863,10 +863,40 @@ io.on('connection', async (socket) => {
       if (targetSockets.length > 0) {
         console.log('=== SENDING CALL TO ALL TARGET SOCKETS ===');
         
+        // Get caller's counter and service information
+        const caller = await User.findById(socket.userId).select('counter');
+        let callerCounter = 'Unknown';
+        let callerService = 'Unknown Service';
+        
+        if (caller && caller.counter) {
+          callerCounter = caller.counter;
+          const counterInfo = counters[parseInt(caller.counter)];
+          if (counterInfo) {
+            callerService = counterInfo.service;
+          }
+        }
+        
+        // Get recipient's counter and service information
+        const recipient = await User.findById(data.recipientId).select('counter');
+        let recipientCounter = 'Unknown';
+        let recipientService = 'Unknown Service';
+        
+        if (recipient && recipient.counter) {
+          recipientCounter = recipient.counter;
+          const counterInfo = counters[parseInt(recipient.counter)];
+          if (counterInfo) {
+            recipientService = counterInfo.service;
+          }
+        }
+        
         const callData = {
           callerId: socket.userId,
           callerName: data.callerName,
           callerEmail: data.callerEmail,
+          callerCounter: callerCounter,
+          callerService: callerService,
+          recipientCounter: recipientCounter,
+          recipientService: recipientService,
           offer: data.offer
         };
         

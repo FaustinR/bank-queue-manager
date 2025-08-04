@@ -248,5 +248,35 @@
     <script src="js/logout-handler.js"></script>
     <script src="js/message-notifications.js"></script>
     <script src="js/connected-users.js"></script>
+    <script src="js/call-notifications.js"></script>
+    <script>
+        // Listen for call notifications from iframe
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'showCallNotification') {
+                if (typeof window.showCallNotification === 'function') {
+                    window.showCallNotification(event.data.callData);
+                }
+            } else if (event.data.type === 'hideCallNotification') {
+                if (typeof window.hideCallNotification === 'function') {
+                    window.hideCallNotification();
+                }
+            } else if (event.data.type === 'unfoldDisplayScreen') {
+                // Find and open the display screen accordion
+                const displaySection = document.getElementById('displayScreenSection');
+                if (displaySection) {
+                    const header = displaySection.querySelector('.accordion-header');
+                    const content = displaySection.querySelector('.accordion-content');
+                    const icon = displaySection.querySelector('.accordion-icon i');
+                    
+                    if (header && content && icon) {
+                        displaySection.classList.add('active');
+                        content.style.display = 'block';
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
