@@ -937,12 +937,23 @@ io.on('connection', async (socket) => {
   });
   
   socket.on('end-call', (data) => {
+    console.log('=== CALL END REQUEST ===');
+    console.log('From socket:', socket.id, 'userId:', socket.userId);
+    console.log('Target user:', data.targetId);
+    
+    // Send call-ended to target user
     const targetSockets = Array.from(io.sockets.sockets.values())
       .filter(s => String(s.userId) === String(data.targetId) && s.isAuthenticated && s.connected);
     
+    console.log('Target sockets found:', targetSockets.length);
     targetSockets.forEach(targetSocket => {
+      console.log('Sending call-ended to target socket:', targetSocket.id);
       targetSocket.emit('call-ended');
     });
+    
+    // Also emit to the caller to confirm call ended
+    console.log('Confirming call-ended to caller');
+    socket.emit('call-ended');
   });
   
   socket.on('call-declined', (data) => {

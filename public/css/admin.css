@@ -370,6 +370,29 @@ body {
 }
 
 /* Responsive */
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .user-info {
+        font-size: 12px;
+    }
+    
+    .user-info #userName,
+    .user-info .role-badge,
+    .user-info .header-logout-btn {
+        font-size: 12px !important;
+    }
+    
+    .header-logout-btn {
+        font-size: 12px !important;
+        padding: 4px 8px;
+    }
+    
+    .role-badge {
+        font-size: 10px !important;
+        padding: 2px 6px;
+    }
+}
+
 @media (max-width: 768px) {
     .admin-container {
         flex-direction: column;
@@ -427,6 +450,18 @@ body {
     .user-info {
         width: 100%;
         justify-content: space-between;
+        font-size: 14px;
+    }
+    
+    .user-info #userName,
+    .user-info .role-badge,
+    .user-info .header-logout-btn {
+        font-size: 14px !important;
+    }
+    
+    .header-logout-btn {
+        font-size: 14px !important;
+        padding: 6px 12px;
     }
     
     .dashboard-stats,

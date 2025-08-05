@@ -889,13 +889,20 @@ async function initiateCall(e) {
             });
         }
         
-        // Get user media with enhanced settings and browser compatibility
+        // Get user media with noise-filtered audio
         const mediaConstraints = {
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
                 autoGainControl: true,
-                sampleRate: 44100
+                sampleRate: 16000,
+                channelCount: 1,
+                volume: 0.8,
+                googEchoCancellation: true,
+                googAutoGainControl: true,
+                googNoiseSuppression: true,
+                googHighpassFilter: true,
+                googTypingNoiseDetection: true
             }
         };
         
@@ -1015,13 +1022,13 @@ async function initiateCall(e) {
         // Show notification on parent window if in iframe, otherwise show locally
         const isInIframe = window.self !== window.top;
         if (isInIframe && typeof window.showCallNotificationOnParent === 'function') {
+            callNotificationData.recipientId = tellerId;
             window.showCallNotificationOnParent(callNotificationData);
         } else if (typeof window.showOutgoingCallNotification === 'function') {
-            window.showOutgoingCallNotification(callNotificationData.name, callNotificationData.counter, callNotificationData.service);
+            window.showOutgoingCallNotification(callNotificationData.name, callNotificationData.counter, callNotificationData.service, tellerId);
         }
         
         currentCall = { recipientId: tellerId, recipientName: tellerName };
-        showCallModal('outgoing', tellerName, { email: '' });
         
     } catch (error) {
         console.error('Call initiation error:', error);
@@ -1030,137 +1037,13 @@ async function initiateCall(e) {
     }
 }
 
-function showCallModal(type, name, userInfo = {}) {
-    console.log('showCallModal called with:', type, name, userInfo);
-    
-    // Remove any existing modal first to prevent conflicts
-    const existingModal = document.getElementById('callModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    console.log('Creating new call modal');
-    const callModal = document.createElement('div');
-    callModal.id = 'callModal';
-    callModal.className = 'modal';
-    callModal.innerHTML = `
-        <div class="modal-content call-modal">
-            <div class="call-info">
-                <div class="call-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="call-name" id="callName">${name}</div>
-                <div class="call-email" id="callEmail">${userInfo.email || ''}</div>
-                <div class="call-status" id="callStatus"></div>
-            </div>
-            <div class="call-controls" id="callControls">
-            </div>
-            <div class="call-header">
-                <button id="minimizeCallBtn" class="minimize-btn">
-                    <i class="fas fa-minus"></i>
-                </button>
-            </div>
-            <audio id="remoteAudio" autoplay playsinline></audio>
-            <audio id="localAudio" muted autoplay playsinline></audio>
-        </div>
-    `;
-    
-    // Append to body immediately
-    document.body.appendChild(callModal);
-    
-    const controlsDiv = document.getElementById('callControls');
-    
-    if (type === 'incoming') {
-        console.log('Setting up incoming call UI');
-        document.getElementById('callStatus').textContent = 'Incoming call';
-        controlsDiv.innerHTML = `
-            <button id="acceptCallBtn" class="accept-call-btn">
-                <i class="fas fa-phone"></i> Accept
-            </button>
-            <button id="declineCallBtn" class="decline-call-btn">
-                <i class="fas fa-phone-slash"></i> Decline
-            </button>
-        `;
-        
-        // Add event listeners with error handling
-        const acceptBtn = document.getElementById('acceptCallBtn');
-        const declineBtn = document.getElementById('declineCallBtn');
-        
-        if (acceptBtn) acceptBtn.onclick = acceptCall;
-        if (declineBtn) declineBtn.onclick = declineCall;
-    } else {
-        console.log('Setting up outgoing call UI');
-        document.getElementById('callStatus').textContent = 'Calling...';
-        controlsDiv.innerHTML = `
-            <button id="endCallBtn" class="end-call-btn">
-                <i class="fas fa-phone-slash"></i> End Call
-            </button>
-        `;
-        
-        const endBtn = document.getElementById('endCallBtn');
-        if (endBtn) endBtn.onclick = endCall;
-    }
-    
-    // Add minimize button listener with proper event handling and debugging
-    const minimizeBtn = document.getElementById('minimizeCallBtn');
-    console.log('Minimize button found:', !!minimizeBtn);
-    if (minimizeBtn) {
-        minimizeBtn.onclick = function(e) {
-            console.log('Minimize button clicked!');
-            e.preventDefault();
-            e.stopPropagation();
-            minimizeCall();
-        };
-        // Also add as event listener as backup
-        minimizeBtn.addEventListener('click', function(e) {
-            console.log('Minimize button clicked via addEventListener!');
-            e.preventDefault();
-            e.stopPropagation();
-            minimizeCall();
-        });
-        console.log('Minimize button event handlers attached');
-    } else {
-        console.error('Minimize button not found!');
-    }
-    
-    // Force show the modal with multiple methods for browser compatibility
-    console.log('Showing modal with multiple methods');
-    
-    // Method 1: CSS classes
-    callModal.classList.add('show');
-    
-    // Method 2: Inline styles as backup
-    callModal.style.display = 'flex';
-    callModal.style.visibility = 'visible';
-    callModal.style.opacity = '1';
-    callModal.style.zIndex = '10000';
-    callModal.style.position = 'fixed';
-    callModal.style.top = '0';
-    callModal.style.left = '0';
-    callModal.style.width = '100%';
-    callModal.style.height = '100%';
-    callModal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    callModal.style.alignItems = 'center';
-    callModal.style.justifyContent = 'center';
-    
-    console.log('Modal created and should be visible');
-    
-    // Verify modal is visible after a short delay
-    setTimeout(() => {
-        const modal = document.getElementById('callModal');
-        if (modal) {
-            const computedStyle = window.getComputedStyle(modal);
-            console.log('Modal verification - Display:', computedStyle.display, 'Visibility:', computedStyle.visibility, 'Opacity:', computedStyle.opacity);
-        }
-    }, 50);
-}
+// Call modal removed - using notification system only
 
 function endCall() {
     if (currentCall) {
         socket.emit('end-call', { targetId: currentCall.recipientId });
     }
     cleanupCall();
-    hideCallModal();
     
     // Hide notification on parent window if in iframe
     const isInIframe = window.self !== window.top;
@@ -1169,134 +1052,7 @@ function endCall() {
     }
 }
 
-function minimizeCall() {
-    console.log('minimizeCall function called');
-    const callModal = document.getElementById('callModal');
-    console.log('Call modal found:', !!callModal);
-    if (callModal) {
-        // Remove show class and force hide with important styles
-        callModal.classList.remove('show');
-        callModal.style.setProperty('display', 'none', 'important');
-        callModal.style.setProperty('visibility', 'hidden', 'important');
-        callModal.style.setProperty('opacity', '0', 'important');
-        console.log('Call modal hidden');
-        
-        let indicator = document.getElementById('callIndicator');
-        if (!indicator) {
-            console.log('Creating call indicator');
-            indicator = document.createElement('div');
-            indicator.id = 'callIndicator';
-            indicator.className = 'call-indicator draggable';
-            indicator.innerHTML = `
-                <div class="drag-handle">
-                    <i class="fas fa-phone"></i>
-                    <span>Call in progress</span>
-                </div>
-                <button onclick="restoreCall()"><i class="fas fa-expand"></i></button>
-            `;
-            document.body.appendChild(indicator);
-            makeDraggable(indicator);
-            console.log('Call indicator created and made draggable');
-        }
-    } else {
-        console.error('Call modal not found for minimizing');
-    }
-}
-
-function restoreCall() {
-    const callModal = document.getElementById('callModal');
-    const indicator = document.getElementById('callIndicator');
-    
-    if (callModal) {
-        callModal.classList.add('show');
-        callModal.style.setProperty('display', 'flex', 'important');
-        callModal.style.setProperty('visibility', 'visible', 'important');
-        callModal.style.setProperty('opacity', '1', 'important');
-    }
-    if (indicator) {
-        indicator.remove();
-    }
-}
-
-// Make element draggable
-function makeDraggable(element) {
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    const dragHandle = element.querySelector('.drag-handle') || element;
-    
-    dragHandle.onmousedown = dragMouseDown;
-    dragHandle.style.cursor = 'move';
-    
-    // Also support touch events for mobile
-    dragHandle.ontouchstart = dragTouchStart;
-    
-    function dragMouseDown(e) {
-        e = e || window.event;
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Disable text selection during drag
-        document.body.style.userSelect = 'none';
-        document.body.style.webkitUserSelect = 'none';
-        
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        document.onmouseup = closeDragElement;
-        document.onmousemove = elementDrag;
-    }
-    
-    function dragTouchStart(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        pos3 = touch.clientX;
-        pos4 = touch.clientY;
-        document.ontouchend = closeDragElement;
-        document.ontouchmove = elementTouchDrag;
-    }
-    
-    function elementDrag(e) {
-        e = e || window.event;
-        e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        updatePosition();
-    }
-    
-    function elementTouchDrag(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        pos1 = pos3 - touch.clientX;
-        pos2 = pos4 - touch.clientY;
-        pos3 = touch.clientX;
-        pos4 = touch.clientY;
-        updatePosition();
-    }
-    
-    function updatePosition() {
-        const newTop = element.offsetTop - pos2;
-        const newLeft = element.offsetLeft - pos1;
-        
-        // Keep within viewport bounds with margin
-        const margin = 10;
-        const maxTop = window.innerHeight - element.offsetHeight - margin;
-        const maxLeft = window.innerWidth - element.offsetWidth - margin;
-        
-        element.style.top = Math.max(margin, Math.min(newTop, maxTop)) + 'px';
-        element.style.left = Math.max(margin, Math.min(newLeft, maxLeft)) + 'px';
-    }
-    
-    function closeDragElement() {
-        // Re-enable text selection
-        document.body.style.userSelect = '';
-        document.body.style.webkitUserSelect = '';
-        
-        document.onmouseup = null;
-        document.onmousemove = null;
-        document.ontouchend = null;
-        document.ontouchmove = null;
-    }
-}
+// Call modal functions removed - using notification system only
 
 function cleanupCall() {
     console.log('Cleaning up call resources');
@@ -1347,22 +1103,12 @@ function cleanupCall() {
     console.log('Call cleanup completed');
 }
 
-function hideCallModal() {
-    const callModal = document.getElementById('callModal');
-    if (callModal) {
-        callModal.classList.remove('show');
-        callModal.style.display = 'none';
-    }
-    
-    const indicator = document.getElementById('callIndicator');
-    if (indicator) indicator.remove();
-}
+// hideCallModal removed - using notification system only
 
 // Socket event listeners for calls
 socket.on('call-failed', (data) => {
     window.notifications.error('Call Failed', data.reason);
     cleanupCall();
-    hideCallModal();
     
     // Hide notification on parent window if in iframe
     const isInIframe = window.self !== window.top;
@@ -1374,7 +1120,6 @@ socket.on('call-failed', (data) => {
 socket.on('call-declined', () => {
     window.notifications.info('Call Declined', 'The user declined your call');
     cleanupCall();
-    hideCallModal();
     
     // Hide notification on parent window if in iframe
     const isInIframe = window.self !== window.top;
@@ -1387,7 +1132,7 @@ socket.on('call-answered', async (data) => {
     try {
         console.log('Call answered by recipient');
         await peerConnection.setRemoteDescription(data.answer);
-        document.getElementById('callStatus').textContent = 'Connected';
+        console.log('Call connected successfully');
     } catch (error) {
         console.error('Error connecting call:', error);
         window.notifications.error('Error', 'Failed to connect call');
@@ -1408,7 +1153,6 @@ socket.on('ice-candidate', async (candidate) => {
 socket.on('call-ended', () => {
     console.log('Call ended by remote party');
     cleanupCall();
-    hideCallModal();
     
     // Hide notification on parent window if in iframe
     const isInIframe = window.self !== window.top;
@@ -1433,7 +1177,6 @@ socket.on('disconnect', () => {
     // Clean up any ongoing calls
     if (currentCall || window.incomingCallData) {
         cleanupCall();
-        hideCallModal();
         window.notifications.info('Connection Lost', 'Call ended due to connection loss');
     }
 });
@@ -1443,7 +1186,6 @@ socket.on('call-ended-disconnect', (data) => {
     if (currentCall && currentCall.recipientId === data.userId) {
         console.log('Call ended due to user disconnection');
         cleanupCall();
-        hideCallModal();
         window.notifications.info('Call Ended', 'The other party disconnected');
         
         // Hide notification on parent window if in iframe
@@ -1454,232 +1196,6 @@ socket.on('call-ended-disconnect', (data) => {
     }
 });
 
-// Handle incoming calls with better error handling and browser compatibility
-socket.on('incoming-call', async (data) => {
-    try {
-        console.log('=== INCOMING CALL RECEIVED ===');
-        console.log('Caller:', data.callerName);
-        console.log('Caller Email:', data.callerEmail);
-        console.log('Caller ID:', data.callerId);
-        
-        // Prevent multiple incoming calls
-        if (window.incomingCallData || currentCall) {
-            console.log('Already in a call, declining new incoming call');
-            socket.emit('call-declined', { callerId: data.callerId });
-            return;
-        }
-        
-        window.incomingCallData = data;
-        
-        // Show incoming call notification on parent window if in iframe
-        const isInIframe = window.self !== window.top;
-        if (isInIframe) {
-            if (typeof window.showCallNotificationOnParent === 'function') {
-                window.showCallNotificationOnParent({
-                    type: 'incoming',
-                    name: data.callerName,
-                    counter: data.callerCounter || 'Unknown',
-                    service: data.callerService || 'Unknown Service'
-                });
-            }
-            // Unfold display screen to show the call modal
-            if (typeof window.unfoldDisplayScreenOnParent === 'function') {
-                window.unfoldDisplayScreenOnParent();
-            }
-        }
-        
-        // Play notification sound if available
-        try {
-            playNotificationSound();
-        } catch (e) {
-            console.log('Could not play notification sound:', e);
-        }
-        
-        // Force show the modal with multiple attempts for browser compatibility
-        console.log('Showing call modal...');
-        showCallModal('incoming', data.callerName, { email: data.callerEmail });
-        
-        // Ensure modal is visible with fallback methods
-        setTimeout(() => {
-            const modal = document.getElementById('callModal');
-            if (modal) {
-                console.log('Modal classes:', modal.className);
-                console.log('Modal display:', window.getComputedStyle(modal).display);
-                
-                // Force visibility if not showing
-                if (!modal.classList.contains('show') || window.getComputedStyle(modal).display === 'none') {
-                    console.log('Forcing modal visibility');
-                    modal.classList.add('show');
-                    modal.style.display = 'flex';
-                    modal.style.visibility = 'visible';
-                    modal.style.opacity = '1';
-                    modal.style.zIndex = '10000';
-                }
-            } else {
-                console.error('Call modal not found in DOM');
-                // Try to create modal again
-                showCallModal('incoming', data.callerName, { email: data.callerEmail });
-            }
-        }, 100);
-        
-        // Auto-decline after 30 seconds if not answered
-        setTimeout(() => {
-            if (window.incomingCallData && window.incomingCallData.callerId === data.callerId) {
-                console.log('Auto-declining call after timeout');
-                declineCall();
-            }
-        }, 30000);
-        
-    } catch (error) {
-        console.error('Error handling incoming call:', error);
-        // Decline the call if there's an error
-        if (data && data.callerId) {
-            socket.emit('call-declined', { callerId: data.callerId });
-        }
-    }
-});
+// Remove incoming call modal - let parent page handle notifications
 
-// Function to accept incoming call with better error handling
-async function acceptCall() {
-    try {
-        const data = window.incomingCallData;
-        if (!data) {
-            console.error('No incoming call data available');
-            return;
-        }
-        
-        console.log('Accepting call from:', data.callerName);
-        
-        // Get user media with enhanced settings and browser compatibility
-        const mediaConstraints = {
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
-                sampleRate: 44100
-            }
-        };
-        
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        } else if (navigator.getUserMedia) {
-            localStream = await new Promise((resolve, reject) => {
-                navigator.getUserMedia(mediaConstraints, resolve, reject);
-            });
-        } else {
-            throw new Error('getUserMedia not supported in this browser');
-        }
-        
-        const localAudio = document.getElementById('localAudio');
-        if (localAudio) {
-            localAudio.srcObject = localStream;
-        }
-        
-        // Create peer connection with multiple STUN servers
-        peerConnection = new RTCPeerConnection({
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ],
-            iceCandidatePoolSize: 10
-        });
-        
-        localStream.getTracks().forEach(track => {
-            peerConnection.addTrack(track, localStream);
-        });
-        
-        peerConnection.ontrack = (event) => {
-            console.log('Received remote stream in accept call');
-            remoteStream = event.streams[0];
-            const remoteAudio = document.getElementById('remoteAudio');
-            if (remoteAudio) {
-                remoteAudio.srcObject = remoteStream;
-                remoteAudio.volume = 1.0;
-                remoteAudio.play().catch(e => {
-                    console.log('Audio play failed, trying user interaction:', e);
-                    document.addEventListener('click', () => {
-                        remoteAudio.play().catch(console.error);
-                    }, { once: true });
-                });
-            }
-        };
-        
-        peerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-                console.log('Sending ICE candidate from accept call');
-                socket.emit('ice-candidate', {
-                    targetId: data.callerId,
-                    candidate: event.candidate
-                });
-            }
-        };
-        
-        // Handle connection state changes
-        peerConnection.onconnectionstatechange = () => {
-            console.log('Accept call - Connection state:', peerConnection.connectionState);
-            if (peerConnection.connectionState === 'failed') {
-                window.notifications.error('Error', 'Call connection failed');
-                endCall();
-            }
-        };
-        
-        await peerConnection.setRemoteDescription(data.offer);
-        const answer = await peerConnection.createAnswer({
-            offerToReceiveAudio: true,
-            offerToReceiveVideo: false
-        });
-        await peerConnection.setLocalDescription(answer);
-        
-        console.log('Sending answer to caller');
-        socket.emit('answer-call', {
-            callerId: data.callerId,
-            answer: answer
-        });
-        
-        currentCall = { recipientId: data.callerId, recipientName: data.callerName };
-        
-        // Update UI
-        const statusElement = document.getElementById('callStatus');
-        if (statusElement) {
-            statusElement.textContent = 'Connected';
-        }
-        
-        const controlsDiv = document.getElementById('callControls');
-        if (controlsDiv) {
-            controlsDiv.innerHTML = `
-                <button id="endCallBtn" class="end-call-btn">
-                    <i class="fas fa-phone-slash"></i> End Call
-                </button>
-            `;
-            const endBtn = document.getElementById('endCallBtn');
-            if (endBtn) endBtn.onclick = endCall;
-        }
-        
-        window.incomingCallData = null;
-        console.log('Call accepted successfully');
-        
-    } catch (error) {
-        console.error('Error accepting call:', error);
-        window.notifications.error('Error', 'Failed to accept call: ' + error.message);
-        declineCall();
-    }
-}
-
-// Function to decline incoming call
-function declineCall() {
-    console.log('Declining call');
-    const data = window.incomingCallData;
-    if (data) {
-        socket.emit('call-declined', { callerId: data.callerId });
-        window.incomingCallData = null;
-    }
-    cleanupCall();
-    hideCallModal();
-    
-    // Hide notification on parent window if in iframe
-    const isInIframe = window.self !== window.top;
-    if (isInIframe && typeof window.hideCallNotificationOnParent === 'function') {
-        window.hideCallNotificationOnParent();
-    }
-}
+// Call accept/decline functions removed - handled by notification system

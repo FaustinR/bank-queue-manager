@@ -76,13 +76,20 @@
         try {
             createAudioElements();
             
-            // Get user media with high quality audio
+            // Get user media with noise-filtered audio
             localStream = await navigator.mediaDevices.getUserMedia({ 
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
                     autoGainControl: true,
-                    sampleRate: 44100
+                    sampleRate: 16000,
+                    channelCount: 1,
+                    volume: 0.8,
+                    googEchoCancellation: true,
+                    googAutoGainControl: true,
+                    googNoiseSuppression: true,
+                    googHighpassFilter: true,
+                    googTypingNoiseDetection: true
                 }, 
                 video: false 
             });
@@ -199,6 +206,12 @@
                     <button onclick="declineCall()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Decline</button>
                 </div>
             `;
+        } else if (callData.type === 'outgoing') {
+            actionButtons = `
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="endCall()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">End Call</button>
+                </div>
+            `;
         }
         
         notification.innerHTML = `
@@ -208,7 +221,7 @@
                 </div>
                 <div style="flex: 1;">
                     <div style="font-weight: bold; font-size: 16px; margin-bottom: 8px;">
-                        ${callData.status === 'active' ? 'Active Call' : (callData.type === 'incoming' ? 'Incoming Call' : 'Outgoing Call')}
+                        ${callData.status === 'active' ? 'Active Call' : (callData.type === 'incoming' ? 'Incoming Call' : 'Calling...')}
                     </div>
                     <div style="font-size: 14px; margin-bottom: 4px;">
                         <strong>Name:</strong> ${callData.name}
@@ -282,10 +295,21 @@
     window.acceptCall = async function() {
         if (!activeCall || activeCall.type !== 'incoming') return;
         
-        const webrtcReady = await initializeWebRTC();
-        if (!webrtcReady) return;
-        
         try {
+            const webrtcReady = await initializeWebRTC();
+            if (!webrtcReady) return;
+            
+            // Set remote description first if we have the offer
+            if (activeCall.offer && peerConnection.signalingState === 'stable') {
+                await peerConnection.setRemoteDescription(activeCall.offer);
+            }
+            
+            // Check if we're in the right state to create an answer
+            if (peerConnection.signalingState !== 'have-remote-offer') {
+                console.error('Cannot create answer, wrong signaling state:', peerConnection.signalingState);
+                return;
+            }
+            
             const socket = getSocket();
             
             const answer = await peerConnection.createAnswer();
@@ -302,6 +326,7 @@
             
         } catch (error) {
             console.error('Failed to accept call:', error);
+            alert('Failed to accept call. Please try again.');
         }
     };
     
@@ -336,16 +361,39 @@
     
     // End active call
     window.endCall = function() {
-        if (!activeCall) return;
-        
         const socket = getSocket();
-        const targetId = activeCall.type === 'incoming' ? activeCall.callerId : activeCall.recipientId;
+        let targetId = null;
         
-        socket.emit('end-call', {
-            targetId: targetId
-        });
+        // Check if we have an active call in the notification system
+        if (activeCall) {
+            targetId = activeCall.type === 'incoming' ? activeCall.callerId : activeCall.recipientId;
+        }
+        // Also check if there's a call from display.js
+        else if (window.parent && window.parent.currentCall) {
+            targetId = window.parent.currentCall.recipientId;
+        }
+        // Check current window for display.js call
+        else if (window.currentCall) {
+            targetId = window.currentCall.recipientId;
+        }
+        
+        if (targetId) {
+            socket.emit('end-call', {
+                targetId: targetId
+            });
+        }
         
         hideCallNotification();
+        
+        // Also clean up display.js call if it exists
+        if (window.parent && typeof window.parent.endCall === 'function') {
+            window.parent.endCall();
+        } else if (window.endCall !== arguments.callee && typeof window.endCall === 'function') {
+            // Avoid infinite recursion
+            const displayEndCall = window.endCall;
+            window.endCall = arguments.callee;
+            displayEndCall();
+        }
     };
 
     // Make call function
@@ -398,38 +446,45 @@
         if (!socket) return;
         
         fetch('/api/auth/me')
-            .then(response => response.json())
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Not authenticated');
+            })
             .then(userData => {
                 socket.emit('authenticate', userData.user._id);
             })
-            .catch(() => {});
+            .catch(() => {}); // Silently handle auth failures
         
         socket.on('incoming-call', async function(data) {
-            if (data.offer) {
-                const webrtcReady = await initializeWebRTC();
-                if (webrtcReady && peerConnection) {
-                    await peerConnection.setRemoteDescription(data.offer);
-                }
-            }
-            
-            showCallNotification({
+            const callData = {
                 type: 'incoming',
                 name: data.callerName,
                 counter: data.callerCounter || 'Unknown',
                 service: data.callerService || 'Incoming call...',
                 callId: data.callerId,
-                callerId: data.callerId
-            });
+                callerId: data.callerId,
+                offer: data.offer
+            };
+            
+            showCallNotification(callData);
         });
         
         socket.on('call-answered', async function(data) {
             if (peerConnection && data.answer) {
-                await peerConnection.setRemoteDescription(data.answer);
-                
-                if (activeCall) {
-                    activeCall.status = 'active';
-                    saveCallState(activeCall);
-                    showCallNotification(activeCall);
+                try {
+                    if (peerConnection.signalingState === 'have-local-offer') {
+                        await peerConnection.setRemoteDescription(data.answer);
+                        
+                        if (activeCall) {
+                            activeCall.status = 'active';
+                            saveCallState(activeCall);
+                            showCallNotification(activeCall);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to set remote description:', error);
                 }
             }
         });
@@ -457,13 +512,15 @@
     window.saveCallState = saveCallState;
     window.clearCallState = clearCallState;
     
-    window.showOutgoingCallNotification = function(recipientName, counter, service) {
-        showCallNotification({
+    window.showOutgoingCallNotification = function(recipientName, counter, service, recipientId) {
+        const callData = {
             type: 'outgoing',
             name: recipientName,
             counter: counter || 'Unknown',
-            service: service || 'Unknown Service'
-        });
+            service: service || 'Unknown Service',
+            recipientId: recipientId
+        };
+        showCallNotification(callData);
     };
     
     window.showCallNotificationOnParent = function(callData) {
