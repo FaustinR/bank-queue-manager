@@ -194,22 +194,25 @@
         let actionButtons = '';
         if (callData.status === 'active') {
             actionButtons = `
-                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; align-items: center;">
-                    <button onclick="toggleMute()" id="muteBtn" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">🎤 Mute</button>
-                    <button onclick="endCall()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">End Call</button>
+                <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                    <button onclick="toggleMute()" id="muteBtn" style="background: #6c757d; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">🎤 Mute</button>
+                    <button onclick="toggleSpeaker()" id="speakerBtn" style="background: #17a2b8; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">🔊 Speaker</button>
+                    <button onclick="endCall()" style="background: #dc3545; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">End Call</button>
                 </div>
             `;
         } else if (callData.type === 'incoming') {
             actionButtons = `
-                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                    <button onclick="acceptCall()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Accept</button>
-                    <button onclick="declineCall()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Decline</button>
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="acceptCall()" style="background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 16px; touch-action: manipulation;">Accept</button>
+                    <button onclick="declineCall()" style="background: #dc3545; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 16px; touch-action: manipulation;">Decline</button>
                 </div>
             `;
         } else if (callData.type === 'outgoing') {
             actionButtons = `
-                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
-                    <button onclick="endCall()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">End Call</button>
+                <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                    <button onclick="toggleMute()" id="muteBtn" style="background: #6c757d; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">🎤 Mute</button>
+                    <button onclick="toggleSpeaker()" id="speakerBtn" style="background: #17a2b8; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">🔊 Speaker</button>
+                    <button onclick="endCall()" style="background: #dc3545; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">End Call</button>
                 </div>
             `;
         }
@@ -258,6 +261,7 @@
         
         // Clean up WebRTC resources
         if (peerConnection) {
+            peerConnection.onconnectionstatechange = null; // Remove event listener
             peerConnection.close();
             peerConnection = null;
         }
@@ -344,8 +348,17 @@
     
     // Mute/unmute functionality
     window.toggleMute = function() {
-        if (localStream) {
-            const audioTrack = localStream.getAudioTracks()[0];
+        let stream = localStream;
+        
+        // If no local stream in notification system, check display.js
+        if (!stream && window.parent && window.parent.localStream) {
+            stream = window.parent.localStream;
+        } else if (!stream && window.localStream) {
+            stream = window.localStream;
+        }
+        
+        if (stream) {
+            const audioTrack = stream.getAudioTracks()[0];
             if (audioTrack) {
                 audioTrack.enabled = !audioTrack.enabled;
                 isMuted = !audioTrack.enabled;
@@ -359,6 +372,28 @@
         }
     };
     
+    // Speaker toggle functionality
+    let isSpeakerOn = false;
+    window.toggleSpeaker = function() {
+        let audioElement = remoteAudio;
+        
+        // If no remote audio in notification system, check display.js or create one
+        if (!audioElement) {
+            audioElement = document.getElementById('remoteAudio');
+        }
+        
+        if (audioElement) {
+            isSpeakerOn = !isSpeakerOn;
+            audioElement.volume = isSpeakerOn ? 1.0 : 0.8;
+            
+            const speakerBtn = document.getElementById('speakerBtn');
+            if (speakerBtn) {
+                speakerBtn.textContent = isSpeakerOn ? '🔊️ Speaker On' : '🔊 Speaker';
+                speakerBtn.style.background = isSpeakerOn ? '#28a745' : '#17a2b8';
+            }
+        }
+    };
+    
     // End active call
     window.endCall = function() {
         const socket = getSocket();
@@ -368,7 +403,7 @@
         if (activeCall) {
             targetId = activeCall.type === 'incoming' ? activeCall.callerId : activeCall.recipientId;
         }
-        // Also check if there's a call from display.js
+        // Check for display.js call in parent window
         else if (window.parent && window.parent.currentCall) {
             targetId = window.parent.currentCall.recipientId;
         }
@@ -377,22 +412,22 @@
             targetId = window.currentCall.recipientId;
         }
         
+        // Immediately hide notification and clean up
+        hideCallNotification();
+        
+        // Clean up display.js call if exists
+        if (window.parent && typeof window.parent.cleanupCall === 'function') {
+            window.parent.cleanupCall();
+        }
+        if (typeof window.cleanupCall === 'function') {
+            window.cleanupCall();
+        }
+        
+        // Send end call signal
         if (targetId) {
             socket.emit('end-call', {
                 targetId: targetId
             });
-        }
-        
-        hideCallNotification();
-        
-        // Also clean up display.js call if it exists
-        if (window.parent && typeof window.parent.endCall === 'function') {
-            window.parent.endCall();
-        } else if (window.endCall !== arguments.callee && typeof window.endCall === 'function') {
-            // Avoid infinite recursion
-            const displayEndCall = window.endCall;
-            window.endCall = arguments.callee;
-            displayEndCall();
         }
     };
 
@@ -458,6 +493,11 @@
             .catch(() => {}); // Silently handle auth failures
         
         socket.on('incoming-call', async function(data) {
+            // Don't show incoming call notifications in display screen iframe
+            if (window.location.pathname === '/display' && window.self !== window.top) {
+                return;
+            }
+            
             const callData = {
                 type: 'incoming',
                 name: data.callerName,
@@ -499,10 +539,37 @@
             }
         });
 
-        socket.on('call-ended', hideCallNotification);
-        socket.on('call-declined', hideCallNotification);
+        socket.on('call-ended', function() {
+            if (activeCall && activeCall.status === 'active') {
+                // Show notification that call was ended by the other party
+                const otherPartyName = activeCall.name || 'The other party';
+                if (typeof window.notifications !== 'undefined') {
+                    window.notifications.info('Call Ended', `${otherPartyName} ended the call`);
+                }
+            }
+            hideCallNotification();
+        });
+        socket.on('call-declined', function() {
+            if (activeCall && activeCall.type === 'outgoing') {
+                // Show notification that call was declined by the recipient
+                const recipientName = activeCall.name || 'The user';
+                if (typeof window.notifications !== 'undefined') {
+                    window.notifications.info('Call Declined', `${recipientName} declined your call`);
+                }
+            }
+            hideCallNotification();
+        });
         socket.on('call-failed', hideCallNotification);
-        socket.on('call-ended-disconnect', hideCallNotification);
+        socket.on('call-ended-disconnect', function() {
+            if (activeCall && activeCall.status === 'active') {
+                // Show notification that call was ended due to disconnection
+                const otherPartyName = activeCall.name || 'The other party';
+                if (typeof window.notifications !== 'undefined') {
+                    window.notifications.info('Call Ended', `${otherPartyName} disconnected`);
+                }
+            }
+            hideCallNotification();
+        });
     }
     
     // Global functions
@@ -520,6 +587,8 @@
             service: service || 'Unknown Service',
             recipientId: recipientId
         };
+        // Store the call data for end call functionality
+        activeCall = callData;
         showCallNotification(callData);
     };
     

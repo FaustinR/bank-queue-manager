@@ -303,6 +303,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Setup message modal event listeners
     setupMessageModal();
     
+    // Remove all incoming call listeners to prevent duplicate notifications
+    socket.off('incoming-call');
+    socket.removeAllListeners('incoming-call');
+    
     // Authenticate socket for calls immediately with retry mechanism
     let authRetries = 0;
     const maxAuthRetries = 3;
@@ -828,6 +832,7 @@ let localStream = null;
 let remoteStream = null;
 let peerConnection = null;
 let currentCall = null;
+let callEnding = false; // Flag to track intentional call ending
 
 const servers = {
     iceServers: [
@@ -841,8 +846,9 @@ async function initiateCall(e) {
     const btn = e.currentTarget;
     const tellerId = btn.getAttribute('data-teller-id');
     const tellerName = btn.getAttribute('data-teller');
+    const counterId = btn.getAttribute('data-counter');
     
-    console.log('Initiating call to:', tellerName, 'ID:', tellerId);
+    console.log('Initiating call to:', tellerName, 'ID:', tellerId, 'Counter:', counterId);
     
     if (!tellerId) {
         window.notifications.error('Error', 'Cannot call: Teller information not available');
@@ -917,10 +923,18 @@ async function initiateCall(e) {
             throw new Error('getUserMedia not supported in this browser');
         }
         
-        const localAudio = document.getElementById('localAudio');
-        if (localAudio) {
-            localAudio.srcObject = localStream;
+        // Create or get local audio element
+        let localAudio = document.getElementById('localAudio');
+        if (!localAudio) {
+            localAudio = document.createElement('audio');
+            localAudio.id = 'localAudio';
+            localAudio.autoplay = true;
+            localAudio.controls = false;
+            localAudio.muted = true; // Prevent echo
+            localAudio.style.display = 'none';
+            document.body.appendChild(localAudio);
         }
+        localAudio.srcObject = localStream;
         
         // Create peer connection with STUN servers for better connectivity
         peerConnection = new RTCPeerConnection({
@@ -941,19 +955,28 @@ async function initiateCall(e) {
         peerConnection.ontrack = (event) => {
             console.log('Received remote stream');
             remoteStream = event.streams[0];
-            const remoteAudio = document.getElementById('remoteAudio');
-            if (remoteAudio) {
-                remoteAudio.srcObject = remoteStream;
-                remoteAudio.volume = 1.0;
-                // Use promise-based play for better browser compatibility
-                remoteAudio.play().catch(e => {
-                    console.log('Audio play failed, trying user interaction:', e);
-                    // Some browsers require user interaction
-                    document.addEventListener('click', () => {
-                        remoteAudio.play().catch(console.error);
-                    }, { once: true });
-                });
+            
+            // Create or get remote audio element
+            let remoteAudio = document.getElementById('remoteAudio');
+            if (!remoteAudio) {
+                remoteAudio = document.createElement('audio');
+                remoteAudio.id = 'remoteAudio';
+                remoteAudio.autoplay = true;
+                remoteAudio.controls = false;
+                remoteAudio.style.display = 'none';
+                document.body.appendChild(remoteAudio);
             }
+            
+            remoteAudio.srcObject = remoteStream;
+            remoteAudio.volume = 1.0;
+            // Use promise-based play for better browser compatibility
+            remoteAudio.play().catch(e => {
+                console.log('Audio play failed, trying user interaction:', e);
+                // Some browsers require user interaction
+                document.addEventListener('click', () => {
+                    remoteAudio.play().catch(console.error);
+                }, { once: true });
+            });
         };
         
         // Handle ICE candidates
@@ -967,14 +990,7 @@ async function initiateCall(e) {
             }
         };
         
-        // Handle connection state changes
-        peerConnection.onconnectionstatechange = () => {
-            console.log('Connection state:', peerConnection.connectionState);
-            if (peerConnection.connectionState === 'failed') {
-                window.notifications.error('Error', 'Call connection failed');
-                endCall();
-            }
-        };
+        // No connection state change handler to prevent false failure notifications
         
         // Create offer with better codec preferences
         const offer = await peerConnection.createOffer({
@@ -996,28 +1012,21 @@ async function initiateCall(e) {
         
         console.log('Call request sent');
         
-        // Show outgoing call notification
+        // Show outgoing call notification with counter info from button
+        const counterServices = {
+            '1': 'Account Opening',
+            '2': 'Loan Application', 
+            '3': 'Money Transfer',
+            '4': 'Card Services',
+            '5': 'General Inquiry'
+        };
+        
         const callNotificationData = {
             type: 'outgoing',
             name: tellerName,
-            counter: 'Unknown',
-            service: 'Unknown Service'
+            counter: counterId || 'Unknown',
+            service: counterServices[counterId] || 'Banking Service'
         };
-        
-        // Get counter and service info for the recipient
-        try {
-            const response2 = await fetch(`/api/users/${tellerId}/basic`);
-            if (response2.ok) {
-                const tellerData = await response2.json();
-                callNotificationData.counter = tellerData.counter || 'Unknown';
-                const counterInfo = counters[parseInt(tellerData.counter)];
-                if (counterInfo) {
-                    callNotificationData.service = counterInfo.service;
-                }
-            }
-        } catch (error) {
-            // Use default values
-        }
         
         // Show notification on parent window if in iframe, otherwise show locally
         const isInIframe = window.self !== window.top;
@@ -1030,6 +1039,9 @@ async function initiateCall(e) {
         
         currentCall = { recipientId: tellerId, recipientName: tellerName };
         
+        // Make localStream globally accessible for mute functionality
+        window.localStream = localStream;
+        
     } catch (error) {
         console.error('Call initiation error:', error);
         window.notifications.error('Error', 'Failed to start call: ' + error.message);
@@ -1040,9 +1052,15 @@ async function initiateCall(e) {
 // Call modal removed - using notification system only
 
 function endCall() {
+    // Set flag to indicate intentional call ending
+    callEnding = true;
+    
+    // Send end call signal first
     if (currentCall) {
         socket.emit('end-call', { targetId: currentCall.recipientId });
     }
+    
+    // Immediately clean up local resources
     cleanupCall();
     
     // Hide notification on parent window if in iframe
@@ -1057,11 +1075,16 @@ function endCall() {
 function cleanupCall() {
     console.log('Cleaning up call resources');
     
-    // Stop all media tracks
+    // Clear call data first to prevent further processing
+    currentCall = null;
+    window.incomingCallData = null;
+    window.localStream = null;
+    
+    // Stop all media tracks FIRST to remove browser tab speaker icon
     if (localStream) {
         localStream.getTracks().forEach(track => {
             track.stop();
-            console.log('Stopped track:', track.kind);
+            console.log('Stopped local track:', track.kind);
         });
         localStream = null;
     }
@@ -1069,36 +1092,40 @@ function cleanupCall() {
     if (remoteStream) {
         remoteStream.getTracks().forEach(track => {
             track.stop();
+            console.log('Stopped remote track:', track.kind);
         });
         remoteStream = null;
     }
     
-    // Close peer connection
+    // Clear and remove audio elements completely
+    const remoteAudio = document.getElementById('remoteAudio');
+    const localAudio = document.getElementById('localAudio');
+    if (remoteAudio) {
+        remoteAudio.pause();
+        remoteAudio.srcObject = null;
+        remoteAudio.src = '';
+        remoteAudio.load(); // Force reload to clear media
+    }
+    if (localAudio) {
+        localAudio.pause();
+        localAudio.srcObject = null;
+        localAudio.src = '';
+        localAudio.load(); // Force reload to clear media
+    }
+    
+    // Close peer connection after media cleanup
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
         console.log('Peer connection closed');
     }
     
-    // Clear audio elements
-    const remoteAudio = document.getElementById('remoteAudio');
-    const localAudio = document.getElementById('localAudio');
-    if (remoteAudio) {
-        remoteAudio.srcObject = null;
-        remoteAudio.pause();
-    }
-    if (localAudio) {
-        localAudio.srcObject = null;
-        localAudio.pause();
-    }
-    
     // Remove call indicator
     const indicator = document.getElementById('callIndicator');
     if (indicator) indicator.remove();
     
-    // Clear call data
-    currentCall = null;
-    window.incomingCallData = null;
+    // Reset call ending flag
+    callEnding = false;
     
     console.log('Call cleanup completed');
 }
@@ -1118,7 +1145,6 @@ socket.on('call-failed', (data) => {
 });
 
 socket.on('call-declined', () => {
-    window.notifications.info('Call Declined', 'The user declined your call');
     cleanupCall();
     
     // Hide notification on parent window if in iframe
@@ -1186,7 +1212,6 @@ socket.on('call-ended-disconnect', (data) => {
     if (currentCall && currentCall.recipientId === data.userId) {
         console.log('Call ended due to user disconnection');
         cleanupCall();
-        window.notifications.info('Call Ended', 'The other party disconnected');
         
         // Hide notification on parent window if in iframe
         const isInIframe = window.self !== window.top;
@@ -1196,6 +1221,7 @@ socket.on('call-ended-disconnect', (data) => {
     }
 });
 
-// Remove incoming call modal - let parent page handle notifications
+// Remove all incoming call handling from display.js - handled by notification system only
 
-// Call accept/decline functions removed - handled by notification system
+// Remove incoming call socket listener to prevent duplicate notifications
+socket.off('incoming-call');
