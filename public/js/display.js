@@ -895,21 +895,28 @@ async function initiateCall(e) {
             });
         }
         
-        // Get user media with noise-filtered audio
-        const mediaConstraints = {
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
+        // Get user media with minimal filtering to capture background voices
+        const audioConstraints = {
+            echoCancellation: false,  // Allow background voices
+            noiseSuppression: false,  // Don't filter background sounds
+            autoGainControl: false    // Keep natural audio levels
+        };
+        
+        // Add advanced constraints for desktop browsers only (also disabled for background audio)
+        if (!navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
+            Object.assign(audioConstraints, {
                 sampleRate: 16000,
                 channelCount: 1,
-                volume: 0.8,
-                googEchoCancellation: true,
-                googAutoGainControl: true,
-                googNoiseSuppression: true,
-                googHighpassFilter: true,
-                googTypingNoiseDetection: true
-            }
+                googEchoCancellation: false,
+                googAutoGainControl: false,
+                googNoiseSuppression: false,
+                googHighpassFilter: false,
+                googTypingNoiseDetection: false
+            });
+        }
+        
+        const mediaConstraints = {
+            audio: audioConstraints
         };
         
         // Handle different browser implementations
@@ -923,7 +930,7 @@ async function initiateCall(e) {
             throw new Error('getUserMedia not supported in this browser');
         }
         
-        // Create or get local audio element
+        // Create or get local audio element with mobile compatibility
         let localAudio = document.getElementById('localAudio');
         if (!localAudio) {
             localAudio = document.createElement('audio');
@@ -931,6 +938,7 @@ async function initiateCall(e) {
             localAudio.autoplay = true;
             localAudio.controls = false;
             localAudio.muted = true; // Prevent echo
+            localAudio.playsInline = true; // Critical for iOS
             localAudio.style.display = 'none';
             document.body.appendChild(localAudio);
         }
@@ -956,27 +964,59 @@ async function initiateCall(e) {
             console.log('Received remote stream');
             remoteStream = event.streams[0];
             
-            // Create or get remote audio element
+            // Create or get remote audio element with mobile compatibility
             let remoteAudio = document.getElementById('remoteAudio');
             if (!remoteAudio) {
                 remoteAudio = document.createElement('audio');
                 remoteAudio.id = 'remoteAudio';
                 remoteAudio.autoplay = true;
                 remoteAudio.controls = false;
+                remoteAudio.playsInline = true; // Critical for iOS
                 remoteAudio.style.display = 'none';
                 document.body.appendChild(remoteAudio);
             }
             
             remoteAudio.srcObject = remoteStream;
             remoteAudio.volume = 1.0;
-            // Use promise-based play for better browser compatibility
-            remoteAudio.play().catch(e => {
-                console.log('Audio play failed, trying user interaction:', e);
-                // Some browsers require user interaction
-                document.addEventListener('click', () => {
-                    remoteAudio.play().catch(console.error);
-                }, { once: true });
-            });
+            remoteAudio.muted = false;
+            
+            // Pause all other audio sources to prevent conflicts
+            const pauseBackgroundAudio = () => {
+                document.querySelectorAll('audio, video').forEach(media => {
+                    if (media !== remoteAudio && media !== localAudio && !media.paused) {
+                        media.pause();
+                        media.setAttribute('data-paused-by-call', 'true');
+                    }
+                });
+            };
+            
+            // Enhanced mobile audio play with background audio management
+            const playRemoteAudio = () => {
+                pauseBackgroundAudio();
+                
+                remoteAudio.play().then(() => {
+                    console.log('Remote audio playing successfully');
+                }).catch(e => {
+                    console.log('Audio play failed, adding interaction listeners:', e);
+                    
+                    // Add multiple event listeners for mobile compatibility
+                    const enableAudio = () => {
+                        pauseBackgroundAudio();
+                        remoteAudio.play().then(() => {
+                            console.log('Audio enabled after user interaction');
+                            document.removeEventListener('click', enableAudio);
+                            document.removeEventListener('touchstart', enableAudio);
+                            document.removeEventListener('touchend', enableAudio);
+                        }).catch(console.error);
+                    };
+                    
+                    document.addEventListener('click', enableAudio, { once: true });
+                    document.addEventListener('touchstart', enableAudio, { once: true });
+                    document.addEventListener('touchend', enableAudio, { once: true });
+                });
+            };
+            
+            playRemoteAudio();
         };
         
         // Handle ICE candidates
@@ -1055,18 +1095,21 @@ function endCall() {
     // Set flag to indicate intentional call ending
     callEnding = true;
     
-    // Send end call signal first
-    if (currentCall) {
-        socket.emit('end-call', { targetId: currentCall.recipientId });
-    }
+    // Store target ID before cleanup
+    const targetId = currentCall ? currentCall.recipientId : null;
     
-    // Immediately clean up local resources
+    // Immediately clean up local resources first
     cleanupCall();
     
     // Hide notification on parent window if in iframe
     const isInIframe = window.self !== window.top;
     if (isInIframe && typeof window.hideCallNotificationOnParent === 'function') {
         window.hideCallNotificationOnParent();
+    }
+    
+    // Send end call signal after cleanup
+    if (targetId) {
+        socket.emit('end-call', { targetId: targetId });
     }
 }
 
@@ -1112,6 +1155,14 @@ function cleanupCall() {
         localAudio.src = '';
         localAudio.load(); // Force reload to clear media
     }
+    
+    // Resume background audio that was paused during call
+    document.querySelectorAll('audio, video').forEach(media => {
+        if (media.getAttribute('data-paused-by-call') === 'true') {
+            media.removeAttribute('data-paused-by-call');
+            // Don't auto-resume, let user decide
+        }
+    });
     
     // Close peer connection after media cleanup
     if (peerConnection) {

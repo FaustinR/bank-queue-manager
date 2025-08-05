@@ -11,12 +11,13 @@
 
     const CALL_STORAGE_KEY = 'activeCall';
     
-    // Create audio elements for call audio
+    // Create audio elements for call audio with mobile compatibility
     function createAudioElements() {
         if (!remoteAudio) {
             remoteAudio = document.createElement('audio');
             remoteAudio.autoplay = true;
             remoteAudio.controls = false;
+            remoteAudio.playsInline = true; // Critical for iOS
             remoteAudio.style.display = 'none';
             document.body.appendChild(remoteAudio);
         }
@@ -26,6 +27,7 @@
             localAudio.autoplay = true;
             localAudio.controls = false;
             localAudio.muted = true; // Prevent echo
+            localAudio.playsInline = true; // Critical for iOS
             localAudio.style.display = 'none';
             document.body.appendChild(localAudio);
         }
@@ -76,21 +78,28 @@
         try {
             createAudioElements();
             
-            // Get user media with noise-filtered audio
-            localStream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true,
+            // Get user media with minimal filtering to capture background voices
+            const audioConstraints = {
+                echoCancellation: false,  // Allow background voices
+                noiseSuppression: false,  // Don't filter background sounds
+                autoGainControl: false    // Keep natural audio levels
+            };
+            
+            // Add advanced constraints for desktop browsers only (also disabled for background audio)
+            if (!navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
+                Object.assign(audioConstraints, {
                     sampleRate: 16000,
                     channelCount: 1,
-                    volume: 0.8,
-                    googEchoCancellation: true,
-                    googAutoGainControl: true,
-                    googNoiseSuppression: true,
-                    googHighpassFilter: true,
-                    googTypingNoiseDetection: true
-                }, 
+                    googEchoCancellation: false,
+                    googAutoGainControl: false,
+                    googNoiseSuppression: false,
+                    googHighpassFilter: false,
+                    googTypingNoiseDetection: false
+                });
+            }
+            
+            localStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: audioConstraints,
                 video: false 
             });
             
@@ -113,7 +122,7 @@
                 peerConnection.addTrack(track, localStream);
             });
             
-            // Handle remote stream - KEY FOR HEARING AUDIO
+            // Handle remote stream with mobile compatibility
             peerConnection.ontrack = (event) => {
                 console.log('Received remote stream');
                 remoteStream = event.streams[0];
@@ -121,10 +130,47 @@
                 // Connect remote stream to audio element for playback
                 if (remoteAudio && remoteStream) {
                     remoteAudio.srcObject = remoteStream;
-                    remoteAudio.play().catch(e => {
-                        console.log('Auto-play prevented, user interaction required');
-                        showAudioEnableButton();
-                    });
+                    remoteAudio.volume = 1.0;
+                    remoteAudio.muted = false;
+                    
+                    // Pause background audio to prevent conflicts
+                    const pauseBackgroundAudio = () => {
+                        document.querySelectorAll('audio, video').forEach(media => {
+                            if (media !== remoteAudio && media !== localAudio && !media.paused) {
+                                media.pause();
+                                media.setAttribute('data-paused-by-call', 'true');
+                            }
+                        });
+                    };
+                    
+                    // Enhanced mobile audio play with background audio management
+                    const playRemoteAudio = () => {
+                        pauseBackgroundAudio();
+                        
+                        remoteAudio.play().then(() => {
+                            console.log('Remote audio playing successfully');
+                        }).catch(e => {
+                            console.log('Auto-play prevented, adding interaction listeners:', e);
+                            showAudioEnableButton();
+                            
+                            // Add multiple event listeners for mobile compatibility
+                            const enableAudio = () => {
+                                pauseBackgroundAudio();
+                                remoteAudio.play().then(() => {
+                                    console.log('Audio enabled after user interaction');
+                                    document.removeEventListener('click', enableAudio);
+                                    document.removeEventListener('touchstart', enableAudio);
+                                    document.removeEventListener('touchend', enableAudio);
+                                }).catch(console.error);
+                            };
+                            
+                            document.addEventListener('click', enableAudio, { once: true });
+                            document.addEventListener('touchstart', enableAudio, { once: true });
+                            document.addEventListener('touchend', enableAudio, { once: true });
+                        });
+                    };
+                    
+                    playRemoteAudio();
                 }
             };
             
@@ -338,12 +384,16 @@
     window.declineCall = function() {
         if (!activeCall || activeCall.type !== 'incoming') return;
         
-        const socket = getSocket();
-        socket.emit('call-declined', {
-            callerId: activeCall.callerId
-        });
+        const callerId = activeCall.callerId;
         
+        // Hide notification immediately
         hideCallNotification();
+        
+        // Send decline signal
+        const socket = getSocket();
+        if (socket && callerId) {
+            socket.emit('call-declined', { callerId: callerId });
+        }
     };
     
     // Mute/unmute functionality
@@ -423,11 +473,9 @@
             window.cleanupCall();
         }
         
-        // Send end call signal
-        if (targetId) {
-            socket.emit('end-call', {
-                targetId: targetId
-            });
+        // Send end call signal immediately without delay
+        if (targetId && socket) {
+            socket.emit('end-call', { targetId: targetId });
         }
     };
 
