@@ -8,6 +8,125 @@ html {
 
 /* Mobile-first approach */
 @media (max-width: 768px) {
+    /* Full width mobile layout */
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .admin-container {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        flex-direction: column;
+    }
+    /* Create mobile toggle button outside sidebar */
+    body::before {
+        content: '\f053';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: fixed;
+        top: 10px;
+        right: 15px;
+        z-index: 1002;
+        background: #2c5aa0;
+        color: white;
+        border: 2px solid white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        cursor: pointer;
+        transform: rotate(90deg);
+        transition: transform 0.3s ease;
+    }
+    
+    body.sidebar-folded::before {
+        transform: rotate(-90deg);
+    }
+    
+    /* Mobile sidebar - vertical folding */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        max-height: 100vh;
+        min-height: auto;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+        flex-direction: column;
+    }
+    
+    .sidebar.folded {
+        transform: translateY(-100%);
+        width: 100%;
+    }
+    
+    /* Hide original toggle button on mobile */
+    .sidebar .sidebar-toggle {
+        display: none !important;
+    }
+    
+    /* Sidebar toggle button - always visible at top right */
+    .sidebar-toggle {
+        position: fixed !important;
+        top: 10px !important;
+        right: 15px !important;
+        z-index: 1001 !important;
+        background: #2c5aa0 !important;
+        color: white !important;
+        border: 2px solid white !important;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+        cursor: pointer !important;
+    }
+    
+    .sidebar-toggle i {
+        color: white !important;
+        transform: rotate(90deg) !important;
+        transition: transform 0.3s ease !important;
+        font-size: 16px !important;
+    }
+    
+    .sidebar.folded .sidebar-toggle i {
+        transform: rotate(-90deg) !important;
+    }
+    
+    /* Override any desktop styles for mobile */
+    .sidebar-toggle:hover {
+        background: #1e3d6f !important;
+    }
+    
+    /* Sidebar header adjustments */
+    .sidebar-header {
+        padding: 15px 20px 10px;
+        text-align: center;
+    }
+    
+    .sidebar-logo {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .sidebar-header h2 {
+        font-size: 1.1rem;
+        margin: 10px 0 0;
+    }
     /* Admin container adjustments */
     .admin-container {
         flex-direction: column;
@@ -34,8 +153,41 @@ html {
     }
     
     .main-content {
-        margin-left: 0;
-        padding: 10px;
+        margin: 0;
+        padding: 0;
+        padding-top: 60px;
+        width: 100vw;
+        height: 100vh;
+        box-sizing: border-box;
+        transition: padding-top 0.3s ease;
+        overflow-y: auto;
+    }
+    
+    /* When sidebar is folded, fill entire viewport */
+    .sidebar.folded + .main-content,
+    body.sidebar-folded .main-content {
+        padding-top: 60px;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
+    }
+    
+    /* Move dashboard content up when sidebar is folded */
+    body.sidebar-folded .content-header {
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    
+    body.sidebar-folded .accordion-section {
+        margin-bottom: 10px;
+    }
+    
+    body.sidebar-folded .dashboard-stats {
+        margin-bottom: 15px;
     }
     
     /* Header adjustments */
@@ -159,7 +311,8 @@ html {
     
     /* Display screen mobile adjustments */
     .header {
-        padding: 15px;
+        padding: 10px;
+        margin: 0;
     }
     
     .header h1 {
@@ -168,8 +321,9 @@ html {
     
     .counters {
         grid-template-columns: 1fr;
-        gap: 15px;
-        padding: 10px;
+        gap: 10px;
+        padding: 5px;
+        margin: 0;
     }
     
     .counter {
@@ -207,7 +361,8 @@ html {
     }
     
     .queue-section {
-        padding: 15px;
+        padding: 10px;
+        margin: 0;
     }
     
     .queue-table {
@@ -221,7 +376,10 @@ html {
     
     /* Kiosk mobile adjustments */
     .kiosk-container {
-        padding: 10px;
+        padding: 5px;
+        margin: 0;
+        width: 100vw;
+        box-sizing: border-box;
     }
     
     .kiosk-header h1 {
@@ -239,7 +397,10 @@ html {
     
     /* Counter page mobile adjustments */
     .counter-container {
-        padding: 10px;
+        padding: 5px;
+        margin: 0;
+        width: 100vw;
+        box-sizing: border-box;
     }
     
     .counter-header {
@@ -260,7 +421,10 @@ html {
     
     /* History page mobile adjustments */
     .history-container {
-        padding: 10px;
+        padding: 5px;
+        margin: 0;
+        width: 100vw;
+        box-sizing: border-box;
     }
     
     .filters {
@@ -285,7 +449,10 @@ html {
     
     /* Users page mobile adjustments */
     .users-container {
-        padding: 10px;
+        padding: 5px;
+        margin: 0;
+        width: 100vw;
+        box-sizing: border-box;
     }
     
     .user-card {
@@ -297,14 +464,34 @@ html {
         margin-bottom: 10px;
     }
     
-    /* Navigation adjustments */
+    /* Navigation adjustments - horizontal layout on mobile */
+    .sidebar-nav {
+        padding: 10px 0;
+    }
+    
+    .sidebar-nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    .sidebar-nav ul li {
+        margin: 0;
+        flex: 1;
+        min-width: 120px;
+    }
+    
     .sidebar-nav ul li a {
-        padding: 12px 15px;
-        font-size: 14px;
+        padding: 8px 12px;
+        font-size: 12px;
+        text-align: center;
+        border-radius: 5px;
+        background: rgba(255,255,255,0.1);
     }
     
     .sidebar-nav ul li a .icon {
-        margin-right: 8px;
+        margin-right: 5px;
     }
     
     /* Touch-friendly interactions */
@@ -315,9 +502,28 @@ html {
         touch-action: manipulation;
     }
     
-    /* Prevent horizontal scroll */
+    /* Full width containers */
+    .container,
+    .admin-container,
+    .inbox-container,
+    .auth-container {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+    
+    /* Remove vertical scrollbar unless needed */
     body {
-        overflow-x: hidden;
+        overflow-y: auto;
+        height: 100vh;
+    }
+    
+    html {
+        height: 100vh;
+        overflow: hidden;
     }
     
     /* Improve text readability */
@@ -330,7 +536,21 @@ html {
 /* Extra small screens */
 @media (max-width: 480px) {
     .main-content {
-        padding: 5px;
+        padding: 0;
+        padding-top: 60px;
+        height: 100vh;
+        overflow-y: auto;
+    }
+    
+    body.sidebar-folded .main-content {
+        padding-top: 60px;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
     }
     
     .content-header h1 {
@@ -351,8 +571,9 @@ html {
     }
     
     .counters {
-        padding: 5px;
-        gap: 10px;
+        padding: 2px;
+        gap: 5px;
+        margin: 0;
     }
     
     .counter {

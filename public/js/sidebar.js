@@ -177,20 +177,57 @@ function setupSidebarToggle() {
     const sidebar = document.querySelector('.sidebar');
     
     if (toggleBtn && sidebar) {
+        // Check if mobile
+        const isMobile = window.innerWidth <= 768;
+        
         // Check if there's a saved preference
         const sidebarState = localStorage.getItem('sidebarState');
-        if (sidebarState === 'folded') {
+        if (sidebarState === 'folded' || (isMobile && sidebarState !== 'expanded')) {
             sidebar.classList.add('folded');
+            document.body.classList.add('sidebar-folded');
         }
         
-        toggleBtn.addEventListener('click', function() {
+        const toggleSidebar = function() {
             sidebar.classList.toggle('folded');
+            document.body.classList.toggle('sidebar-folded');
             
             // Save preference
             if (sidebar.classList.contains('folded')) {
                 localStorage.setItem('sidebarState', 'folded');
             } else {
                 localStorage.setItem('sidebarState', 'expanded');
+            }
+        };
+        
+        toggleBtn.addEventListener('click', toggleSidebar);
+        
+        // Mobile toggle button click detection
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768) {
+                const rect = {
+                    top: 10,
+                    right: window.innerWidth - 15,
+                    bottom: 50,
+                    left: window.innerWidth - 55
+                };
+                
+                if (e.clientX >= rect.left && e.clientX <= rect.right && 
+                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    toggleSidebar();
+                }
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const isMobileNow = window.innerWidth <= 768;
+            if (isMobileNow && !sidebar.classList.contains('folded')) {
+                // On mobile, default to folded unless explicitly expanded
+                const state = localStorage.getItem('sidebarState');
+                if (state !== 'expanded') {
+                    sidebar.classList.add('folded');
+                    document.body.classList.add('sidebar-folded');
+                }
             }
         });
     }
