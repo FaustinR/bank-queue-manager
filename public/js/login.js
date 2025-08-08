@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     counterOptionalText.style.display = 'inline';
     counterSelect.querySelector('option[value=""]').disabled = false;
     
+    // Load counter availability status
+    loadCounterAvailability();
+    
     // Check if counter is occupied when counter selection changes
     counterSelect.addEventListener('change', async function() {
         const counterId = counterSelect.value;
@@ -143,4 +146,46 @@ document.addEventListener('DOMContentLoaded', function() {
             loginButton.disabled = false;
         }
     });
+    
+    // Store original option texts
+    const originalTexts = {};
+    const options = counterSelect.querySelectorAll('option[value]:not([value=""])');
+    options.forEach(option => {
+        originalTexts[option.value] = option.textContent;
+    });
+    
+    // Function to load counter availability status
+    async function loadCounterAvailability() {
+        try {
+            const response = await fetch('/api/counters/staff');
+            if (!response.ok) return;
+            
+            const data = await response.json();
+            const counterStaff = data.counterStaff || {};
+            
+            // Update counter options with availability status
+            options.forEach(option => {
+                const counterId = option.value;
+                const isOccupied = counterStaff[counterId];
+                const originalText = originalTexts[counterId];
+                
+                if (isOccupied) {
+                    option.textContent = originalText + ' 🔴 Occupied';
+                    option.disabled = true;
+                    option.style.color = '#666';
+                    option.style.backgroundColor = '#f5f5f5';
+                } else {
+                    option.textContent = originalText + ' 🟢 Available';
+                    option.disabled = false;
+                    option.style.color = '#333';
+                    option.style.backgroundColor = '#fff';
+                }
+            });
+        } catch (error) {
+            // Silent error handling
+        }
+    }
+    
+    // Refresh counter availability every 10 seconds
+    setInterval(loadCounterAvailability, 10000);
 });
