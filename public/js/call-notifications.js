@@ -111,16 +111,30 @@
                 autoGainControl: false
             };
             
-            // Simple microphone capture
+            // Try system audio first, fallback to microphone
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: false
-                });
-                console.log('Microphone captured');
+                // First try to capture system audio (includes background music)
+                try {
+                    localStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: false,
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        }
+                    });
+                    console.log('System audio captured (includes background music)');
+                } catch (e) {
+                    // Fallback to microphone if system audio denied
+                    localStream = await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                        video: false
+                    });
+                    console.log('Microphone captured (no background music)');
+                }
             } catch (error) {
-                console.error('Microphone access failed:', error);
-                alert('Please allow microphone access');
+                console.error('Audio access failed:', error);
+                alert('Please allow audio access');
                 throw error;
             }
             
@@ -165,16 +179,30 @@
                     remoteAudio.remove();
                 }
                 
-                // Create new audio element
+                // Create new audio element with visible controls for iPhone
                 remoteAudio = document.createElement('audio');
                 remoteAudio.id = 'remoteCallAudio';
                 remoteAudio.autoplay = true;
+                remoteAudio.controls = /iPhone|iPad|iPod/.test(navigator.userAgent); // Show controls on iOS
                 remoteAudio.playsInline = true;
                 remoteAudio.volume = 1.0;
                 remoteAudio.muted = false;
                 remoteAudio.setAttribute('playsinline', 'true');
                 remoteAudio.setAttribute('webkit-playsinline', 'true');
-                remoteAudio.style.display = 'none';
+                
+                // Position for iPhone visibility
+                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                    remoteAudio.style.position = 'fixed';
+                    remoteAudio.style.bottom = '60px';
+                    remoteAudio.style.left = '10px';
+                    remoteAudio.style.width = '200px';
+                    remoteAudio.style.zIndex = '99999';
+                    remoteAudio.style.background = 'rgba(0,0,0,0.8)';
+                    remoteAudio.style.borderRadius = '5px';
+                } else {
+                    remoteAudio.style.display = 'none';
+                }
+                
                 document.body.appendChild(remoteAudio);
                 
                 // Set stream and make globally accessible

@@ -913,16 +913,30 @@ async function initiateCall(e) {
             autoGainControl: false
         };
         
-        // Simple microphone capture
+        // Try system audio first, fallback to microphone
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: false
-            });
-            console.log('Display: Microphone captured');
+            // First try to capture system audio (includes background music)
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: false,
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                });
+                console.log('Display: System audio captured (includes background music)');
+            } catch (e) {
+                // Fallback to microphone if system audio denied
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: false
+                });
+                console.log('Display: Microphone captured (no background music)');
+            }
         } catch (error) {
-            console.error('Display: Microphone failed:', error);
-            alert('Please allow microphone access');
+            console.error('Display: Audio access failed:', error);
+            alert('Please allow audio access');
             throw error;
         }
         
