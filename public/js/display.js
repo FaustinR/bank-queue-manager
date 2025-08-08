@@ -1004,18 +1004,20 @@ async function initiateCall(e) {
                 document.body.appendChild(remoteAudio);
             }
             
-            // Set stream and try to play
+            // Set stream and make globally accessible
             remoteAudio.srcObject = remoteStream;
+            window.remoteAudio = remoteAudio;
+            console.log('Display remote audio srcObject set:', !!remoteAudio.srcObject);
             
             setTimeout(() => {
                 remoteAudio.play().then(() => {
-                    console.log('Display remote audio playing');
+                    console.log('Display remote audio playing successfully');
                 }).catch(e => {
                     console.log('Display audio blocked:', e.message);
                     // Add click listener to enable audio
                     const enableAudio = () => {
                         remoteAudio.play().then(() => {
-                            console.log('Display audio enabled');
+                            console.log('Display audio enabled after interaction');
                         }).catch(console.error);
                         document.removeEventListener('click', enableAudio);
                         document.removeEventListener('touchstart', enableAudio);

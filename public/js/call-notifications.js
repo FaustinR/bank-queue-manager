@@ -179,21 +179,27 @@
                 
                 console.log('Setting up remote audio for iPhone');
                 
+                // Ensure remoteAudio element exists
+                if (!remoteAudio) {
+                    createAudioElements();
+                }
+                
                 // Set stream to audio element
                 remoteAudio.srcObject = remoteStream;
+                console.log('Remote audio srcObject set:', !!remoteAudio.srcObject);
                 
-                // Force play immediately with user interaction
-                const forcePlay = () => {
+                // Make remoteAudio globally accessible for speaker toggle
+                window.remoteAudio = remoteAudio;
+                
+                // Force play immediately
+                setTimeout(() => {
                     remoteAudio.play().then(() => {
-                        console.log('Remote audio playing');
+                        console.log('Remote audio playing successfully');
                     }).catch(e => {
-                        console.log('Audio play blocked:', e.message);
+                        console.log('Audio play blocked, showing enable button:', e.message);
                         showAudioEnableButton();
                     });
-                };
-                
-                // Try immediate play
-                setTimeout(forcePlay, 100);
+                }, 100);
             };
             
             // Handle ICE candidates
@@ -223,14 +229,20 @@
             enableBtn.textContent = '🔊 Tap to Enable Audio';
             enableBtn.style.cssText = 'background: #ff6b35; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; margin: 10px auto; display: block; font-size: 16px; font-weight: bold;';
             enableBtn.onclick = () => {
-                if (remoteAudio && remoteAudio.srcObject) {
-                    remoteAudio.play().then(() => {
-                        console.log('Audio enabled by user');
+                const audioElement = window.remoteAudio || remoteAudio;
+                console.log('Enable audio clicked. Audio element:', !!audioElement, 'srcObject:', !!audioElement?.srcObject);
+                
+                if (audioElement && audioElement.srcObject) {
+                    audioElement.play().then(() => {
+                        console.log('Audio enabled by user successfully');
                         enableBtn.remove();
                     }).catch(e => {
                         console.error('Still failed to play:', e);
                         enableBtn.textContent = '❌ Audio Failed - Check Settings';
                     });
+                } else {
+                    console.error('No audio element or stream found');
+                    enableBtn.textContent = '❌ No Audio Stream';
                 }
             };
             currentNotification.appendChild(enableBtn);
@@ -572,13 +584,19 @@
     // Speaker toggle functionality
     let isSpeakerOn = false;
     window.toggleSpeaker = function() {
-        if (remoteAudio && remoteAudio.srcObject) {
+        const audioElement = window.remoteAudio || remoteAudio;
+        
+        if (audioElement && audioElement.srcObject) {
             isSpeakerOn = !isSpeakerOn;
-            remoteAudio.volume = isSpeakerOn ? 1.0 : 0.5;
-            remoteAudio.muted = false;
+            audioElement.volume = isSpeakerOn ? 1.0 : 0.5;
+            audioElement.muted = false;
+            
+            console.log('Speaker toggle - volume:', audioElement.volume, 'muted:', audioElement.muted);
             
             // Force play
-            remoteAudio.play().catch(e => {
+            audioElement.play().then(() => {
+                console.log('Speaker audio playing');
+            }).catch(e => {
                 console.log('Speaker play failed:', e);
                 showAudioEnableButton();
             });
@@ -591,6 +609,7 @@
             
             console.log('Speaker:', isSpeakerOn ? 'ON' : 'OFF');
         } else {
+            console.log('No audio element found. remoteAudio:', !!remoteAudio, 'window.remoteAudio:', !!window.remoteAudio);
             alert('No active audio stream found');
         }
     };
