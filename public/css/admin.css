@@ -513,7 +513,9 @@ body {
 }
 
 .accordion-header:hover {
-    background: #edf2f7;
+    background: rgba(44, 90, 160, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
 }
 
 .accordion-header h3 {

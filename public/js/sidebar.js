@@ -57,6 +57,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get all links in the sidebar
     const sidebarLinks = document.querySelectorAll('.sidebar-nav a');
     
+    // Function to update active state
+    function updateActiveState(clickedLink) {
+        // Remove active class from all list items
+        document.querySelectorAll('.sidebar-nav li').forEach(li => {
+            li.classList.remove('active');
+        });
+        
+        // Add active class to clicked item's parent li
+        const parentLi = clickedLink.closest('li');
+        if (parentLi) {
+            parentLi.classList.add('active');
+        }
+    }
+    
+    // Set initial active state based on current page
+    const currentPath = window.location.pathname;
+    sidebarLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === currentPath || (currentPath === '/admin' && href === '/admin')) {
+            updateActiveState(link);
+        }
+    });
+    
     // Add click event listener to each link
     sidebarLinks.forEach(link => {
         // For links with target="_blank", add session token to URL
@@ -64,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
             (link.getAttribute('href') === '/history' || link.getAttribute('href') === '/display')) {
             link.onclick = function(e) {
                 e.preventDefault();
+                updateActiveState(this);
                 // Open in new tab with session cookie preserved
                 window.open(this.getAttribute('href'), '_blank');
                 return false;
@@ -76,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle dashboard link to scroll to top
                 link.onclick = function(e) {
                     e.preventDefault();
+                    updateActiveState(this);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     return false;
                 };
@@ -85,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle history link
                 link.onclick = function(e) {
                     e.preventDefault();
+                    updateActiveState(this);
                     if (window.location.pathname === '/admin') {
                         // On admin page, open the accordion
                         const historySection = document.getElementById('ticketHistorySection');
@@ -105,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle display link
                 link.onclick = function(e) {
                     e.preventDefault();
+                    updateActiveState(this);
                     if (window.location.pathname === '/admin') {
                         // On admin page, show the display screen accordion
                         const displaySection = document.getElementById('displayScreenSection');
@@ -126,6 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Force the link to open in the same tab
                 link.onclick = function(e) {
                     e.preventDefault();
+                    updateActiveState(this);
                     window.location.href = this.getAttribute('href');
                     return false;
                 };

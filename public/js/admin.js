@@ -126,14 +126,12 @@ async function fetchUserInfo() {
                 roleElement.style.backgroundColor = '#fd7e14';
                 
                 // Hide any signup links (create user)
-                const signupLinks = document.querySelectorAll('a[href="/signup"]');
+                const signupLinks = document.querySelectorAll('.sidebar-nav a[href="/signup"]');
                 signupLinks.forEach(link => {
                     // Hide the entire list item, not just the link
                     const listItem = link.closest('li');
                     if (listItem) {
                         listItem.style.display = 'none';
-                    } else {
-                        link.style.display = 'none';
                     }
                 });
                 
@@ -153,13 +151,11 @@ async function fetchUserInfo() {
                 roleElement.style.backgroundColor = '#20c997';
                 
                 // Hide only signup links, keep users link visible
-                const signupLinks = document.querySelectorAll('a[href="/signup"]');
+                const signupLinks = document.querySelectorAll('.sidebar-nav a[href="/signup"]');
                 signupLinks.forEach(link => {
                     const listItem = link.closest('li');
                     if (listItem) {
                         listItem.style.display = 'none';
-                    } else {
-                        link.style.display = 'none';
                     }
                 });
                 
