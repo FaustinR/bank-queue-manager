@@ -895,70 +895,23 @@ async function initiateCall(e) {
             });
         }
         
-        // Audio constraints allowing background sounds
+        // Simple audio constraints for reliability
         const audioConstraints = {
-            echoCancellation: true,   // Keep echo cancellation for call quality
-            noiseSuppression: false,  // Disable to allow background sounds
-            autoGainControl: false,   // Disable to preserve natural audio levels
-            sampleRate: { ideal: 48000, min: 8000 },
-            channelCount: { ideal: 1 },
-            volume: { ideal: 1.0 }
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
         };
         
-        // Try to get system audio + microphone for desktop
+        // Simple, reliable audio capture
         try {
-            // First try to get display media with system audio (Chrome/Edge)
-            if (navigator.mediaDevices.getDisplayMedia && !navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
-                try {
-                    const displayStream = await navigator.mediaDevices.getDisplayMedia({
-                        video: false,
-                        audio: {
-                            echoCancellation: false,
-                            noiseSuppression: false,
-                            autoGainControl: false,
-                            suppressLocalAudioPlayback: false
-                        }
-                    });
-                    
-                    // Also get microphone
-                    const micStream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: audioConstraints,
-                        video: false 
-                    });
-                    
-                    // Combine system audio and microphone
-                    const audioContext = new AudioContext();
-                    const systemSource = audioContext.createMediaStreamSource(displayStream);
-                    const micSource = audioContext.createMediaStreamSource(micStream);
-                    const destination = audioContext.createMediaStreamDestination();
-                    
-                    systemSource.connect(destination);
-                    micSource.connect(destination);
-                    
-                    localStream = destination.stream;
-                    console.log('Using system audio + microphone');
-                } catch (displayError) {
-                    console.log('System audio capture failed, using microphone only:', displayError);
-                    throw displayError;
-                }
-            } else {
-                throw new Error('Display media not supported');
-            }
+            localStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: true,
+                video: false 
+            });
+            console.log('Audio stream obtained successfully');
         } catch (error) {
-            console.log('Falling back to microphone only');
-            // Fallback to microphone only
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: audioConstraints,
-                    video: false 
-                });
-            } catch (micError) {
-                console.log('Advanced constraints failed, trying basic:', micError);
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: true,
-                    video: false 
-                });
-            }
+            console.error('Failed to get audio stream:', error);
+            throw error;
         }
         
         // Create or get local audio element with mobile compatibility
