@@ -234,7 +234,20 @@
             font-family: Arial, sans-serif;
             min-width: 350px;
             max-width: 450px;
+            cursor: move;
+            user-select: none;
+            touch-action: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         `;
+        
+        // Mobile responsive adjustments
+        if (window.innerWidth <= 480) {
+            notification.style.minWidth = '280px';
+            notification.style.maxWidth = '95vw';
+            notification.style.padding = '15px';
+            notification.style.fontSize = '14px';
+        }
 
         // Create notification content with action buttons
         let actionButtons = '';
@@ -288,6 +301,9 @@
 
         document.body.appendChild(notification);
         currentNotification = notification;
+        
+        // Make notification draggable
+        makeDraggable(notification);
 
         if (!document.querySelector('link[href*="font-awesome"]')) {
             const link = document.createElement('link');
@@ -325,6 +341,97 @@
         }
     }
 
+    // Make element draggable with enhanced mobile support
+    function makeDraggable(element) {
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+        let dragTimeout;
+        
+        function handleStart(e) {
+            // Don't drag if clicking on buttons or inputs
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+            
+            // Clear any existing timeout
+            if (dragTimeout) clearTimeout(dragTimeout);
+            
+            // Handle both mouse and touch events
+            const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+            const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+            
+            startX = clientX;
+            startY = clientY;
+            
+            const rect = element.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+            
+            // For touch events, add a small delay to distinguish from tap
+            if (e.type === 'touchstart') {
+                dragTimeout = setTimeout(() => {
+                    isDragging = true;
+                    element.style.transform = 'none';
+                    element.style.left = initialX + 'px';
+                    element.style.top = initialY + 'px';
+                    element.style.zIndex = '100000';
+                }, 150);
+            } else {
+                isDragging = true;
+                element.style.transform = 'none';
+                element.style.left = initialX + 'px';
+                element.style.top = initialY + 'px';
+                element.style.zIndex = '100000';
+            }
+            
+            e.preventDefault();
+        }
+        
+        function handleMove(e) {
+            if (!isDragging) return;
+            
+            const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+            const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
+            
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+            
+            // Add margin for mobile viewport
+            const margin = 10;
+            const maxX = window.innerWidth - element.offsetWidth - margin;
+            const maxY = window.innerHeight - element.offsetHeight - margin;
+            
+            const newX = Math.max(margin, Math.min(maxX, initialX + deltaX));
+            const newY = Math.max(margin, Math.min(maxY, initialY + deltaY));
+            
+            element.style.left = newX + 'px';
+            element.style.top = newY + 'px';
+            
+            e.preventDefault();
+        }
+        
+        function handleEnd(e) {
+            if (dragTimeout) {
+                clearTimeout(dragTimeout);
+                dragTimeout = null;
+            }
+            
+            if (isDragging) {
+                isDragging = false;
+                element.style.zIndex = '99999';
+            }
+        }
+        
+        // Mouse events
+        element.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        
+        // Touch events for mobile with better support
+        element.addEventListener('touchstart', handleStart, { passive: false });
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
+        document.addEventListener('touchcancel', handleEnd);
+    }
+    
     // Global socket instance
     let globalSocket = null;
     
@@ -646,6 +753,9 @@
                 type: 'showCallNotification',
                 callData: callData
             }, '*');
+        } else {
+            // If not in iframe, show locally
+            showCallNotification(callData);
         }
     };
     
@@ -654,6 +764,9 @@
             window.parent.postMessage({
                 type: 'hideCallNotification'
             }, '*');
+        } else {
+            // If not in iframe, hide locally
+            hideCallNotification();
         }
     };
     
@@ -692,6 +805,15 @@
             if (savedCall && !currentNotification) {
                 showCallNotification(savedCall);
             }
+        }
+    });
+    
+    // Handle messages from iframe (display screen)
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'showCallNotification') {
+            showCallNotification(event.data.callData);
+        } else if (event.data.type === 'hideCallNotification') {
+            hideCallNotification();
         }
     });
 })();

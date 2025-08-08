@@ -1052,7 +1052,7 @@ async function initiateCall(e) {
         
         console.log('Call request sent');
         
-        // Show outgoing call notification with counter info from button
+        // Show outgoing call notification on parent page (top level)
         const counterServices = {
             '1': 'Account Opening',
             '2': 'Loan Application', 
@@ -1065,16 +1065,19 @@ async function initiateCall(e) {
             type: 'outgoing',
             name: tellerName,
             counter: counterId || 'Unknown',
-            service: counterServices[counterId] || 'Banking Service'
+            service: counterServices[counterId] || 'Banking Service',
+            recipientId: tellerId
         };
         
-        // Show notification on parent window if in iframe, otherwise show locally
+        // Show notification on parent page if in iframe
         const isInIframe = window.self !== window.top;
-        if (isInIframe && typeof window.showCallNotificationOnParent === 'function') {
-            callNotificationData.recipientId = tellerId;
-            window.showCallNotificationOnParent(callNotificationData);
+        if (isInIframe) {
+            window.parent.postMessage({
+                type: 'showCallNotification',
+                callData: callNotificationData
+            }, '*');
         } else if (typeof window.showOutgoingCallNotification === 'function') {
-            window.showOutgoingCallNotification(callNotificationData.name, callNotificationData.counter, callNotificationData.service, tellerId);
+            window.showOutgoingCallNotification(tellerName, counterId || 'Unknown', counterServices[counterId] || 'Banking Service', tellerId);
         }
         
         currentCall = { recipientId: tellerId, recipientName: tellerName };
@@ -1101,10 +1104,14 @@ function endCall() {
     // Immediately clean up local resources first
     cleanupCall();
     
-    // Hide notification on parent window if in iframe
+    // Hide call notification on parent page
     const isInIframe = window.self !== window.top;
-    if (isInIframe && typeof window.hideCallNotificationOnParent === 'function') {
-        window.hideCallNotificationOnParent();
+    if (isInIframe) {
+        window.parent.postMessage({
+            type: 'hideCallNotification'
+        }, '*');
+    } else if (typeof window.hideCallNotification === 'function') {
+        window.hideCallNotification();
     }
     
     // Send end call signal after cleanup
@@ -1188,20 +1195,28 @@ socket.on('call-failed', (data) => {
     window.notifications.error('Call Failed', data.reason);
     cleanupCall();
     
-    // Hide notification on parent window if in iframe
+    // Hide call notification on parent page
     const isInIframe = window.self !== window.top;
-    if (isInIframe && typeof window.hideCallNotificationOnParent === 'function') {
-        window.hideCallNotificationOnParent();
+    if (isInIframe) {
+        window.parent.postMessage({
+            type: 'hideCallNotification'
+        }, '*');
+    } else if (typeof window.hideCallNotification === 'function') {
+        window.hideCallNotification();
     }
 });
 
 socket.on('call-declined', () => {
     cleanupCall();
     
-    // Hide notification on parent window if in iframe
+    // Hide call notification on parent page
     const isInIframe = window.self !== window.top;
-    if (isInIframe && typeof window.hideCallNotificationOnParent === 'function') {
-        window.hideCallNotificationOnParent();
+    if (isInIframe) {
+        window.parent.postMessage({
+            type: 'hideCallNotification'
+        }, '*');
+    } else if (typeof window.hideCallNotification === 'function') {
+        window.hideCallNotification();
     }
 });
 
@@ -1231,10 +1246,14 @@ socket.on('call-ended', () => {
     console.log('Call ended by remote party');
     cleanupCall();
     
-    // Hide notification on parent window if in iframe
+    // Hide call notification on parent page
     const isInIframe = window.self !== window.top;
-    if (isInIframe && typeof window.hideCallNotificationOnParent === 'function') {
-        window.hideCallNotificationOnParent();
+    if (isInIframe) {
+        window.parent.postMessage({
+            type: 'hideCallNotification'
+        }, '*');
+    } else if (typeof window.hideCallNotification === 'function') {
+        window.hideCallNotification();
     }
 });
 
@@ -1264,10 +1283,14 @@ socket.on('call-ended-disconnect', (data) => {
         console.log('Call ended due to user disconnection');
         cleanupCall();
         
-        // Hide notification on parent window if in iframe
+        // Hide call notification on parent page
         const isInIframe = window.self !== window.top;
-        if (isInIframe && typeof window.hideCallNotificationOnParent === 'function') {
-            window.hideCallNotificationOnParent();
+        if (isInIframe) {
+            window.parent.postMessage({
+                type: 'hideCallNotification'
+            }, '*');
+        } else if (typeof window.hideCallNotification === 'function') {
+            window.hideCallNotification();
         }
     }
 });

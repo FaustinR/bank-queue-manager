@@ -505,14 +505,103 @@ html {
     /* Full width containers */
     .container,
     .admin-container,
-    .inbox-container,
-    .auth-container {
+    .inbox-container {
         width: 100vw;
         height: 100vh;
         margin: 0;
         padding: 0;
         box-sizing: border-box;
         overflow: hidden;
+    }
+    
+    /* Auth forms full page mobile */
+    .auth-container,
+    .signup-container {
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 100vw !important;
+        min-height: 100vh !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        transform: none !important;
+        display: block !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+    
+    .auth-card {
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 100vw !important;
+        min-height: 100vh !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+    }
+    
+    .signup-card {
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 100vw !important;
+        min-height: 100vh !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+    }
+    
+    /* Add margin to signup content */
+    .signup-card .auth-header {
+        margin: 20px 20px 0 20px !important;
+    }
+    
+    .signup-card .auth-body {
+        margin: 0 20px !important;
+        flex: 1 !important;
+    }
+    
+    .signup-card .auth-footer {
+        margin: 0 20px 20px 20px !important;
+    }
+    
+    /* Compact signup form inputs */
+    .signup-card input,
+    .signup-card select {
+        padding: 8px !important;
+        font-size: 14px !important;
+    }
+    
+    .signup-card .form-group {
+        margin-bottom: 12px !important;
+    }
+    
+    .signup-card .auth-header {
+        padding: 15px 20px 10px !important;
+    }
+    
+    .signup-card .auth-body {
+        padding: 15px !important;
+    }
+    
+    .signup-card .auth-footer {
+        padding: 10px !important;
     }
     
     /* Remove vertical scrollbar unless needed */
@@ -611,10 +700,13 @@ html {
     /* Call notification extra small screen adjustments */
     #callNotification {
         min-width: 280px !important;
-        max-width: 98vw !important;
-        left: 1vw !important;
+        max-width: 95vw !important;
+        left: 2.5vw !important;
         padding: 12px !important;
         font-size: 12px !important;
+        touch-action: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
     }
     
     #callNotification button {
@@ -629,6 +721,42 @@ html {
     #callNotification div[style*="display: flex"] {
         gap: 4px !important;
         flex-wrap: wrap !important;
+    }
+    
+    /* iPhone SE and very small screens */
+    .signup-card .auth-header {
+        margin: 10px 15px 0 15px !important;
+    }
+    
+    .signup-card .auth-body {
+        margin: 0 15px !important;
+    }
+    
+    .signup-card .auth-footer {
+        margin: 0 15px 10px 15px !important;
+    }
+    
+    /* Extra compact for very small screens */
+    .signup-card input,
+    .signup-card select {
+        padding: 6px !important;
+        font-size: 14px !important;
+    }
+    
+    .signup-card .form-group {
+        margin-bottom: 8px !important;
+    }
+    
+    .signup-card .auth-header {
+        padding: 10px 15px 5px !important;
+    }
+    
+    .signup-card .auth-body {
+        padding: 10px !important;
+    }
+    
+    .signup-card .auth-footer {
+        padding: 5px !important;
     }
 }
 
@@ -680,17 +808,30 @@ html {
     
     /* Fix iOS Safari 100vh issue */
     .admin-container,
-    .inbox-container {
+    .inbox-container,
+    .auth-container {
         height: -webkit-fill-available;
+    }
+    
+    .auth-card,
+    .signup-card {
+        height: -webkit-fill-available !important;
+        width: 100% !important;
+        min-width: 100vw !important;
+        min-height: -webkit-fill-available !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 }
 
 /* Additional iOS fixes */
 @media screen and (-webkit-min-device-pixel-ratio: 2) {
     /* High DPI iOS devices */
-    .auth-container {
-        -webkit-transform: translate(-50%, -50%) scale(0.9);
-        transform: translate(-50%, -50%) scale(0.9);
+    @media (min-width: 769px) {
+        .auth-container {
+            -webkit-transform: translate(-50%, -50%) scale(0.9);
+            transform: translate(-50%, -50%) scale(0.9);
+        }
     }
 }
 
