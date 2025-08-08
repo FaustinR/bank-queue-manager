@@ -115,7 +115,7 @@ async function fetchUserInfo() {
             window.location.href = '/login';
         }
     } catch (error) {
-        console.error('Error fetching user info:', error);
+        // Error fetching user info
     }
 }
 
@@ -145,7 +145,6 @@ async function fetchUsers() {
                 `<tr><td colspan="6">Error loading users: ${data.message || 'Unknown error'}</td></tr>`;
         }
     } catch (error) {
-        console.error('Error fetching users:', error);
         document.getElementById('usersTableBody').innerHTML = 
             '<tr><td colspan="6">Error loading users. Please try again.</td></tr>';
     }
@@ -283,7 +282,6 @@ async function deleteUser(userId) {
             alert(`Error deleting user: ${data.message || 'Unknown error'}`);
         }
     } catch (error) {
-        console.error('Error deleting user:', error);
         alert('Error deleting user. Please try again.');
     }
 }

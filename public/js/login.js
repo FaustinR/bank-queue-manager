@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     // Counter staff update notification sent from client
                 } catch (notifyError) {
-                    // Error handling without logging
+                    // Counter staff update notification failed
                 }
                 
                 // Authenticate socket with user ID

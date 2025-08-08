@@ -51,8 +51,14 @@ router.post('/login', async (req, res) => {
     
     // Assign counter to user if provided
     if (counter) {
+      // Clear any stale sessions if user is not connected
+      if (user.connected === 'no' && user.sessions) {
+        user.sessions.clear();
+        await user.save();
+      }
+      
       // Check if user is already logged in at a different counter
-      if (user.sessions && user.sessions.size > 0) {
+      if (user.connected === 'yes' && user.sessions && user.sessions.size > 0) {
         // Get the first counter the user is assigned to
         const existingCounter = Array.from(user.sessions.values())[0];
         
@@ -337,6 +343,12 @@ router.get('/logout', async (req, res) => {
         
         // Remove this session from the user's sessions and set connected status to 'no'
         user.sessions.delete(sessionId);
+        
+        // If no more sessions, clear the sessions Map completely
+        if (user.sessions.size === 0) {
+          user.sessions.clear();
+        }
+        
         user.connected = 'no';
         await user.save();
         
@@ -351,6 +363,10 @@ router.get('/logout', async (req, res) => {
         
         // Only clear the counter if no other session is using it
         if (!counterInUse && sessionCounter) {
+          // Clear user's counter assignment
+          user.counter = null;
+          await user.save();
+          
           const Counter = require('../models/Counter');
           await Counter.findOneAndUpdate(
             { counterId: parseInt(sessionCounter), staffId: userId },

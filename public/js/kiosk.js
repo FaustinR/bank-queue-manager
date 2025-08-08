@@ -160,7 +160,7 @@ document.getElementById('ticketForm').addEventListener('submit', async (e) => {
         return;
     }
     
-    console.log('Form data being sent:', { customerName, service, language });
+
     
     try {
         const response = await fetch('/api/ticket', {
@@ -178,7 +178,7 @@ document.getElementById('ticketForm').addEventListener('submit', async (e) => {
         document.getElementById('receiptNumber').textContent = ticket.number;
         document.getElementById('receiptTime').textContent = new Date(ticket.timestamp).toLocaleTimeString();
         
-        console.log('Ticket data:', ticket);
+
         
         // Generate QR code
         const ticketUrl = `${window.location.origin}/ticket?name=${encodeURIComponent(ticket.customerName)}&service=${encodeURIComponent(ticket.service)}&language=${encodeURIComponent(ticket.language)}&number=${ticket.number}&time=${encodeURIComponent(new Date(ticket.timestamp).toLocaleTimeString())}&counter=${ticket.counterId}`;

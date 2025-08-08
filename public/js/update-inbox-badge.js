@@ -102,6 +102,6 @@ window.updateInboxBadge = function() {
             });
         })
         .catch(error => {
-            console.error('Error checking unread messages:', error);
+            // Error checking unread messages
         });
 }

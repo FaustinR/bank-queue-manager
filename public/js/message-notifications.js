@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 // Not authenticated or error, do nothing
-                console.log('Not setting up message notifications:', error.message);
             });
     }
     
@@ -45,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
             audio.volume = 0.5;
             audio.play();
         } catch (error) {
-            console.log('Could not play notification sound');
+            // Could not play notification sound
         }
     }
     
@@ -136,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             })
             .catch(error => {
-                console.error('Error checking unread messages:', error);
+                // Error checking unread messages
             });
     }
 });

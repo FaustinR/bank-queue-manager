@@ -19,14 +19,13 @@ function playNotificationSound() {
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.3);
     } catch (error) {
-        console.log('Could not play notification sound:', error);
         // Fallback: try to use HTML5 audio if available
         try {
             const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
             audio.volume = 0.3;
             audio.play().catch(() => {});
         } catch (e) {
-            console.log('Fallback audio also failed:', e);
+            // Fallback audio failed
         }
     }
 }
@@ -316,7 +315,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             const response = await fetch('/api/auth/me');
             if (response.ok) {
                 const userData = await response.json();
-                console.log('Authenticating socket with user ID:', userData.user._id);
                 socket.emit('authenticate', userData.user._id);
                 
                 // Store user ID globally for call handling
@@ -324,11 +322,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 
                 return true;
             } else {
-                console.log('User not authenticated, cannot make calls');
                 return false;
             }
         } catch (error) {
-            console.log('Error authenticating socket:', error);
             return false;
         }
     };
@@ -337,7 +333,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const success = await authenticateSocket();
         if (!success && authRetries < maxAuthRetries) {
             authRetries++;
-            console.log(`Authentication retry ${authRetries}/${maxAuthRetries}`);
             setTimeout(tryAuthenticate, 1000 * authRetries);
         }
     };
@@ -346,7 +341,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Wait for authentication confirmation with timeout
     socket.on('authenticated', (data) => {
-        console.log('Socket authentication confirmed for user:', data.userId);
         window.socketAuthenticated = true;
     });
 });
@@ -854,8 +848,6 @@ async function initiateCall(e) {
     const tellerName = btn.getAttribute('data-teller');
     const counterId = btn.getAttribute('data-counter');
     
-    console.log('Initiating call to:', tellerName, 'ID:', tellerId, 'Counter:', counterId);
-    
     if (!tellerId) {
         window.notifications.error('Error', 'Cannot call: Teller information not available');
         return;
@@ -867,9 +859,8 @@ async function initiateCall(e) {
         if (audioContext.state === 'suspended') {
             await audioContext.resume();
         }
-        console.log('Audio context ready for call');
     } catch (e) {
-        console.log('Audio context init failed:', e);
+        // Audio context init failed
     }
     
     try {
@@ -889,11 +880,8 @@ async function initiateCall(e) {
         const userData = await response.json();
         const callerName = `${userData.user.firstName} ${userData.user.lastName}`;
         
-        console.log('Caller:', callerName, 'calling:', tellerName);
-        
         // Ensure socket is authenticated before making call
         if (!window.socketAuthenticated) {
-            console.log('Re-authenticating socket before call');
             socket.emit('authenticate', userData.user._id);
             
             // Wait for authentication with timeout
@@ -931,17 +919,16 @@ async function initiateCall(e) {
                         autoGainControl: false
                     }
                 });
-                console.log('Display: System audio captured (includes background music)');
+                // System audio captured
             } catch (e) {
                 // Fallback to microphone if system audio denied
                 localStream = await navigator.mediaDevices.getUserMedia({
                     audio: true,
                     video: false
                 });
-                console.log('Display: Microphone captured (no background music)');
+                // Microphone captured
             }
         } catch (error) {
-            console.error('Display: Audio access failed:', error);
             alert('Please allow audio access');
             throw error;
         }
@@ -981,15 +968,11 @@ async function initiateCall(e) {
         
         // Handle remote stream
         peerConnection.ontrack = (event) => {
-            console.log('Display: Remote stream received');
             remoteStream = event.streams[0];
             
             if (!remoteStream || remoteStream.getAudioTracks().length === 0) {
-                console.error('Display: No audio tracks');
                 return;
             }
-            
-            console.log('Display: Creating audio element');
             
             // Remove existing audio element
             let remoteAudio = document.getElementById('remoteAudio');
@@ -1013,14 +996,11 @@ async function initiateCall(e) {
             remoteAudio.srcObject = remoteStream;
             window.remoteAudio = remoteAudio;
             
-            console.log('Display: Audio element created with autoplay');
-            
             // Force play for better compatibility
             setTimeout(() => {
                 remoteAudio.play().then(() => {
-                    console.log('Display: Audio playing automatically');
+                    // Audio playing automatically
                 }).catch(e => {
-                    console.log('Display: Autoplay blocked');
                     // Fallback: enable on user interaction
                     const enableAudio = () => {
                         remoteAudio.play();
@@ -1036,7 +1016,6 @@ async function initiateCall(e) {
         // Handle ICE candidates
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log('Sending ICE candidate');
                 socket.emit('ice-candidate', {
                     targetId: tellerId,
                     candidate: event.candidate
@@ -1044,16 +1023,12 @@ async function initiateCall(e) {
             }
         };
         
-        // No connection state change handler to prevent false failure notifications
-        
         // Create offer with better codec preferences
         const offer = await peerConnection.createOffer({
             offerToReceiveAudio: true,
             offerToReceiveVideo: false
         });
         await peerConnection.setLocalDescription(offer);
-        
-        console.log('Sending call request to:', tellerId);
         
         // Send call request with caller info
         socket.emit('call-user', {
@@ -1063,8 +1038,6 @@ async function initiateCall(e) {
             callerEmail: userData.user.email,
             offer: offer
         });
-        
-        console.log('Call request sent');
         
         // Show outgoing call notification on parent page (top level)
         const counterServices = {
@@ -1100,7 +1073,6 @@ async function initiateCall(e) {
         window.localStream = localStream;
         
     } catch (error) {
-        console.error('Call initiation error:', error);
         window.notifications.error('Error', 'Failed to start call: ' + error.message);
         cleanupCall();
     }
@@ -1137,8 +1109,6 @@ function endCall() {
 // Call modal functions removed - using notification system only
 
 function cleanupCall() {
-    console.log('Cleaning up call resources');
-    
     // Clear call data first to prevent further processing
     currentCall = null;
     window.incomingCallData = null;
@@ -1148,7 +1118,6 @@ function cleanupCall() {
     if (localStream) {
         localStream.getTracks().forEach(track => {
             track.stop();
-            console.log('Stopped local track:', track.kind);
         });
         localStream = null;
     }
@@ -1156,7 +1125,6 @@ function cleanupCall() {
     if (remoteStream) {
         remoteStream.getTracks().forEach(track => {
             track.stop();
-            console.log('Stopped remote track:', track.kind);
         });
         remoteStream = null;
     }
@@ -1189,7 +1157,6 @@ function cleanupCall() {
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
-        console.log('Peer connection closed');
     }
     
     // Remove call indicator
@@ -1198,8 +1165,6 @@ function cleanupCall() {
     
     // Reset call ending flag
     callEnding = false;
-    
-    console.log('Call cleanup completed');
 }
 
 // hideCallModal removed - using notification system only
@@ -1236,11 +1201,8 @@ socket.on('call-declined', () => {
 
 socket.on('call-answered', async (data) => {
     try {
-        console.log('Call answered by recipient');
         await peerConnection.setRemoteDescription(data.answer);
-        console.log('Call connected successfully');
     } catch (error) {
-        console.error('Error connecting call:', error);
         window.notifications.error('Error', 'Failed to connect call');
         endCall();
     }
@@ -1252,12 +1214,11 @@ socket.on('ice-candidate', async (candidate) => {
             await peerConnection.addIceCandidate(candidate);
         }
     } catch (error) {
-        console.error('Error adding ICE candidate:', error);
+        // ICE candidate error
     }
 });
 
 socket.on('call-ended', () => {
-    console.log('Call ended by remote party');
     cleanupCall();
     
     // Hide call notification on parent page
@@ -1273,16 +1234,13 @@ socket.on('call-ended', () => {
 
 // Handle socket reconnection
 socket.on('connect', () => {
-    console.log('Socket connected/reconnected');
     // Re-authenticate if we have user ID
     if (window.currentUserId) {
-        console.log('Re-authenticating after reconnection');
         socket.emit('authenticate', window.currentUserId);
     }
 });
 
 socket.on('disconnect', () => {
-    console.log('Socket disconnected');
     window.socketAuthenticated = false;
     // Clean up any ongoing calls
     if (currentCall || window.incomingCallData) {
@@ -1294,7 +1252,6 @@ socket.on('disconnect', () => {
 // Handle call-related disconnections
 socket.on('call-ended-disconnect', (data) => {
     if (currentCall && currentCall.recipientId === data.userId) {
-        console.log('Call ended due to user disconnection');
         cleanupCall();
         
         // Hide call notification on parent page

@@ -21,7 +21,6 @@ function initUnreadBadge() {
         })
         .catch(error => {
             // Not authenticated or error, do nothing
-            console.log('Not checking unread messages:', error.message);
         });
     
 }
@@ -98,7 +97,7 @@ function updateUnreadBadge() {
                 });
             })
             .catch(error => {
-                console.error('Error checking unread messages:', error);
+                // Error checking unread messages
             });
     }
 });

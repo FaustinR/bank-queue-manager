@@ -343,7 +343,7 @@ function setupDisplayScreenBadge() {
             
             updateDisplayScreenBadge(totalUnread);
         } catch (error) {
-            console.error('Error checking unread messages for display screen badge:', error);
+            // Error handling without logging
         }
     }
     

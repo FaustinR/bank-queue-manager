@@ -70,7 +70,7 @@
             activeCall = { ...callData, timestamp: Date.now() };
             localStorage.setItem(CALL_STORAGE_KEY, JSON.stringify(activeCall));
         } catch (e) {
-            console.error('Failed to save call state:', e);
+            // Failed to save call state
         }
     }
     
@@ -91,9 +91,9 @@
                 if (audioContext.state === 'suspended') {
                     audioContext.resume();
                 }
-                console.log('Audio context initialized');
+
             } catch (e) {
-                console.log('Audio context failed:', e);
+                // Audio context failed
             }
         }
     }
@@ -126,11 +126,11 @@
                         },
                         video: false
                     });
-                    console.log('Microphone captured successfully');
+
                     break;
                 } catch (error) {
                     retryCount++;
-                    console.log(`Audio capture attempt ${retryCount} failed:`, error.message);
+
                     
                     if (error.name === 'NotAllowedError') {
                         alert('Microphone access denied. Please allow microphone access and refresh the page.');
@@ -175,15 +175,14 @@
             
             // Handle remote stream
             peerConnection.ontrack = (event) => {
-                console.log('Remote stream received');
+
                 remoteStream = event.streams[0];
                 
                 if (!remoteStream || remoteStream.getAudioTracks().length === 0) {
-                    console.error('No audio tracks');
                     return;
                 }
                 
-                console.log('Creating audio element');
+
                 
                 // Remove existing audio element
                 if (remoteAudio) {
@@ -206,14 +205,13 @@
                 remoteAudio.srcObject = remoteStream;
                 window.remoteAudio = remoteAudio;
                 
-                console.log('Audio element created with autoplay');
+
                 
                 // Force play for better compatibility
                 setTimeout(() => {
                     remoteAudio.play().then(() => {
-                        console.log('Audio playing automatically');
+                        // Audio playing automatically
                     }).catch(e => {
-                        console.log('Autoplay blocked, trying manual play');
                         showAudioEnableButton();
                     });
                 }, 100);
@@ -240,23 +238,19 @@
     
     // Debug function to check audio state
     window.debugAudio = function() {
-        console.log('=== AUDIO DEBUG ===');
-        console.log('remoteAudio variable:', !!remoteAudio);
-        console.log('window.remoteAudio:', !!window.remoteAudio);
-        console.log('remoteStream:', !!remoteStream);
-        
+        // Debug function for audio state
         const audioElement = window.remoteAudio || remoteAudio;
-        if (audioElement) {
-            console.log('Audio element exists');
-            console.log('srcObject:', !!audioElement.srcObject);
-            console.log('volume:', audioElement.volume);
-            console.log('muted:', audioElement.muted);
-            console.log('paused:', audioElement.paused);
-            console.log('readyState:', audioElement.readyState);
-        } else {
-            console.log('No audio element found');
-        }
-        console.log('==================');
+        return {
+            remoteAudio: !!remoteAudio,
+            windowRemoteAudio: !!window.remoteAudio,
+            remoteStream: !!remoteStream,
+            audioElement: !!audioElement,
+            srcObject: audioElement ? !!audioElement.srcObject : false,
+            volume: audioElement ? audioElement.volume : null,
+            muted: audioElement ? audioElement.muted : null,
+            paused: audioElement ? audioElement.paused : null,
+            readyState: audioElement ? audioElement.readyState : null
+        };
     };
     
     // Show button to enable audio if auto-play is blocked
@@ -268,18 +262,14 @@
             enableBtn.style.cssText = 'background: #ff6b35; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; margin: 10px auto; display: block; font-size: 16px; font-weight: bold;';
             enableBtn.onclick = () => {
                 const audioElement = window.remoteAudio || remoteAudio;
-                console.log('Enable audio clicked. Audio element:', !!audioElement, 'srcObject:', !!audioElement?.srcObject);
                 
                 if (audioElement && audioElement.srcObject) {
                     audioElement.play().then(() => {
-                        console.log('Audio enabled by user successfully');
                         enableBtn.remove();
                     }).catch(e => {
-                        console.error('Still failed to play:', e);
                         enableBtn.textContent = '❌ Audio Failed - Check Settings';
                     });
                 } else {
-                    console.error('No audio element or stream found');
                     enableBtn.textContent = '❌ No Audio Stream';
                 }
             };
@@ -622,26 +612,17 @@
     // Speaker toggle with debugging
     let isSpeakerOn = false;
     window.toggleSpeaker = function() {
-        console.log('Speaker toggle clicked');
-        console.log('window.remoteAudio exists:', !!window.remoteAudio);
-        console.log('remoteAudio exists:', !!remoteAudio);
-        
         const audioElement = window.remoteAudio || remoteAudio;
         
         if (audioElement) {
-            console.log('Audio element found, srcObject:', !!audioElement.srcObject);
-            
             if (audioElement.srcObject) {
                 isSpeakerOn = !isSpeakerOn;
                 audioElement.volume = isSpeakerOn ? 1.0 : 0.5;
                 audioElement.muted = false;
                 
-                console.log('Setting volume to:', audioElement.volume);
-                
                 audioElement.play().then(() => {
-                    console.log('Audio play successful');
+                    // Audio play successful
                 }).catch(e => {
-                    console.log('Audio play failed:', e);
                     showAudioEnableButton();
                 });
                 
@@ -650,14 +631,10 @@
                     speakerBtn.textContent = isSpeakerOn ? '🔊 ON' : '🔊 Speaker';
                     speakerBtn.style.background = isSpeakerOn ? '#28a745' : '#17a2b8';
                 }
-                
-                console.log('Speaker:', isSpeakerOn ? 'ON' : 'OFF');
             } else {
-                console.log('No srcObject on audio element');
                 alert('No audio stream found');
             }
         } else {
-            console.log('No audio element found');
             alert('No audio element found');
         }
     };

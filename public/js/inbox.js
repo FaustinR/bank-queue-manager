@@ -25,41 +25,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle socket connection
     socket.on('connect', () => {
-        console.log('Socket connected:', socket.id);
         // Authenticate if we already have user ID
         if (currentUserId) {
-            console.log('Authenticating socket with existing user ID:', currentUserId);
             socket.emit('authenticate', currentUserId);
         }
     });
     
     socket.on('authenticated', (data) => {
-        console.log('Socket authenticated for user:', data.userId);
+        // Socket authenticated
     });
     
     socket.on('call-failed', (data) => {
-        console.log('Call failed:', data.reason);
         window.notifications.error('Call Failed', data.reason);
         endCall();
     });
     
     // Debug function to check authentication status
     window.checkCallAuth = function() {
-        console.log('Current user ID:', currentUserId);
-        console.log('Socket connected:', socket.connected);
-        console.log('Socket ID:', socket.id);
-        
-        // Force re-authentication
-        if (currentUserId && socket.connected) {
-            socket.emit('authenticate', currentUserId);
-            console.log('Re-authentication sent');
-        }
+        return {
+            currentUserId: currentUserId,
+            socketConnected: socket.connected,
+            socketId: socket.id
+        };
     };
     
     // Force authentication immediately when currentUserId is available
     function forceAuth() {
         if (currentUserId && socket.connected) {
-            console.log('Force authenticating user:', currentUserId);
             socket.emit('authenticate', currentUserId);
         }
     }
@@ -67,14 +59,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Simple authentication check
     window.ensureAuthenticated = function() {
         if (currentUserId && socket.connected && !socket.authenticated) {
-            console.log('Ensuring authentication...');
             socket.emit('authenticate', currentUserId);
         }
     };
     
     // Track authentication status
     socket.on('authenticated', (data) => {
-        console.log('Socket authenticated for user:', data.userId);
         socket.authenticated = true;
     });
     
@@ -171,29 +161,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentUserId = data.user._id;
                 
                 // Authenticate socket connection immediately
-                console.log('User ID loaded:', currentUserId);
                 authenticateSocket();
             })
             .catch(error => {
-                console.error('Authentication error:', error);
+                // Authentication error
             });
     }
     
     // Authenticate socket with retry logic
     function authenticateSocket() {
         if (!currentUserId) {
-            console.log('No user ID available for authentication');
             return;
         }
         
         if (socket.connected) {
-            console.log('Authenticating socket with user ID:', currentUserId);
             socket.emit('authenticate', currentUserId);
         } else {
-            console.log('Socket not connected, waiting...');
             // Wait for socket to connect
             socket.on('connect', () => {
-                console.log('Socket connected, authenticating with user ID:', currentUserId);
                 socket.emit('authenticate', currentUserId);
             });
         }
@@ -214,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             })
             .catch(error => {
-                console.error('Error loading users:', error);
+                // Error loading users
             });
     }
     
@@ -227,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderMessageList();
             })
             .catch(error => {
-                console.error('Error loading messages:', error);
+                // Error loading messages
             });
     }
     
@@ -251,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error updating unread count:', error);
+                // Error updating unread count
             });
     }
     
@@ -556,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateUnreadCount();
         })
         .catch(error => {
-            console.error('Error marking message as read:', error);
+            // Error marking message as read
         });
     }
     
@@ -636,7 +621,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Error deleting message:', error);
+            // Error deleting message
         });
     }
     
@@ -797,7 +782,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Error sending message:', error);
             window.notifications.error('Error', 'Error sending message. Please try again.');
         });
     }
@@ -927,7 +911,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            console.error('Error deleting chats:', error);
             window.notifications.error('Error', 'Error deleting chats. Please try again.');
         });
     }
@@ -962,7 +945,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cleanup();
         }
         
-        console.log('Starting call to:', userName);
+
         currentCallUserId = userId;
         
         navigator.mediaDevices.getUserMedia({ 
@@ -973,23 +956,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
             .then(stream => {
-                console.log('Got local media stream with tracks:', stream.getTracks().map(t => t.kind));
                 localStream = stream;
                 createPeerConnection();
                 
                 localStream.getTracks().forEach(track => {
-                    console.log('Adding local track:', track.kind, 'enabled:', track.enabled);
                     peerConnection.addTrack(track, localStream);
                 });
                 
                 return peerConnection.createOffer({ offerToReceiveAudio: true });
             })
             .then(offer => {
-                console.log('Created offer with audio:', offer.sdp.includes('m=audio'));
                 return peerConnection.setLocalDescription(offer);
             })
             .then(() => {
-                console.log('Set local description, sending call');
                 socket.emit('call-user', {
                     recipientId: userId,
                     callerName: document.getElementById('userName').textContent,
@@ -1000,7 +979,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 isCallActive = true;
             })
             .catch(error => {
-                console.error('Error starting call:', error);
                 window.notifications.error('Call Error', 'Could not access microphone');
             });
     }
@@ -1019,23 +997,18 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         peerConnection.ontrack = event => {
-            console.log('Received remote track:', event.track.kind, event.streams.length);
             remoteStream = event.streams[0];
             const remoteAudio = document.getElementById('remoteAudio');
             if (remoteAudio) {
-                console.log('Setting srcObject for remote audio');
                 remoteAudio.srcObject = remoteStream;
                 remoteAudio.volume = isSpeakerOn ? 1.0 : 0.7;
                 remoteAudio.muted = false;
-                
-                // Debug stream info
-                console.log('Remote stream tracks:', remoteStream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled })));
                 
                 // Set initial audio output device for desktop
                 if (remoteAudio.setSinkId && typeof remoteAudio.setSinkId === 'function') {
                     // Always start with default device
                     remoteAudio.setSinkId('default').catch(e => {
-                        console.log('Initial setSinkId failed:', e);
+                        // Initial setSinkId failed
                     });
                 }
                 
@@ -1044,9 +1017,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const playPromise = remoteAudio.play();
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
-                            console.log('Remote audio started playing successfully');
+                            // Remote audio started playing successfully
                         }).catch(e => {
-                            console.log('Auto-play failed:', e);
                             remoteAudio.dataset.needsPlay = 'true';
                         });
                     }
@@ -1055,7 +1027,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         peerConnection.onconnectionstatechange = () => {
-            console.log('Connection state:', peerConnection.connectionState);
+            // Connection state changed
         };
     }
     
@@ -1147,12 +1119,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => {
                     const remoteAudio = document.getElementById('remoteAudio');
                     if (remoteAudio && remoteAudio.srcObject) {
-                        remoteAudio.play().catch(e => console.log('Remote audio play failed:', e));
+                        remoteAudio.play().catch(e => {
+                            // Remote audio play failed
+                        });
                     }
                 }, 500);
             })
             .catch(error => {
-                console.error('Error answering call:', error);
                 endCall();
             });
     }
@@ -1277,10 +1250,8 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
-            console.log('Available audio outputs:', audioOutputs.map(d => ({ id: d.deviceId, label: d.label })));
             return audioOutputs;
         } catch (error) {
-            console.log('Could not enumerate devices:', error);
             return [];
         }
     }
@@ -1315,10 +1286,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (bluetoothDevice) {
                         targetDeviceId = bluetoothDevice.deviceId;
-                        console.log('Using Bluetooth/Speaker device:', bluetoothDevice.label);
                     } else {
                         targetDeviceId = 'default';
-                        console.log('Using default audio device');
                     }
                 } else {
                     // Use communications device or default
@@ -1327,13 +1296,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 try {
                     await remoteAudio.setSinkId(targetDeviceId);
-                    console.log(`Audio output set to device: ${targetDeviceId}`);
                 } catch (e) {
-                    console.log('setSinkId failed, trying default:', e);
                     try {
                         await remoteAudio.setSinkId('default');
                     } catch (e2) {
-                        console.log('Default setSinkId also failed:', e2);
+                        // Default setSinkId also failed
                     }
                 }
             }
@@ -1346,13 +1313,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioContext.state === 'suspended') {
                     audioContext.resume().then(() => {
-                        console.log('Audio context resumed');
+                        // Audio context resumed
                     });
                 }
             }
             
             // Force audio to play again
-            remoteAudio.play().catch(e => console.log('Audio replay failed:', e));
+            remoteAudio.play().catch(e => {
+                // Audio replay failed
+            });
             
             // Update button appearance
             if (speakerBtn) {
@@ -1410,40 +1379,37 @@ document.addEventListener('DOMContentLoaded', function() {
             cleanup();
         }
         
-        console.log('Incoming call from:', data.callerName);
+
         currentCallUserId = data.callerId;
         createPeerConnection();
         
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
             .then(() => {
-                console.log('Remote description set for incoming call');
                 showCallUI('incoming', data.callerName);
                 isCallActive = true;
                 isCallMinimized = false;
             })
             .catch(error => {
-                console.error('Error handling incoming call:', error);
                 endCall();
             });
     });
     
     socket.on('call-answered', (data) => {
-        console.log('Call answered, setting remote description');
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer))
             .then(() => {
-                console.log('Remote description set for answer');
                 updateCallUI('connected');
                 
                 // Ensure audio plays after connection is established
                 setTimeout(() => {
                     const remoteAudio = document.getElementById('remoteAudio');
                     if (remoteAudio && remoteAudio.srcObject) {
-                        remoteAudio.play().catch(e => console.log('Audio play failed:', e));
+                        remoteAudio.play().catch(e => {
+                            // Audio play failed
+                        });
                     }
                 }, 200);
             })
             .catch(error => {
-                console.error('Error handling call answer:', error);
                 endCall();
             });
     });
@@ -1452,16 +1418,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (peerConnection && peerConnection.remoteDescription) {
             peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
                 .catch(error => {
-                    console.error('Error adding ICE candidate:', error);
+                    // Error adding ICE candidate
                 });
         } else {
-            console.log('Queuing ICE candidate until remote description is set');
             // Queue the candidate for later if remote description isn't set yet
             setTimeout(() => {
                 if (peerConnection && peerConnection.remoteDescription) {
                     peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
                         .catch(error => {
-                            console.error('Error adding queued ICE candidate:', error);
+                            // Error adding queued ICE candidate
                         });
                 }
             }, 1000);
@@ -1469,13 +1434,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     socket.on('call-ended', () => {
-        console.log('Call ended by other party');
         cleanup();
     });
     
     socket.on('call-ended-disconnect', (data) => {
         if (data.userId === currentCallUserId) {
-            console.log('Call ended due to disconnect');
             cleanup();
         }
     });
@@ -1483,7 +1446,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Debug function to create a test message (can be called from console)
     window.createTestMessage = function() {
         if (!currentUserId) {
-            console.error('User ID not available yet');
             return;
         }
         
@@ -1502,13 +1464,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            console.log('Test message created:', data);
             window.notifications.info('Test Message', 'Test message created. You should see a badge on the inbox link.');
             // Force update of unread count
             updateUnreadCount();
         })
         .catch(error => {
-            console.error('Error creating test message:', error);
+            // Error creating test message
         });
     };
 });

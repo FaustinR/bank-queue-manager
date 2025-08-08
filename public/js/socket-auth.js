@@ -11,8 +11,6 @@ function initializeSocket() {
   
   // Set up event listeners
   socket.on('connect', () => {
-    console.log('Socket connected');
-    
     // If user is logged in, authenticate the socket
     const userId = localStorage.getItem('userId');
     if (userId) {
@@ -25,9 +23,6 @@ function initializeSocket() {
   
   // Handle user connection updates
   socket.on('userConnectionUpdate', (data) => {
-    // Update UI if needed based on user connection status
-    console.log(`User ${data.userId} is now ${data.connected}`);
-    
     // If we're on the users page, refresh the connected users list
     if (window.location.pathname === '/users' && typeof loadConnectedUsers === 'function') {
       loadConnectedUsers();
@@ -36,19 +31,17 @@ function initializeSocket() {
   
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log('Socket disconnected');
+    // Socket disconnected
   });
 }
 
 // Fetch current user and authenticate socket
 async function fetchCurrentUser() {
   try {
-    console.log('Fetching current user...');
     const response = await fetch('/api/auth/me');
     const data = await response.json();
     
     if (response.ok && data.user && data.user._id) {
-      console.log('Current user found:', data.user._id);
       // Authenticate socket with user ID
       authenticateSocket(data.user._id);
       
@@ -61,15 +54,12 @@ async function fetchCurrentUser() {
           },
           body: JSON.stringify({ userId: data.user._id })
         });
-        console.log('User marked as connected via API');
       } catch (markError) {
-        console.error('Error marking user as connected:', markError);
+        // Error marking user as connected
       }
-    } else {
-      console.log('No authenticated user found');
     }
   } catch (error) {
-    console.error('Error fetching current user:', error);
+    // Error fetching current user
   }
 }
 

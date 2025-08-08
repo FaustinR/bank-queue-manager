@@ -37,7 +37,7 @@ async function fetchCounterStaff() {
             window.counterStaff = data.counterStaff || {};
         }
     } catch (error) {
-        console.error('Error fetching counter staff:', error);
+        // Error fetching counter staff
     }
 }
 
@@ -298,7 +298,6 @@ async function fetchTicketHistory() {
             displayTickets(data.tickets);
         }
     } catch (error) {
-        console.error('Error fetching ticket history:', error);
         document.getElementById('ticketTable').innerHTML = '<tr><td colspan="9">Error loading ticket data</td></tr>';
     }
 }

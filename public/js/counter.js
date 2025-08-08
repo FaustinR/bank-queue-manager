@@ -50,7 +50,7 @@ async function checkCurrentUserCounter() {
             if (data.user && data.user.counter) {
                 // Check if the user's counter matches this counter (convert both to strings for comparison)
                 isCurrentUserCounter = String(data.user.counter) === String(counterId);
-                console.log('User counter:', data.user.counter, 'Current counter:', counterId, 'Match:', isCurrentUserCounter);
+
                 
                 // Update the next button based on whether this is the current user's counter
                 const nextBtn = document.getElementById('nextBtn');
@@ -59,23 +59,20 @@ async function checkCurrentUserCounter() {
                     const queueLength = document.querySelectorAll('#queuePreview .queue-table tbody tr').length;
                     nextBtn.disabled = queueLength === 0;
                     nextBtn.title = queueLength === 0 ? 'No customers waiting' : 'Call next customer';
-                    console.log('This is your counter - button enabled if queue has customers');
                 } else {
                     // Not the user's counter, disable the button
                     nextBtn.disabled = true;
                     nextBtn.title = 'You can only call customers for your assigned counter';
-                    console.log('Not your counter - button disabled');
                 }
             } else {
                 // User doesn't have an assigned counter
                 const nextBtn = document.getElementById('nextBtn');
                 nextBtn.disabled = true;
                 nextBtn.title = 'You need to be assigned to this counter to call customers';
-                console.log('No counter assigned - button disabled');
             }
         }
     } catch (error) {
-        console.error('Error checking current user counter:', error);
+        // Error checking current user counter
     }
 }
 
@@ -112,11 +109,9 @@ function updateCounter(data) {
             if (!isCurrentUserCounter) {
                 nextBtn.disabled = true;
                 nextBtn.title = 'You can only call customers for your assigned counter';
-                console.log('updateCounter: Not your counter - button disabled');
             } else {
                 nextBtn.disabled = queue.length === 0;
                 nextBtn.title = queue.length === 0 ? 'No customers waiting' : 'Call next customer';
-                console.log('updateCounter: Your counter - button ' + (queue.length === 0 ? 'disabled (no customers)' : 'enabled'));
             }
         }
     }
@@ -180,7 +175,7 @@ document.getElementById('nextBtn').addEventListener('click', async () => {
             }
         }
     } catch (error) {
-        console.error('Error calling next customer:', error);
+        // Error calling next customer
     }
 });
 
@@ -199,7 +194,7 @@ socket.on('queueUpdate', updateCounter);
 socket.on('newMessage', function(data) {
     // Check if this message is for this counter
     if (data && data.counterId === counterId) {
-        console.log('New message received for counter', counterId);
+
         
         // Show a notification
         if (window.notifications) {
