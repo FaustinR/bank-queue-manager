@@ -276,27 +276,37 @@
             `;
         }
         
+        const minimizeIcon = '−';
+        
         notification.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-phone${callData.type === 'outgoing' ? '' : '-alt'}" style="font-size: 20px;"></i>
+            <div style="position: relative;">
+                <button onclick="toggleMinimize('${notification.id}')" style="position: absolute; top: -8px; right: -8px; background: rgba(255,255,255,0.9); border: 2px solid white; color: #333; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.2s ease; z-index: 1000;" id="minimizeBtn" onmouseover="this.style.background='white'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(255,255,255,0.9)'; this.style.transform='scale(1)'">${minimizeIcon}</button>
+                <div class="notification-content">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-phone${callData.type === 'outgoing' ? '' : '-alt'}" style="font-size: 20px;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; font-size: 16px; margin-bottom: 8px;" class="caller-name">
+                                ${callData.status === 'active' ? 'Active Call' : (callData.type === 'incoming' ? 'Incoming Call' : 'Calling...')}
+                            </div>
+                            <div style="font-size: 14px; margin-bottom: 4px;" class="call-details">
+                                <strong>Name:</strong> ${callData.name}
+                            </div>
+                            <div style="font-size: 14px; margin-bottom: 4px;" class="call-details">
+                                <strong>Counter:</strong> Counter ${callData.counter}
+                            </div>
+                            <div style="font-size: 14px;" class="call-details">
+                                <strong>Service:</strong> ${callData.service}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">${actionButtons}</div>
                 </div>
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; font-size: 16px; margin-bottom: 8px;">
-                        ${callData.status === 'active' ? 'Active Call' : (callData.type === 'incoming' ? 'Incoming Call' : 'Calling...')}
-                    </div>
-                    <div style="font-size: 14px; margin-bottom: 4px;">
-                        <strong>Name:</strong> ${callData.name}
-                    </div>
-                    <div style="font-size: 14px; margin-bottom: 4px;">
-                        <strong>Counter:</strong> Counter ${callData.counter}
-                    </div>
-                    <div style="font-size: 14px;">
-                        <strong>Service:</strong> ${callData.service}
-                    </div>
+                <div class="minimized-content" style="display: none; text-align: center; padding: 10px;">
+                    <strong>${callData.name}</strong>
                 </div>
             </div>
-            ${actionButtons}
         `;
 
         document.body.appendChild(notification);
@@ -726,6 +736,30 @@
             hideCallNotification();
         });
     }
+    
+    // Toggle minimize function
+    window.toggleMinimize = function(notificationId) {
+        const notification = document.getElementById(notificationId);
+        if (!notification) return;
+        
+        const content = notification.querySelector('.notification-content');
+        const minimizedContent = notification.querySelector('.minimized-content');
+        const minimizeBtn = notification.querySelector('#minimizeBtn');
+        
+        if (content.style.display === 'none') {
+            // Restore
+            notification.style.height = 'auto';
+            minimizeBtn.textContent = '−';
+            content.style.display = 'block';
+            minimizedContent.style.display = 'none';
+        } else {
+            // Minimize
+            notification.style.height = '60px';
+            minimizeBtn.textContent = '+';
+            content.style.display = 'none';
+            minimizedContent.style.display = 'block';
+        }
+    };
     
     // Global functions
     window.showCallNotification = showCallNotification;
