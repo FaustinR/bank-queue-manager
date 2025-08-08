@@ -607,3 +607,46 @@ body {
     height: 600px;
     border: none;
 }
+
+/* Display Screen Badge */
+.display-screen-badge {
+    position: relative;
+    display: inline-block;
+    background-color: #f44336;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    text-align: center;
+    line-height: 14px;
+    margin-left: 8px;
+    box-shadow: 0 0 5px rgba(244, 67, 54, 0.8);
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.8); }
+    50% { box-shadow: 0 0 15px rgba(244, 67, 54, 1); }
+    100% { box-shadow: 0 0 5px rgba(244, 67, 54, 0.8); }
+}
+
+/* Mobile responsive badge */
+@media (max-width: 768px) {
+    .display-screen-badge {
+        font-size: 10px;
+        padding: 1px 4px;
+        min-width: 14px;
+        height: 14px;
+        line-height: 12px;
+        margin-left: 5px;
+        touch-action: manipulation;
+    }
+    
+    .accordion-header {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+}

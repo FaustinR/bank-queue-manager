@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup logout button
     setupLogoutButton();
+    
+    // Setup display screen badge
+    setupDisplayScreenBadge();
 });
 
 // Handle logout button click
@@ -292,4 +295,94 @@ function handleUrlParameters() {
             }, 100);
         }
     }
+}
+
+// Display Screen Badge Management
+function setupDisplayScreenBadge() {
+    const displayScreenBadge = document.getElementById('displayScreenBadge');
+    const displayScreenSection = document.getElementById('displayScreenSection');
+    
+    if (!displayScreenBadge || !displayScreenSection) {
+        return;
+    }
+    
+    // Function to check if display screen is folded
+    function isDisplayScreenFolded() {
+        return !displayScreenSection.classList.contains('active');
+    }
+    
+    // Function to update the badge
+    function updateDisplayScreenBadge(count) {
+        if (count > 0) {
+            displayScreenBadge.textContent = count > 99 ? '99+' : count;
+            displayScreenBadge.style.display = 'inline-block';
+        } else {
+            displayScreenBadge.style.display = 'none';
+        }
+    }
+    
+    // Function to hide the badge
+    function hideDisplayScreenBadge() {
+        displayScreenBadge.style.display = 'none';
+    }
+    
+    // Check for unread messages and update badge
+    async function checkUnreadMessages() {
+        try {
+            const response = await fetch('/api/messages/unread-by-counter');
+            if (!response.ok) return;
+            
+            const data = await response.json();
+            const unreadByCounter = data.unreadByCounter || {};
+            
+            // Calculate total unread messages
+            let totalUnread = 0;
+            Object.values(unreadByCounter).forEach(count => {
+                totalUnread += count;
+            });
+            
+            updateDisplayScreenBadge(totalUnread);
+        } catch (error) {
+            console.error('Error checking unread messages for display screen badge:', error);
+        }
+    }
+    
+    // Listen for display screen accordion toggle
+    const displayScreenHeader = displayScreenSection.querySelector('.accordion-header');
+    if (displayScreenHeader) {
+        const handleToggle = function() {
+            // Always check for messages when toggling, don't hide badge
+            setTimeout(checkUnreadMessages, 350);
+        };
+        
+        displayScreenHeader.addEventListener('click', handleToggle);
+        displayScreenHeader.addEventListener('touchend', handleToggle);
+    }
+    
+    // Listen for new message events from socket
+    if (typeof socket !== 'undefined') {
+        socket.on('newMessage', function(data) {
+            // Update badge when new message arrives
+            setTimeout(checkUnreadMessages, 100);
+        });
+    }
+    
+    // Listen for messages from the display screen iframe
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'newMessageForBadge') {
+            // Update badge when new message arrives from iframe
+            setTimeout(checkUnreadMessages, 100);
+        }
+    });
+    
+    // Check for unread messages every 10 seconds
+    setInterval(checkUnreadMessages, 10000);
+    
+    // Initial check
+    setTimeout(checkUnreadMessages, 1000);
+    
+    // Listen for window resize to handle mobile responsiveness
+    window.addEventListener('resize', function() {
+        setTimeout(checkUnreadMessages, 100);
+    });
 }

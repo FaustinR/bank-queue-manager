@@ -180,4 +180,12 @@ socket.on('newMessage', function(data) {
             addBadgeToMessageButton(data.counterId, currentCount + 1);
         }
     }
+    
+    // Notify parent window about new message for display screen badge
+    if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+            type: 'newMessageForBadge',
+            data: data
+        }, '*');
+    }
 });

@@ -199,7 +199,7 @@
             <!-- Display Screen iframe (initially hidden) -->
             <div class="accordion-section" id="displayScreenSection">
                 <div class="accordion-header">
-                    <h3>Display Screen</h3>
+                    <h3>Display Screen <span id="displayScreenBadge" class="display-screen-badge" style="display: none;"></span></h3>
                     <span class="accordion-icon"><i class="fas fa-chevron-down"></i></span>
                 </div>
                 <div class="accordion-content">
@@ -275,6 +275,9 @@
                         icon.classList.add('fa-chevron-up');
                     }
                 }
+            } else if (event.data.type === 'newMessageForBadge') {
+                // This will be handled by display-screen-badge.js
+                // Just pass it along to ensure the badge updates
             }
         });
     </script>
