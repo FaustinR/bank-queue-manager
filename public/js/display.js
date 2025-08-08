@@ -398,7 +398,7 @@ function updateDisplay(data) {
                 ${(counterStaff[counterId] && counterStaffIds[counterId] && isInIframe) ? 
                     `<div class="counter-actions">
                         <button class="message-btn" style="position: relative;" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="${isCurrentUserCounter ? 'fas fa-inbox' : 'fas fa-envelope'}"></i> ${isCurrentUserCounter ? 'Inbox' : 'Message'}</button>
-                        ${!isCurrentUserCounter ? `<button class="call-btn" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="fas fa-phone"></i> Call</button>` : ''}
+                        ${!isCurrentUserCounter && window.innerWidth > 768 && !('ontouchstart' in window) ? `<button class="call-btn" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="fas fa-phone"></i> Call</button>` : ''}
                     </div>` : 
                     ''}
             </div>
@@ -841,6 +841,12 @@ const servers = {
 };
 
 async function initiateCall(e) {
+    // Disable call functionality on mobile devices
+    if (window.innerWidth <= 768 || 'ontouchstart' in window) {
+        window.notifications.info('Info', 'Voice calls are not available on mobile devices');
+        return;
+    }
+    
     e.stopPropagation();
     
     const btn = e.currentTarget;
@@ -991,53 +997,40 @@ async function initiateCall(e) {
                 remoteAudio.remove();
             }
             
-            // Create always-visible audio element
+            // Create hidden audio element with autoplay
             remoteAudio = document.createElement('audio');
-            remoteAudio.id = 'remoteAudio';
-            remoteAudio.autoplay = false;
-            remoteAudio.controls = true;
+            remoteAudio.autoplay = true;
+            remoteAudio.controls = false;
             remoteAudio.playsInline = true;
             remoteAudio.volume = 1.0;
             remoteAudio.muted = false;
             remoteAudio.setAttribute('playsinline', 'true');
             remoteAudio.setAttribute('webkit-playsinline', 'true');
-            
-            // Always visible positioning
-            remoteAudio.style.position = 'fixed';
-            remoteAudio.style.top = '10px';
-            remoteAudio.style.left = '10px';
-            remoteAudio.style.right = '10px';
-            remoteAudio.style.height = '50px';
-            remoteAudio.style.zIndex = '99999';
-            remoteAudio.style.background = '#000';
-            remoteAudio.style.borderRadius = '5px';
-            
+            remoteAudio.style.display = 'none';
             document.body.appendChild(remoteAudio);
             
             // Set stream and make globally accessible
             remoteAudio.srcObject = remoteStream;
             window.remoteAudio = remoteAudio;
             
-            console.log('Display: Audio element created, srcObject set:', !!remoteAudio.srcObject);
-            console.log('Display: Global remoteAudio set:', !!window.remoteAudio);
+            console.log('Display: Audio element created with autoplay');
             
-            // Don't autoplay - let user control via visible controls
-            console.log('Display: Audio element ready - user must press play');
-            
-            // Add instruction for mobile users
-            if (window.innerWidth <= 768) {
-                const instruction = document.createElement('div');
-                instruction.style.cssText = 'position: fixed; bottom: 70px; left: 10px; right: 10px; background: #ff6b35; color: white; padding: 10px; border-radius: 5px; z-index: 99998; text-align: center; font-weight: bold;';
-                instruction.textContent = 'TAP THE PLAY BUTTON ABOVE TO HEAR AUDIO';
-                document.body.appendChild(instruction);
-                
-                // Remove instruction after 10 seconds
-                setTimeout(() => {
-                    if (instruction.parentNode) {
-                        instruction.remove();
-                    }
-                }, 10000);
-            }
+            // Force play for better compatibility
+            setTimeout(() => {
+                remoteAudio.play().then(() => {
+                    console.log('Display: Audio playing automatically');
+                }).catch(e => {
+                    console.log('Display: Autoplay blocked');
+                    // Fallback: enable on user interaction
+                    const enableAudio = () => {
+                        remoteAudio.play();
+                        document.removeEventListener('click', enableAudio);
+                        document.removeEventListener('touchstart', enableAudio);
+                    };
+                    document.addEventListener('click', enableAudio, { once: true });
+                    document.addEventListener('touchstart', enableAudio, { once: true });
+                });
+            }, 100);
         };
         
         // Handle ICE candidates

@@ -111,31 +111,42 @@
                 autoGainControl: false
             };
             
-            // Try system audio first, fallback to microphone
-            try {
-                // First try to capture system audio (includes background music)
+            // Try microphone with retry for multiple browser sessions
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            while (retryCount < maxRetries) {
                 try {
-                    localStream = await navigator.mediaDevices.getDisplayMedia({
-                        video: false,
-                        audio: {
-                            echoCancellation: false,
-                            noiseSuppression: false,
-                            autoGainControl: false
-                        }
-                    });
-                    console.log('System audio captured (includes background music)');
-                } catch (e) {
-                    // Fallback to microphone if system audio denied
                     localStream = await navigator.mediaDevices.getUserMedia({
-                        audio: true,
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            sampleRate: 44100
+                        },
                         video: false
                     });
-                    console.log('Microphone captured (no background music)');
+                    console.log('Microphone captured successfully');
+                    break;
+                } catch (error) {
+                    retryCount++;
+                    console.log(`Audio capture attempt ${retryCount} failed:`, error.message);
+                    
+                    if (error.name === 'NotAllowedError') {
+                        alert('Microphone access denied. Please allow microphone access and refresh the page.');
+                        throw error;
+                    } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                        if (retryCount >= maxRetries) {
+                            alert('Microphone is being used by another browser tab. Please close other tabs using the microphone and try again.');
+                            throw error;
+                        }
+                        // Wait before retry
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    } else {
+                        alert('Failed to access microphone: ' + error.message);
+                        throw error;
+                    }
                 }
-            } catch (error) {
-                console.error('Audio access failed:', error);
-                alert('Please allow audio access');
-                throw error;
             }
             
             // Set local audio stream (muted to prevent echo)
@@ -179,53 +190,33 @@
                     remoteAudio.remove();
                 }
                 
-                // Create audio element - always visible on mobile
+                // Create hidden audio element with autoplay
                 remoteAudio = document.createElement('audio');
-                remoteAudio.id = 'remoteCallAudio';
-                remoteAudio.autoplay = false; // Never autoplay on mobile
-                remoteAudio.controls = true; // Always show controls
+                remoteAudio.autoplay = true;
+                remoteAudio.controls = false;
                 remoteAudio.playsInline = true;
                 remoteAudio.volume = 1.0;
                 remoteAudio.muted = false;
                 remoteAudio.setAttribute('playsinline', 'true');
                 remoteAudio.setAttribute('webkit-playsinline', 'true');
-                
-                // Always visible positioning
-                remoteAudio.style.position = 'fixed';
-                remoteAudio.style.bottom = '10px';
-                remoteAudio.style.left = '10px';
-                remoteAudio.style.right = '10px';
-                remoteAudio.style.height = '50px';
-                remoteAudio.style.zIndex = '99999';
-                remoteAudio.style.background = '#000';
-                remoteAudio.style.borderRadius = '5px';
-                
+                remoteAudio.style.display = 'none';
                 document.body.appendChild(remoteAudio);
                 
                 // Set stream and make globally accessible
                 remoteAudio.srcObject = remoteStream;
                 window.remoteAudio = remoteAudio;
                 
-                console.log('Audio element created, srcObject set:', !!remoteAudio.srcObject);
-                console.log('Global remoteAudio set:', !!window.remoteAudio);
+                console.log('Audio element created with autoplay');
                 
-                // Don't autoplay - let user control via visible controls
-                console.log('Audio element ready - user must press play button');
-                
-                // Add instruction for iPhone users
-                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-                    const instruction = document.createElement('div');
-                    instruction.style.cssText = 'position: fixed; top: 10px; left: 10px; right: 10px; background: #ff6b35; color: white; padding: 10px; border-radius: 5px; z-index: 99998; text-align: center; font-weight: bold;';
-                    instruction.textContent = 'TAP THE PLAY BUTTON BELOW TO HEAR AUDIO';
-                    document.body.appendChild(instruction);
-                    
-                    // Remove instruction after 10 seconds
-                    setTimeout(() => {
-                        if (instruction.parentNode) {
-                            instruction.remove();
-                        }
-                    }, 10000);
-                }
+                // Force play for better compatibility
+                setTimeout(() => {
+                    remoteAudio.play().then(() => {
+                        console.log('Audio playing automatically');
+                    }).catch(e => {
+                        console.log('Autoplay blocked, trying manual play');
+                        showAudioEnableButton();
+                    });
+                }, 100);
             };
             
             // Handle ICE candidates

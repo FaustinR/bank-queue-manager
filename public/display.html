@@ -111,6 +111,13 @@
         }
     </script>
     <script src="/js/restart-check.js"></script>
-    <script src="/js/call-notifications.js"></script>
+    <script>
+        // Only load call functionality on desktop devices
+        if (window.innerWidth > 768 && !('ontouchstart' in window)) {
+            const callScript = document.createElement('script');
+            callScript.src = '/js/call-notifications.js';
+            document.body.appendChild(callScript);
+        }
+    </script>
 </body>
 </html>

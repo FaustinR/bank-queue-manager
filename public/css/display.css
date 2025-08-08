@@ -861,3 +861,30 @@ body:not(.embedded-display) .counter {
         font-size: 14px;
     }
 }
+
+/* Hide call functionality on mobile devices */
+@media (max-width: 768px), (pointer: coarse) {
+    .call-btn,
+    #callNotification,
+    #remoteCallAudio,
+    #localCallAudio, 
+    #remoteAudio,
+    #localAudio,
+    .enable-audio-btn,
+    .call-notification,
+    .call-modal,
+    .call-controls,
+    .call-indicator,
+    .incoming-call,
+    .outgoing-call,
+    audio[id*="call"],
+    audio[id*="remote"],
+    audio[id*="local"],
+    div[style*="TAP THE PLAY BUTTON"],
+    div[style*="HEAR AUDIO"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+}
