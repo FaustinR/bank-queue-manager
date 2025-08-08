@@ -88,19 +88,60 @@
                 volume: { ideal: 1.0 }
             };
             
-            // Try getUserMedia with fallback for different browsers
+            // Try to get system audio + microphone for desktop
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: audioConstraints,
-                    video: false 
-                });
+                // First try to get display media with system audio (Chrome/Edge)
+                if (navigator.mediaDevices.getDisplayMedia && !navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
+                    try {
+                        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+                            video: false,
+                            audio: {
+                                echoCancellation: false,
+                                noiseSuppression: false,
+                                autoGainControl: false,
+                                suppressLocalAudioPlayback: false
+                            }
+                        });
+                        
+                        // Also get microphone
+                        const micStream = await navigator.mediaDevices.getUserMedia({ 
+                            audio: audioConstraints,
+                            video: false 
+                        });
+                        
+                        // Combine system audio and microphone
+                        const audioContext = new AudioContext();
+                        const systemSource = audioContext.createMediaStreamSource(displayStream);
+                        const micSource = audioContext.createMediaStreamSource(micStream);
+                        const destination = audioContext.createMediaStreamDestination();
+                        
+                        systemSource.connect(destination);
+                        micSource.connect(destination);
+                        
+                        localStream = destination.stream;
+                        console.log('Using system audio + microphone');
+                    } catch (displayError) {
+                        console.log('System audio capture failed, using microphone only:', displayError);
+                        throw displayError;
+                    }
+                } else {
+                    throw new Error('Display media not supported');
+                }
             } catch (error) {
-                console.log('Advanced constraints failed, trying basic:', error);
-                // Fallback to basic constraints for compatibility
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: true,
-                    video: false 
-                });
+                console.log('Falling back to microphone only');
+                // Fallback to microphone only
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: audioConstraints,
+                        video: false 
+                    });
+                } catch (micError) {
+                    console.log('Advanced constraints failed, trying basic:', micError);
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: true,
+                        video: false 
+                    });
+                }
             }
             
             // Set local audio stream (muted to prevent echo)
