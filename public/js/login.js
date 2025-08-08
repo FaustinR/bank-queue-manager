@@ -59,9 +59,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset error message
         loginError.style.display = 'none';
         
-        // Show spinner
+        // Show spinner and change text
         loginButton.classList.add('loading');
         loginButton.disabled = true;
+        const buttonText = loginButton.querySelector('.button-text');
+        buttonText.textContent = 'Signing in...';
         
         // If counter is selected, check if it's occupied by a REAL staff member
         if (counter) {
@@ -123,9 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 loginError.textContent = data.message || 'Invalid email or password';
                 loginError.style.display = 'block';
                 
-                // Hide spinner
+                // Hide spinner and restore text
                 loginButton.classList.remove('loading');
                 loginButton.disabled = false;
+                buttonText.textContent = 'Login';
                 
                 // If the error is about already being logged in at another counter, make it more visible
                 if (data.message && data.message.includes('You are already logged in at Counter')) {
@@ -141,9 +144,10 @@ document.addEventListener('DOMContentLoaded', function() {
             loginError.textContent = 'An error occurred. Please try again.';
             loginError.style.display = 'block';
             
-            // Hide spinner
+            // Hide spinner and restore text
             loginButton.classList.remove('loading');
             loginButton.disabled = false;
+            buttonText.textContent = 'Login';
         }
     });
     

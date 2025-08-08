@@ -329,21 +329,20 @@ function setupDisplayScreenBadge() {
     // Check for unread messages and update badge
     async function checkUnreadMessages() {
         try {
-            const response = await fetch('/api/messages/unread-by-counter');
-            if (!response.ok) return;
+            const response = await fetch('/api/messages/unread');
+            if (!response.ok) {
+                // If endpoint doesn't exist, hide badge
+                hideDisplayScreenBadge();
+                return;
+            }
             
             const data = await response.json();
-            const unreadByCounter = data.unreadByCounter || {};
+            const unreadCount = data.unreadCount || 0;
             
-            // Calculate total unread messages
-            let totalUnread = 0;
-            Object.values(unreadByCounter).forEach(count => {
-                totalUnread += count;
-            });
-            
-            updateDisplayScreenBadge(totalUnread);
+            updateDisplayScreenBadge(unreadCount);
         } catch (error) {
-            // Error handling without logging
+            // If there's an error (like endpoint not found), hide the badge
+            hideDisplayScreenBadge();
         }
     }
     
