@@ -967,12 +967,21 @@ async function initiateCall(e) {
             peerConnection.addTrack(track, localStream);
         });
         
-        // Handle remote stream
+        // Handle remote stream with enhanced iPhone compatibility
         peerConnection.ontrack = (event) => {
-            console.log('Received remote stream');
+            console.log('Received remote stream with tracks:', event.streams[0].getTracks().length);
             remoteStream = event.streams[0];
             
-            // Create or get remote audio element with mobile compatibility
+            // Verify we have audio tracks
+            const audioTracks = remoteStream.getAudioTracks();
+            console.log('Remote audio tracks:', audioTracks.length);
+            
+            if (audioTracks.length === 0) {
+                console.error('No remote audio tracks received');
+                return;
+            }
+            
+            // Create or get remote audio element with enhanced mobile compatibility
             let remoteAudio = document.getElementById('remoteAudio');
             if (!remoteAudio) {
                 remoteAudio = document.createElement('audio');
@@ -984,9 +993,30 @@ async function initiateCall(e) {
                 document.body.appendChild(remoteAudio);
             }
             
+            // Clear any existing source first
+            remoteAudio.srcObject = null;
+            remoteAudio.src = '';
+            
+            // Set up audio element for iPhone compatibility
             remoteAudio.srcObject = remoteStream;
             remoteAudio.volume = 1.0;
             remoteAudio.muted = false;
+            
+            // Critical iOS Safari attributes
+            remoteAudio.setAttribute('playsinline', 'true');
+            remoteAudio.setAttribute('webkit-playsinline', 'true');
+            remoteAudio.setAttribute('preload', 'auto');
+            
+            // Force audio to use device speakers on iPhone
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                remoteAudio.setAttribute('x-webkit-airplay', 'allow');
+                remoteAudio.style.webkitPlaysinline = 'true';
+                
+                // Try to set audio output to speakers if supported
+                if (remoteAudio.setSinkId) {
+                    remoteAudio.setSinkId('default').catch(e => console.log('setSinkId not supported:', e));
+                }
+            }
             
             // Pause all other audio sources to prevent conflicts
             const pauseBackgroundAudio = () => {
@@ -998,33 +1028,80 @@ async function initiateCall(e) {
                 });
             };
             
-            // Enhanced mobile audio play with background audio management
-            const playRemoteAudio = () => {
+            // Enhanced iPhone audio play with multiple fallbacks
+            const playRemoteAudio = async () => {
                 pauseBackgroundAudio();
                 
-                remoteAudio.play().then(() => {
-                    console.log('Remote audio playing successfully');
-                }).catch(e => {
-                    console.log('Audio play failed, adding interaction listeners:', e);
+                try {
+                    console.log('Attempting to play remote audio on iPhone...');
                     
-                    // Add multiple event listeners for mobile compatibility
-                    const enableAudio = () => {
-                        pauseBackgroundAudio();
-                        remoteAudio.play().then(() => {
-                            console.log('Audio enabled after user interaction');
+                    // Load the audio first
+                    remoteAudio.load();
+                    
+                    // Wait for loadeddata event
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => reject(new Error('Audio load timeout')), 3000);
+                        
+                        remoteAudio.addEventListener('loadeddata', () => {
+                            clearTimeout(timeout);
+                            resolve();
+                        }, { once: true });
+                        
+                        remoteAudio.addEventListener('error', (e) => {
+                            clearTimeout(timeout);
+                            reject(e);
+                        }, { once: true });
+                    });
+                    
+                    // Now try to play
+                    const playPromise = remoteAudio.play();
+                    await playPromise;
+                    
+                    console.log('Remote audio playing successfully on iPhone');
+                    
+                    // Verify audio is actually playing
+                    setTimeout(() => {
+                        if (remoteAudio.paused) {
+                            console.log('Audio paused unexpectedly, retrying...');
+                            remoteAudio.play().catch(console.error);
+                        }
+                    }, 500);
+                    
+                } catch (e) {
+                    console.log('iPhone audio play failed, enabling on interaction:', e);
+                    
+                    // Add multiple event listeners for iPhone compatibility
+                    const enableAudio = async () => {
+                        try {
+                            console.log('User interaction detected, enabling iPhone audio...');
+                            pauseBackgroundAudio();
+                            
+                            // Force reload and play
+                            remoteAudio.load();
+                            await remoteAudio.play();
+                            
+                            console.log('iPhone audio enabled successfully after interaction');
+                            
+                            // Remove listeners
                             document.removeEventListener('click', enableAudio);
                             document.removeEventListener('touchstart', enableAudio);
                             document.removeEventListener('touchend', enableAudio);
-                        }).catch(console.error);
+                            
+                        } catch (err) {
+                            console.error('Failed to enable iPhone audio:', err);
+                            alert('Please tap the screen to enable audio reception');
+                        }
                     };
                     
+                    // Add multiple event listeners for iPhone
                     document.addEventListener('click', enableAudio, { once: true });
                     document.addEventListener('touchstart', enableAudio, { once: true });
                     document.addEventListener('touchend', enableAudio, { once: true });
-                });
+                }
             };
             
-            playRemoteAudio();
+            // Delay for iPhone compatibility
+            setTimeout(playRemoteAudio, /iPad|iPhone|iPod/.test(navigator.userAgent) ? 300 : 100);
         };
         
         // Handle ICE candidates
