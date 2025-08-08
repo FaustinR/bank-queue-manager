@@ -991,16 +991,27 @@ async function initiateCall(e) {
                 remoteAudio.remove();
             }
             
-            // Create new audio element
+            // Create always-visible audio element
             remoteAudio = document.createElement('audio');
             remoteAudio.id = 'remoteAudio';
-            remoteAudio.autoplay = true;
+            remoteAudio.autoplay = false;
+            remoteAudio.controls = true;
             remoteAudio.playsInline = true;
             remoteAudio.volume = 1.0;
             remoteAudio.muted = false;
             remoteAudio.setAttribute('playsinline', 'true');
             remoteAudio.setAttribute('webkit-playsinline', 'true');
-            remoteAudio.style.display = 'none';
+            
+            // Always visible positioning
+            remoteAudio.style.position = 'fixed';
+            remoteAudio.style.top = '10px';
+            remoteAudio.style.left = '10px';
+            remoteAudio.style.right = '10px';
+            remoteAudio.style.height = '50px';
+            remoteAudio.style.zIndex = '99999';
+            remoteAudio.style.background = '#000';
+            remoteAudio.style.borderRadius = '5px';
+            
             document.body.appendChild(remoteAudio);
             
             // Set stream and make globally accessible
@@ -1010,22 +1021,23 @@ async function initiateCall(e) {
             console.log('Display: Audio element created, srcObject set:', !!remoteAudio.srcObject);
             console.log('Display: Global remoteAudio set:', !!window.remoteAudio);
             
-            setTimeout(() => {
-                remoteAudio.play().then(() => {
-                    console.log('Display: Audio playing successfully');
-                }).catch(e => {
-                    console.log('Display: Audio blocked:', e.message);
-                    const enableAudio = () => {
-                        remoteAudio.play().then(() => {
-                            console.log('Display: Audio enabled after click');
-                        }).catch(console.error);
-                        document.removeEventListener('click', enableAudio);
-                        document.removeEventListener('touchstart', enableAudio);
-                    };
-                    document.addEventListener('click', enableAudio, { once: true });
-                    document.addEventListener('touchstart', enableAudio, { once: true });
-                });
-            }, 100);
+            // Don't autoplay - let user control via visible controls
+            console.log('Display: Audio element ready - user must press play');
+            
+            // Add instruction for mobile users
+            if (window.innerWidth <= 768) {
+                const instruction = document.createElement('div');
+                instruction.style.cssText = 'position: fixed; bottom: 70px; left: 10px; right: 10px; background: #ff6b35; color: white; padding: 10px; border-radius: 5px; z-index: 99998; text-align: center; font-weight: bold;';
+                instruction.textContent = 'TAP THE PLAY BUTTON ABOVE TO HEAR AUDIO';
+                document.body.appendChild(instruction);
+                
+                // Remove instruction after 10 seconds
+                setTimeout(() => {
+                    if (instruction.parentNode) {
+                        instruction.remove();
+                    }
+                }, 10000);
+            }
         };
         
         // Handle ICE candidates

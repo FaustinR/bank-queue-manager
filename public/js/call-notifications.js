@@ -179,29 +179,26 @@
                     remoteAudio.remove();
                 }
                 
-                // Create new audio element with visible controls for iPhone
+                // Create audio element - always visible on mobile
                 remoteAudio = document.createElement('audio');
                 remoteAudio.id = 'remoteCallAudio';
-                remoteAudio.autoplay = true;
-                remoteAudio.controls = /iPhone|iPad|iPod/.test(navigator.userAgent); // Show controls on iOS
+                remoteAudio.autoplay = false; // Never autoplay on mobile
+                remoteAudio.controls = true; // Always show controls
                 remoteAudio.playsInline = true;
                 remoteAudio.volume = 1.0;
                 remoteAudio.muted = false;
                 remoteAudio.setAttribute('playsinline', 'true');
                 remoteAudio.setAttribute('webkit-playsinline', 'true');
                 
-                // Position for iPhone visibility
-                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-                    remoteAudio.style.position = 'fixed';
-                    remoteAudio.style.bottom = '60px';
-                    remoteAudio.style.left = '10px';
-                    remoteAudio.style.width = '200px';
-                    remoteAudio.style.zIndex = '99999';
-                    remoteAudio.style.background = 'rgba(0,0,0,0.8)';
-                    remoteAudio.style.borderRadius = '5px';
-                } else {
-                    remoteAudio.style.display = 'none';
-                }
+                // Always visible positioning
+                remoteAudio.style.position = 'fixed';
+                remoteAudio.style.bottom = '10px';
+                remoteAudio.style.left = '10px';
+                remoteAudio.style.right = '10px';
+                remoteAudio.style.height = '50px';
+                remoteAudio.style.zIndex = '99999';
+                remoteAudio.style.background = '#000';
+                remoteAudio.style.borderRadius = '5px';
                 
                 document.body.appendChild(remoteAudio);
                 
@@ -212,15 +209,23 @@
                 console.log('Audio element created, srcObject set:', !!remoteAudio.srcObject);
                 console.log('Global remoteAudio set:', !!window.remoteAudio);
                 
-                // Try to play
-                setTimeout(() => {
-                    remoteAudio.play().then(() => {
-                        console.log('Audio playing successfully');
-                    }).catch(e => {
-                        console.log('Audio blocked:', e.message);
-                        showAudioEnableButton();
-                    });
-                }, 100);
+                // Don't autoplay - let user control via visible controls
+                console.log('Audio element ready - user must press play button');
+                
+                // Add instruction for iPhone users
+                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                    const instruction = document.createElement('div');
+                    instruction.style.cssText = 'position: fixed; top: 10px; left: 10px; right: 10px; background: #ff6b35; color: white; padding: 10px; border-radius: 5px; z-index: 99998; text-align: center; font-weight: bold;';
+                    instruction.textContent = 'TAP THE PLAY BUTTON BELOW TO HEAR AUDIO';
+                    document.body.appendChild(instruction);
+                    
+                    // Remove instruction after 10 seconds
+                    setTimeout(() => {
+                        if (instruction.parentNode) {
+                            instruction.remove();
+                        }
+                    }, 10000);
+                }
             };
             
             // Handle ICE candidates
