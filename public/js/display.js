@@ -913,35 +913,50 @@ async function initiateCall(e) {
             autoGainControl: false
         };
         
-        // iOS Safari compatible audio capture
+        // Get audio with system audio capture for background music
         try {
-            // Request microphone permission explicitly
-            const constraints = {
+            let constraints = {
                 audio: {
                     echoCancellation: false,
                     noiseSuppression: false,
                     autoGainControl: false,
-                    sampleRate: 44100
+                    sampleRate: 48000,
+                    channelCount: 2
                 },
                 video: false
             };
             
-            localStream = await navigator.mediaDevices.getUserMedia(constraints);
-            console.log('Audio stream obtained:', localStream.getAudioTracks().length, 'tracks');
-            
-            // Verify audio tracks are active
-            const audioTracks = localStream.getAudioTracks();
-            if (audioTracks.length === 0) {
-                throw new Error('No audio tracks in stream');
+            // Try getDisplayMedia for system audio capture
+            if (navigator.mediaDevices.getDisplayMedia) {
+                try {
+                    const displayStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: false,
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
+                            sampleRate: 48000
+                        }
+                    });
+                    
+                    if (displayStream.getAudioTracks().length > 0) {
+                        localStream = displayStream;
+                        console.log('Display: System audio captured');
+                    }
+                } catch (e) {
+                    console.log('Display: System audio not available');
+                }
             }
             
-            audioTracks.forEach(track => {
-                console.log('Audio track:', track.label, 'enabled:', track.enabled, 'ready:', track.readyState);
-            });
+            // Fallback to microphone
+            if (!localStream) {
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                console.log('Display: Microphone captured');
+            }
             
         } catch (error) {
-            console.error('Failed to get audio stream:', error);
-            alert('Microphone access denied. Please allow microphone access and refresh the page.');
+            console.error('Display audio capture failed:', error);
+            alert('Audio access denied');
             throw error;
         }
         
@@ -978,54 +993,59 @@ async function initiateCall(e) {
             peerConnection.addTrack(track, localStream);
         });
         
-        // Handle remote stream
+        // Handle remote stream with iOS compatibility
         peerConnection.ontrack = (event) => {
-            console.log('Remote stream received in display');
+            console.log('Display: Remote stream received');
             remoteStream = event.streams[0];
             
             if (!remoteStream || remoteStream.getAudioTracks().length === 0) {
-                console.error('No audio tracks in remote stream');
+                console.error('Display: No audio tracks');
                 return;
             }
             
-            // Create or get remote audio element
+            // Create visible audio element for iOS
             let remoteAudio = document.getElementById('remoteAudio');
-            if (!remoteAudio) {
-                remoteAudio = document.createElement('audio');
-                remoteAudio.id = 'remoteAudio';
-                remoteAudio.autoplay = false;
-                remoteAudio.controls = false;
-                remoteAudio.playsInline = true;
-                remoteAudio.muted = false;
-                remoteAudio.volume = 1.0;
-                remoteAudio.setAttribute('playsinline', 'true');
-                remoteAudio.setAttribute('webkit-playsinline', 'true');
-                remoteAudio.style.display = 'none';
-                document.body.appendChild(remoteAudio);
+            if (remoteAudio) {
+                remoteAudio.remove();
             }
             
-            // Set stream and make globally accessible
+            remoteAudio = document.createElement('audio');
+            remoteAudio.id = 'remoteAudio';
+            remoteAudio.autoplay = true;
+            remoteAudio.controls = true;
+            remoteAudio.playsInline = true;
+            remoteAudio.muted = false;
+            remoteAudio.volume = 1.0;
+            remoteAudio.setAttribute('playsinline', 'true');
+            remoteAudio.setAttribute('webkit-playsinline', 'true');
+            remoteAudio.style.position = 'fixed';
+            remoteAudio.style.top = '10px';
+            remoteAudio.style.left = '10px';
+            remoteAudio.style.width = '200px';
+            remoteAudio.style.zIndex = '99999';
+            document.body.appendChild(remoteAudio);
+            
             remoteAudio.srcObject = remoteStream;
             window.remoteAudio = remoteAudio;
-            console.log('Display remote audio srcObject set:', !!remoteAudio.srcObject);
             
-            setTimeout(() => {
-                remoteAudio.play().then(() => {
-                    console.log('Display remote audio playing successfully');
-                }).catch(e => {
-                    console.log('Display audio blocked:', e.message);
-                    // Add click listener to enable audio
-                    const enableAudio = () => {
-                        remoteAudio.play().then(() => {
-                            console.log('Display audio enabled after interaction');
-                        }).catch(console.error);
-                        document.removeEventListener('click', enableAudio);
-                        document.removeEventListener('touchstart', enableAudio);
-                    };
-                    document.addEventListener('click', enableAudio, { once: true });
-                    document.addEventListener('touchstart', enableAudio, { once: true });
-                });
-            }, 100);
+            console.log('Display: iOS audio element created');
+            
+            setTimeout(async () => {
+                try {
+                    await remoteAudio.play();
+                    console.log('Display: iOS audio playing');
+                    
+                    // Hide controls after 3 seconds
+                    setTimeout(() => {
+                        remoteAudio.controls = false;
+                        remoteAudio.style.display = 'none';
+                    }, 3000);
+                    
+                } catch (e) {
+                    console.log('Display: iOS audio blocked');
+                    alert('Tap the audio controls to enable sound');
+                }
+            }, 200);
         };
         
         // Handle ICE candidates
