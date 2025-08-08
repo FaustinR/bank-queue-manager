@@ -62,13 +62,19 @@ function showDisplayScreen() {
 // Accordion functionality
 function setupAccordions() {
     const accordionSections = document.querySelectorAll('.accordion-section');
+    let hoverTimer = null;
     
     accordionSections.forEach(section => {
         const header = section.querySelector('.accordion-header');
         
-        // All sections start folded by default
-        
+        // Click handler
         header.addEventListener('click', () => {
+            // Clear any pending hover timer
+            if (hoverTimer) {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
+            }
+            
             // Toggle active class on the clicked section
             section.classList.toggle('active');
             
@@ -78,6 +84,32 @@ function setupAccordions() {
                 if (iframe && !iframe.getAttribute('src')) {
                     iframe.setAttribute('src', '/history');
                 }
+            }
+        });
+        
+        // Hover handlers for auto-open
+        header.addEventListener('mouseenter', () => {
+            // Only set timer if section is not already active
+            if (!section.classList.contains('active')) {
+                hoverTimer = setTimeout(() => {
+                    section.classList.add('active');
+                    
+                    // Load iframe if needed
+                    if (section.id === 'ticketHistorySection') {
+                        const iframe = section.querySelector('iframe');
+                        if (iframe && !iframe.getAttribute('src')) {
+                            iframe.setAttribute('src', '/history');
+                        }
+                    }
+                }, 2000);
+            }
+        });
+        
+        header.addEventListener('mouseleave', () => {
+            // Clear timer when mouse leaves
+            if (hoverTimer) {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
             }
         });
     });

@@ -10,6 +10,7 @@ const connectDB = require('./config/db');
 const Ticket = require('./models/Ticket');
 const Counter = require('./models/Counter');
 const User = require('./models/User');
+const Call = require('./models/Call');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -298,6 +299,50 @@ app.get('/profile', isAuthenticated, (req, res) => {
 
 app.get('/inbox', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'inbox.html'));
+});
+
+app.get('/call-logs', isAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'call-logs.html'));
+});
+
+// API endpoint to get call logs
+app.get('/api/call-logs', isAuthenticated, async (req, res) => {
+  try {
+    const calls = await Call.find({
+      $or: [
+        { callerId: req.session.userId },
+        { recipientId: req.session.userId }
+      ]
+    })
+    .populate('callerId', 'firstName lastName')
+    .populate('recipientId', 'firstName lastName')
+    .sort({ createdAt: -1 })
+    .limit(100);
+    
+    res.json({ calls });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API endpoint to delete call logs
+app.delete('/api/call-logs/:id', isAuthenticated, async (req, res) => {
+  try {
+    await Call.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/call-logs', isAuthenticated, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    await Call.deleteMany({ _id: { $in: ids } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 
@@ -900,6 +945,19 @@ io.on('connection', async (socket) => {
           offer: data.offer
         };
         
+        // Create single call record
+        const newCall = new Call({
+          callerId: socket.userId,
+          recipientId: data.recipientId,
+          callerName: data.callerName,
+          recipientName: `${targetUser.firstName} ${targetUser.lastName}`,
+          type: 'outgoing',
+          status: 'initiated'
+        });
+        await newCall.save();
+        
+        callData.callId = newCall._id;
+        
         // Send to all authenticated sockets of the target user
         targetSockets.forEach(targetSocket => {
           console.log('Sending to socket:', targetSocket.id);
@@ -918,7 +976,23 @@ io.on('connection', async (socket) => {
     }
   });
   
-  socket.on('answer-call', (data) => {
+  socket.on('answer-call', async (data) => {
+    try {
+      // Update call record to answered
+      await Call.updateOne(
+        { 
+          $or: [
+            { callerId: socket.userId, recipientId: data.callerId },
+            { callerId: data.callerId, recipientId: socket.userId }
+          ],
+          status: 'initiated'
+        },
+        { status: 'answered' }
+      );
+    } catch (error) {
+      console.error('Error updating call status:', error);
+    }
+    
     const targetSockets = Array.from(io.sockets.sockets.values())
       .filter(s => String(s.userId) === String(data.callerId) && s.isAuthenticated && s.connected);
     
@@ -956,7 +1030,23 @@ io.on('connection', async (socket) => {
     socket.emit('call-ended');
   });
   
-  socket.on('call-declined', (data) => {
+  socket.on('call-declined', async (data) => {
+    try {
+      // Update call record to declined/missed
+      await Call.updateOne(
+        { 
+          $or: [
+            { callerId: socket.userId, recipientId: data.callerId },
+            { callerId: data.callerId, recipientId: socket.userId }
+          ],
+          status: 'initiated'
+        },
+        { status: 'declined' }
+      );
+    } catch (error) {
+      console.error('Error updating call status:', error);
+    }
+    
     const targetSockets = Array.from(io.sockets.sockets.values())
       .filter(s => String(s.userId) === String(data.callerId) && s.isAuthenticated && s.connected);
     

@@ -1,0 +1,134 @@
+.call-logs-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    padding: 20px;
+}
+
+.call-logs-actions {
+    margin-bottom: 15px;
+}
+
+.delete-selected-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.delete-selected-btn:hover {
+    background: #c82333;
+}
+
+.call-logs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.call-log-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.call-log-checkbox {
+    margin-right: 10px;
+}
+
+.call-log-delete {
+    margin-right: 10px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.call-log-delete:hover {
+    background: #c82333;
+}
+
+.call-log-item:hover {
+    background-color: #f8f9fa;
+}
+
+.call-direction {
+    margin-right: 15px;
+    font-size: 18px;
+    width: 20px;
+    text-align: center;
+}
+
+.call-direction.incoming {
+    color: #28a745;
+}
+
+.call-direction.outgoing {
+    color: #007bff;
+}
+
+.call-direction.missed {
+    color: #dc3545;
+}
+
+.call-info {
+    flex: 1;
+}
+
+.call-contact {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.call-details {
+    font-size: 14px;
+    color: #666;
+}
+
+.call-duration {
+    font-weight: bold;
+    color: #2c5aa0;
+    margin-left: 15px;
+}
+
+.call-duration.missed {
+    color: #dc3545;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: #ccc;
+}
+
+@media (max-width: 768px) {
+    .call-log-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .call-direction {
+        margin-right: 0;
+    }
+    
+    .call-duration {
+        margin-left: 0;
+        align-self: flex-end;
+    }
+}

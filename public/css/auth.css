@@ -182,7 +182,7 @@ input:focus, select:focus {
     transform: translateY(0);
 }
 
-/* Sophisticated Spinner styles */
+/* Single Circle Arrow Spinner */
 .spinner {
     display: none;
     position: absolute;
@@ -191,47 +191,15 @@ input:focus, select:focus {
     transform: translateY(-50%);
     width: 20px;
     height: 20px;
-}
-
-.spinner::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 2px solid transparent;
-    border-top: 2px solid rgba(255, 255, 255, 0.8);
-    border-right: 2px solid rgba(255, 255, 255, 0.6);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.4);
-    border-left: 2px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
     border-radius: 50%;
-    animation: sophisticatedSpin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: spin 1s linear infinite;
 }
 
-.spinner::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top: 2px solid rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    animation: sophisticatedSpin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse;
-}
-
-@keyframes sophisticatedSpin {
-    0% {
-        transform: rotate(0deg);
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.8;
-    }
-    100% {
-        transform: rotate(360deg);
-        opacity: 1;
-    }
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
 }
 
 .auth-button.loading {
@@ -241,22 +209,6 @@ input:focus, select:focus {
 
 .auth-button.loading .spinner {
     display: block;
-}
-
-.auth-button.loading::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-    animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
 }
 
 .cancel-button {

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Logs - Bank Queue Management</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/call-logs.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="shortcut icon" href="images/favicon.jpeg" type="image/jpeg">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="sidebar-header">
+                <img src="images/favicon.jpeg" alt="Bank Logo" class="sidebar-logo">
+                <h2>Admin Panel</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/admin"><i class="icon">📊</i><span> Dashboard</span></a></li>
+                    <li><a href="/history"><i class="icon">📜</i><span> Ticket History</span></a></li>
+                    <li><a href="/inbox"><i class="icon">✉️</i><span> Inbox</span></a></li>
+                    <li class="active"><a href="/call-logs"><i class="icon">📞</i><span> Call Logs</span></a></li>
+                    <li><a href="/signup"><i class="icon">👤</i><span> Create User</span></a></li>
+                    <li><a href="/users"><i class="icon">👥</i><span> Manage Users</span></a></li>
+                    <li><a href="/" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
+                    <li><a href="/display"><i class="icon">📺</i><span> Display Screen</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Call Logs</h1>
+                <div class="user-info">
+                    <span id="userName">Loading...</span>
+                    <span class="role-badge" id="userRole">...</span>
+                    <a href="/api/auth/logout" class="header-logout-btn"><img src="images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a>
+                </div>
+            </header>
+            
+            <div class="call-logs-container">
+                <div class="call-logs-actions">
+                    <button id="deleteSelectedBtn" class="delete-selected-btn" style="display: none;">
+                        <i class="fas fa-trash"></i> Delete Selected
+                    </button>
+                </div>
+                <div class="call-logs-list" id="callLogsList">
+                    <div class="empty-state">
+                        <i class="fas fa-phone"></i>
+                        <p>No call logs available</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/socket-auth.js"></script>
+    <script src="js/call-logs.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/user-profile-link.js"></script>
+    <script src="js/session-timeout.js"></script>
+    <script src="js/restart-check.js"></script>
+    <script src="js/logout-handler.js"></script>
+</body>
+</html>

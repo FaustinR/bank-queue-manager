@@ -154,16 +154,13 @@
                 localAudio.srcObject = localStream;
             }
             
-            // Create peer connection with comprehensive STUN/TURN servers
+            // Create peer connection with optimized STUN servers
             peerConnection = new RTCPeerConnection({
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:stun3.l.google.com:19302' },
-                    { urls: 'stun:stun4.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' }
                 ],
-                iceCandidatePoolSize: 10,
+                iceCandidatePoolSize: 4,
                 bundlePolicy: 'max-bundle',
                 rtcpMuxPolicy: 'require'
             });
