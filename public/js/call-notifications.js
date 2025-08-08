@@ -78,43 +78,48 @@
         try {
             createAudioElements();
             
-            // Get user media with minimal filtering to capture background voices
+            // Audio constraints allowing background sounds
             const audioConstraints = {
-                echoCancellation: false,  // Allow background voices
-                noiseSuppression: false,  // Don't filter background sounds
-                autoGainControl: false    // Keep natural audio levels
+                echoCancellation: true,   // Keep echo cancellation for call quality
+                noiseSuppression: false,  // Disable to allow background sounds
+                autoGainControl: false,   // Disable to preserve natural audio levels
+                sampleRate: { ideal: 48000, min: 8000 },
+                channelCount: { ideal: 1 },
+                volume: { ideal: 1.0 }
             };
             
-            // Add advanced constraints for desktop browsers only (also disabled for background audio)
-            if (!navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
-                Object.assign(audioConstraints, {
-                    sampleRate: 16000,
-                    channelCount: 1,
-                    googEchoCancellation: false,
-                    googAutoGainControl: false,
-                    googNoiseSuppression: false,
-                    googHighpassFilter: false,
-                    googTypingNoiseDetection: false
+            // Try getUserMedia with fallback for different browsers
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: audioConstraints,
+                    video: false 
+                });
+            } catch (error) {
+                console.log('Advanced constraints failed, trying basic:', error);
+                // Fallback to basic constraints for compatibility
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: true,
+                    video: false 
                 });
             }
-            
-            localStream = await navigator.mediaDevices.getUserMedia({ 
-                audio: audioConstraints,
-                video: false 
-            });
             
             // Set local audio stream (muted to prevent echo)
             if (localAudio) {
                 localAudio.srcObject = localStream;
             }
             
-            // Create peer connection
+            // Create peer connection with comprehensive STUN/TURN servers
             peerConnection = new RTCPeerConnection({
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' }
                 ],
-                iceCandidatePoolSize: 10
+                iceCandidatePoolSize: 10,
+                bundlePolicy: 'max-bundle',
+                rtcpMuxPolicy: 'require'
             });
             
             // Add local stream to peer connection
@@ -143,31 +148,41 @@
                         });
                     };
                     
-                    // Enhanced mobile audio play with background audio management
-                    const playRemoteAudio = () => {
+                    // Enhanced audio play with mobile compatibility
+                    const playRemoteAudio = async () => {
                         pauseBackgroundAudio();
                         
-                        remoteAudio.play().then(() => {
+                        // Set audio properties for mobile compatibility
+                        remoteAudio.volume = 1.0;
+                        remoteAudio.muted = false;
+                        
+                        try {
+                            await remoteAudio.play();
                             console.log('Remote audio playing successfully');
-                        }).catch(e => {
-                            console.log('Auto-play prevented, adding interaction listeners:', e);
-                            showAudioEnableButton();
+                        } catch (e) {
+                            console.log('Auto-play prevented, enabling on user interaction:', e);
                             
-                            // Add multiple event listeners for mobile compatibility
-                            const enableAudio = () => {
-                                pauseBackgroundAudio();
-                                remoteAudio.play().then(() => {
+                            // Create a more prominent audio enable button
+                            const enableAudio = async () => {
+                                try {
+                                    pauseBackgroundAudio();
+                                    await remoteAudio.play();
                                     console.log('Audio enabled after user interaction');
-                                    document.removeEventListener('click', enableAudio);
-                                    document.removeEventListener('touchstart', enableAudio);
-                                    document.removeEventListener('touchend', enableAudio);
-                                }).catch(console.error);
+                                    // Remove the enable button if it exists
+                                    const enableBtn = document.querySelector('.enable-audio-btn');
+                                    if (enableBtn) enableBtn.remove();
+                                } catch (error) {
+                                    console.error('Failed to enable audio:', error);
+                                }
                             };
                             
+                            // Add event listeners for user interaction
                             document.addEventListener('click', enableAudio, { once: true });
                             document.addEventListener('touchstart', enableAudio, { once: true });
-                            document.addEventListener('touchend', enableAudio, { once: true });
-                        });
+                            
+                            // Show enable button
+                            showAudioEnableButton();
+                        }
                     };
                     
                     playRemoteAudio();

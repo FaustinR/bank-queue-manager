@@ -895,39 +895,29 @@ async function initiateCall(e) {
             });
         }
         
-        // Get user media with minimal filtering to capture background voices
+        // Audio constraints allowing background sounds
         const audioConstraints = {
-            echoCancellation: false,  // Allow background voices
-            noiseSuppression: false,  // Don't filter background sounds
-            autoGainControl: false    // Keep natural audio levels
+            echoCancellation: true,   // Keep echo cancellation for call quality
+            noiseSuppression: false,  // Disable to allow background sounds
+            autoGainControl: false,   // Disable to preserve natural audio levels
+            sampleRate: { ideal: 48000, min: 8000 },
+            channelCount: { ideal: 1 },
+            volume: { ideal: 1.0 }
         };
         
-        // Add advanced constraints for desktop browsers only (also disabled for background audio)
-        if (!navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) {
-            Object.assign(audioConstraints, {
-                sampleRate: 16000,
-                channelCount: 1,
-                googEchoCancellation: false,
-                googAutoGainControl: false,
-                googNoiseSuppression: false,
-                googHighpassFilter: false,
-                googTypingNoiseDetection: false
+        // Try getUserMedia with fallback for different browsers
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: audioConstraints,
+                video: false 
             });
-        }
-        
-        const mediaConstraints = {
-            audio: audioConstraints
-        };
-        
-        // Handle different browser implementations
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        } else if (navigator.getUserMedia) {
-            localStream = await new Promise((resolve, reject) => {
-                navigator.getUserMedia(mediaConstraints, resolve, reject);
+        } catch (error) {
+            console.log('Advanced constraints failed, trying basic:', error);
+            // Fallback to basic constraints for compatibility
+            localStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: true,
+                video: false 
             });
-        } else {
-            throw new Error('getUserMedia not supported in this browser');
         }
         
         // Create or get local audio element with mobile compatibility
@@ -944,14 +934,18 @@ async function initiateCall(e) {
         }
         localAudio.srcObject = localStream;
         
-        // Create peer connection with STUN servers for better connectivity
+        // Create peer connection with comprehensive STUN servers
         peerConnection = new RTCPeerConnection({
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' }
             ],
-            iceCandidatePoolSize: 10
+            iceCandidatePoolSize: 10,
+            bundlePolicy: 'max-bundle',
+            rtcpMuxPolicy: 'require'
         });
         
         // Add local stream
