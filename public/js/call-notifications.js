@@ -85,15 +85,35 @@
                 autoGainControl: false
             };
             
-            // Simple, reliable audio capture
+            // iOS Safari compatible audio capture
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: true,
-                    video: false 
+                // Request microphone permission explicitly
+                const constraints = {
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false,
+                        sampleRate: 44100
+                    },
+                    video: false
+                };
+                
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                console.log('Audio stream obtained:', localStream.getAudioTracks().length, 'tracks');
+                
+                // Verify audio tracks are active
+                const audioTracks = localStream.getAudioTracks();
+                if (audioTracks.length === 0) {
+                    throw new Error('No audio tracks in stream');
+                }
+                
+                audioTracks.forEach(track => {
+                    console.log('Audio track:', track.label, 'enabled:', track.enabled, 'ready:', track.readyState);
                 });
-                console.log('Audio stream obtained successfully');
+                
             } catch (error) {
                 console.error('Failed to get audio stream:', error);
+                alert('Microphone access denied. Please allow microphone access and refresh the page.');
                 throw error;
             }
             
@@ -128,38 +148,50 @@
                 
                 // Connect remote stream to audio element for playback
                 if (remoteAudio && remoteStream) {
+                    console.log('Setting up remote audio stream');
                     remoteAudio.srcObject = remoteStream;
                     remoteAudio.volume = 1.0;
                     remoteAudio.muted = false;
+                    remoteAudio.autoplay = true;
                     
-                    // Pause background audio to prevent conflicts
-                    const pauseBackgroundAudio = () => {
-                        document.querySelectorAll('audio, video').forEach(media => {
-                            if (media !== remoteAudio && media !== localAudio && !media.paused) {
-                                media.pause();
-                                media.setAttribute('data-paused-by-call', 'true');
-                            }
-                        });
-                    };
+                    // iOS Safari specific setup
+                    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                        remoteAudio.setAttribute('playsinline', 'true');
+                        remoteAudio.setAttribute('webkit-playsinline', 'true');
+                    }
                     
-                    // Simple audio playback
-                    const playRemoteAudio = () => {
-                        remoteAudio.volume = 1.0;
-                        remoteAudio.muted = false;
-                        
-                        remoteAudio.play().catch(e => {
-                            console.log('Audio autoplay blocked, will play on user interaction');
-                            const enableAudio = () => {
-                                remoteAudio.play();
+                    // Force audio play with user interaction handling
+                    const playAudio = async () => {
+                        try {
+                            await remoteAudio.play();
+                            console.log('Remote audio playing');
+                        } catch (e) {
+                            console.log('Audio blocked, enabling on interaction:', e);
+                            
+                            // Show audio enable button
+                            showAudioEnableButton();
+                            
+                            // Enable on any user interaction
+                            const enableAudio = async () => {
+                                try {
+                                    await remoteAudio.play();
+                                    console.log('Audio enabled');
+                                    const btn = document.querySelector('.enable-audio-btn');
+                                    if (btn) btn.remove();
+                                } catch (err) {
+                                    console.error('Failed to enable audio:', err);
+                                }
                                 document.removeEventListener('click', enableAudio);
                                 document.removeEventListener('touchstart', enableAudio);
                             };
-                            document.addEventListener('click', enableAudio, { once: true });
-                            document.addEventListener('touchstart', enableAudio, { once: true });
-                        });
+                            
+                            document.addEventListener('click', enableAudio);
+                            document.addEventListener('touchstart', enableAudio);
+                        }
                     };
                     
-                    playRemoteAudio();
+                    // Delay to ensure stream is ready
+                    setTimeout(playAudio, 100);
                 }
             };
             
@@ -533,20 +565,33 @@
     window.toggleSpeaker = function() {
         let audioElement = remoteAudio;
         
-        // If no remote audio in notification system, check display.js or create one
+        // Find remote audio element
         if (!audioElement) {
             audioElement = document.getElementById('remoteAudio');
+        }
+        if (!audioElement) {
+            audioElement = document.querySelector('audio[id*="remote"]');
         }
         
         if (audioElement) {
             isSpeakerOn = !isSpeakerOn;
-            audioElement.volume = isSpeakerOn ? 1.0 : 0.8;
+            
+            // Force audio to play and set volume
+            audioElement.volume = isSpeakerOn ? 1.0 : 0.5;
+            audioElement.muted = false;
+            
+            // Try to play audio
+            audioElement.play().catch(e => console.log('Speaker toggle play failed:', e));
             
             const speakerBtn = document.getElementById('speakerBtn');
             if (speakerBtn) {
-                speakerBtn.textContent = isSpeakerOn ? '🔊️ Speaker On' : '🔊 Speaker';
+                speakerBtn.textContent = isSpeakerOn ? '🔊 ON' : '🔊 Speaker';
                 speakerBtn.style.background = isSpeakerOn ? '#28a745' : '#17a2b8';
             }
+            
+            console.log('Speaker toggled:', isSpeakerOn ? 'ON' : 'OFF');
+        } else {
+            console.log('No audio element found for speaker toggle');
         }
     };
     

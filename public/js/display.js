@@ -902,15 +902,35 @@ async function initiateCall(e) {
             autoGainControl: false
         };
         
-        // Simple, reliable audio capture
+        // iOS Safari compatible audio capture
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ 
-                audio: true,
-                video: false 
+            // Request microphone permission explicitly
+            const constraints = {
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                    sampleRate: 44100
+                },
+                video: false
+            };
+            
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log('Audio stream obtained:', localStream.getAudioTracks().length, 'tracks');
+            
+            // Verify audio tracks are active
+            const audioTracks = localStream.getAudioTracks();
+            if (audioTracks.length === 0) {
+                throw new Error('No audio tracks in stream');
+            }
+            
+            audioTracks.forEach(track => {
+                console.log('Audio track:', track.label, 'enabled:', track.enabled, 'ready:', track.readyState);
             });
-            console.log('Audio stream obtained successfully');
+            
         } catch (error) {
             console.error('Failed to get audio stream:', error);
+            alert('Microphone access denied. Please allow microphone access and refresh the page.');
             throw error;
         }
         
