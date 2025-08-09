@@ -31,8 +31,13 @@ function playNotificationSound() {
 }
 
 // Text-to-speech function with language support
+let isSpeaking = false;
 function speak(text, language) {
-    if ('speechSynthesis' in window) {
+    if ('speechSynthesis' in window && !isSpeaking) {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+        
+        isSpeaking = true;
         const utterance = new SpeechSynthesisUtterance(text);
         
         // Get available voices
@@ -42,21 +47,17 @@ function speak(text, language) {
         switch(language) {
             case 'French':
                 utterance.lang = 'fr-FR';
-                // Try to find a French voice
                 const frenchVoice = voices.find(voice => voice.lang.includes('fr'));
                 if (frenchVoice) utterance.voice = frenchVoice;
                 break;
             case 'English':
-                utterance.lang = 'en-US'; // Use US English instead of British
-                // Try to find an American English voice
+                utterance.lang = 'en-US';
                 const englishVoice = voices.find(voice => voice.lang === 'en-US');
                 if (englishVoice) utterance.voice = englishVoice;
                 break;
             case 'Kinyarwanda':
             case 'Swahili':
-                // Use English for Kinyarwanda and Swahili
                 utterance.lang = 'en-US';
-                // Use the same variable name pattern as other cases
                 const otherEnglishVoice = voices.find(voice => voice.lang === 'en-US');
                 if (otherEnglishVoice) utterance.voice = otherEnglishVoice;
                 break;
@@ -64,11 +65,18 @@ function speak(text, language) {
                 utterance.lang = 'en-US';
         }
         
-        utterance.rate = 0.9; // Slightly slower rate for clarity
+        utterance.rate = 0.9;
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
         
-        // Voice selection complete
+        // Reset flag when speech ends
+        utterance.onend = () => {
+            isSpeaking = false;
+        };
+        
+        utterance.onerror = () => {
+            isSpeaking = false;
+        };
         
         window.speechSynthesis.speak(utterance);
     }
@@ -362,7 +370,10 @@ function updateDisplay(data) {
         const queueLength = queues[id] ? queues[id].length : 0;
         const counterDiv = document.createElement('div');
         // Add 'has-waiting' class if there are customers waiting
-        counterDiv.className = `counter ${counter.status} ${queueLength > 0 ? 'has-waiting' : ''}`;
+        // Ensure serving status takes priority over has-waiting
+        const statusClass = counter.status === 'serving' ? 'serving' : counter.status;
+        const waitingClass = (queueLength > 0 && counter.status !== 'serving') ? 'has-waiting' : '';
+        counterDiv.className = `counter ${statusClass} ${waitingClass}`.trim();
         
         // Make the counter div clickable but prevent clicks on message button from triggering it
         counterDiv.addEventListener('click', (e) => {
@@ -634,20 +645,11 @@ socket.on('customerCalled', (data) => {
         // Get language-specific announcement
         let announcement;
         
-        switch(customer.language) {
-            case 'French':
-                announcement = `Client ${customer.customerName}, veuillez vous rendre au guichet ${counter} pour ${translatedService}.`;
-                break;
-            case 'English':
-                announcement = `Customer ${customer.customerName}, please proceed to counter ${counter} for ${translatedService}.`;
-                break;
-            case 'Kinyarwanda':
-            case 'Swahili':
-                // Use English for Kinyarwanda and Swahili customers
-                announcement = `Customer ${customer.customerName}, please proceed to counter ${counter} for ${baseService}.`;
-                break;
-            default:
-                announcement = `Customer ${customer.customerName}, please proceed to counter ${counter} for ${translatedService}.`;
+        if (customer.language === 'French') {
+            announcement = `Client ${customer.customerName}, veuillez vous rendre au guichet ${counter} pour ${translatedService}.`;
+        } else {
+            // Use English for all other languages (English, Kinyarwanda, Swahili, and default)
+            announcement = `Customer ${customer.customerName}, please proceed to counter ${counter} for ${translatedService}.`;
         }
         
         // Speak the announcement in the customer's preferred language

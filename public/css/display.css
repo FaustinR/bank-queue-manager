@@ -92,12 +92,15 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-.counter.serving { 
-    background: #e94560; 
+.counter.serving,
+.counter[class*="serving"] { 
+    background: #e94560 !important; /* Keep red when serving - highest priority */
+    border: none !important;
+    box-shadow: none !important;
 }
 
-.counter.has-waiting { 
-    background: #2ecc71; /* Green color for counters with waiting customers */
+.counter.has-waiting:not(.serving) { 
+    background: #2ecc71; /* Green color for counters with waiting customers only when not serving */
     border: 2px solid #ffd700; /* Gold border to make it stand out */
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); /* Subtle glow effect */
 }

@@ -177,8 +177,9 @@ async function initializeFromDB() {
     const dbCounters = await Counter.find().populate('currentTicket');
     dbCounters.forEach(counter => {
       if (counters[counter.counterId]) {
-        counters[counter.counterId].status = counter.status;
-        if (counter.currentTicket) {
+        // If there's a current ticket being served, set status to serving
+        if (counter.currentTicket && counter.currentTicket.status === 'serving') {
+          counters[counter.counterId].status = 'serving';
           counters[counter.counterId].current = {
             id: counter.currentTicket._id,
             number: counter.currentTicket.ticketNumber,
@@ -189,6 +190,10 @@ async function initializeFromDB() {
             timestamp: counter.currentTicket.createdAt,
             status: counter.currentTicket.status
           };
+        } else {
+          // No current ticket or ticket not being served, set to available
+          counters[counter.counterId].status = 'available';
+          counters[counter.counterId].current = null;
         }
       }
     });
