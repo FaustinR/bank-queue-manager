@@ -721,11 +721,16 @@ app.post('/api/counter/:id/next', async (req, res) => {
       counters[counterId].current = nextCustomer;
       counters[counterId].status = 'serving';
       
+      // Get current teller information
+      const staffInfo = await getCounterStaffInfo();
+      const tellerName = staffInfo.counterStaff[counterId] || null;
+      
       // Update ticket in MongoDB
       const ticket = await Ticket.findById(nextCustomer.id);
       if (ticket) {
         ticket.status = 'serving';
         ticket.calledAt = new Date();
+        ticket.tellerName = tellerName; // Store teller name
         await ticket.save();
         
         // Update counter in MongoDB
@@ -737,9 +742,6 @@ app.post('/api/counter/:id/next', async (req, res) => {
           }
         );
       }
-      
-      // Get counter staff information with IDs
-      const staffInfo = await getCounterStaffInfo();
       
       // Create a deep copy of the queues to avoid reference issues
       const queuesCopy = {};
@@ -1408,7 +1410,7 @@ app.get('/api/tickets/history', async (req, res) => {
     const tickets = await Ticket.find(query)
       .sort({ createdAt: -1 })
       .limit(500)
-      .select('ticketNumber customerName service customService counterId status createdAt calledAt completedAt serviceTime waitTime');
+      .select('ticketNumber customerName service customService counterId status createdAt calledAt completedAt serviceTime waitTime tellerName');
     
     res.json({ tickets });
   } catch (error) {

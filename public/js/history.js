@@ -183,10 +183,12 @@ function sortTickets(columnIndex, direction) {
                 valueB = b.counterId || 0;
                 break;
             case 4: // Teller
-                valueA = window.counterStaff && window.counterStaff[a.counterId] ? 
-                    window.counterStaff[a.counterId].toLowerCase() : '-';
-                valueB = window.counterStaff && window.counterStaff[b.counterId] ? 
-                    window.counterStaff[b.counterId].toLowerCase() : '-';
+                valueA = a.tellerName ? a.tellerName.toLowerCase() : 
+                    (window.counterStaff && window.counterStaff[a.counterId] ? 
+                    window.counterStaff[a.counterId].toLowerCase() : '-');
+                valueB = b.tellerName ? b.tellerName.toLowerCase() : 
+                    (window.counterStaff && window.counterStaff[b.counterId] ? 
+                    window.counterStaff[b.counterId].toLowerCase() : '-');
                 break;
             case 5: // Status
                 valueA = a.status.toLowerCase();
@@ -256,8 +258,9 @@ function filterTickets() {
     // Filter by teller
     if (tellerFilter) {
         filteredTickets = filteredTickets.filter(ticket => {
-            const tellerName = window.counterStaff && window.counterStaff[ticket.counterId] ? 
-                window.counterStaff[ticket.counterId].toLowerCase() : '-';
+            const tellerName = ticket.tellerName ? ticket.tellerName.toLowerCase() : 
+                (window.counterStaff && window.counterStaff[ticket.counterId] ? 
+                window.counterStaff[ticket.counterId].toLowerCase() : '-');
             return tellerName.includes(tellerFilter);
         });
     }
@@ -409,9 +412,11 @@ function displayTickets(tickets) {
             serviceDisplay = ticket.customService;
         }
         
-        // Get teller name for this counter
+        // Get teller name - use stored teller name first, then current counter staff
         let tellerName = '-';
-        if (window.counterStaff && window.counterStaff[ticket.counterId]) {
+        if (ticket.tellerName) {
+            tellerName = ticket.tellerName;
+        } else if (window.counterStaff && window.counterStaff[ticket.counterId]) {
             tellerName = window.counterStaff[ticket.counterId];
         }
         

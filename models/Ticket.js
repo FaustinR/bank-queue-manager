@@ -50,6 +50,9 @@ const ticketSchema = new mongoose.Schema({
   },
   customService: {
     type: String
+  },
+  tellerName: {
+    type: String
   }
 });
 

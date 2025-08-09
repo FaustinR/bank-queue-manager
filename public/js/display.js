@@ -571,7 +571,7 @@ socket.on('customerCalled', (data) => {
     `;
     nowServing.style.display = 'block';
     
-    // Play notification sound first
+    // Play notification sound only once
     playNotificationSound();
     
     // Wait a moment for the sound to finish before speaking

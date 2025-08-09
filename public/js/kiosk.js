@@ -67,25 +67,51 @@ document.getElementById('service').addEventListener('change', function() {
     if (this.value) {
         clearFieldError('service');
     }
+    checkFormCompletion();
 });
+
+// Check if form is complete and show/hide button
+function checkFormCompletion() {
+    const customerName = document.getElementById('customerName').value.trim();
+    const service = document.getElementById('service').value;
+    const language = document.getElementById('language').value;
+    const otherService = document.getElementById('otherService').value.trim();
+    const button = document.querySelector('button[type="submit"]');
+    
+    let isComplete = customerName && service && language;
+    
+    // If "Other" is selected, check if otherService is filled
+    if (service === 'Other') {
+        isComplete = isComplete && otherService;
+    }
+    
+    if (isComplete) {
+        button.classList.add('show');
+    } else {
+        button.classList.remove('show');
+    }
+}
 
 // Add event listeners to clear errors on input
 document.getElementById('customerName').addEventListener('input', function() {
     if (this.value.trim()) {
         clearFieldError('customerName');
     }
+    checkFormCompletion();
 });
 
 document.getElementById('language').addEventListener('change', function() {
     if (this.value) {
         clearFieldError('language');
     }
+    checkFormCompletion();
 });
 
 document.getElementById('otherService').addEventListener('input', function() {
     if (this.value.trim()) {
         clearFieldError('otherService');
     }
+    checkFormCompletion();
 });
 
 // Clear field errors

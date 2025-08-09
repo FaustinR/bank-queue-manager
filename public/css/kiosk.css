@@ -202,6 +202,15 @@ select {
     height: auto;
     max-height: 120px;
     overflow-y: auto;
+    position: relative;
+    z-index: 1000;
+}
+
+select:focus {
+    position: absolute;
+    z-index: 5000;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 select:focus {
@@ -244,6 +253,11 @@ button {
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
     margin-top: 10px;
+    display: none;
+}
+
+button.show {
+    display: block;
 }
 
 button:hover {
@@ -385,23 +399,39 @@ button:active {
 .queue-info {
     background: rgba(255,255,255,0.9);
     border-radius: 8px;
-    margin-top: auto;
-    margin-bottom: 0;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     backdrop-filter: blur(10px);
     text-align: center;
     font-weight: bold;
     color: #2c5aa0;
     font-size: 13px;
-    flex-shrink: 0;
     width: 100%;
     box-sizing: border-box;
-    position: relative;
-    display: block;
-    visibility: visible;
-    opacity: 1;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 500px;
     z-index: 100;
-    width: 100% !important;
+    padding: 10px;
+}
+
+@media (max-width: 768px) {
+    .queue-info {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        transform: none;
+        max-width: none;
+        width: calc(100% - 20px);
+        font-size: 14px;
+        padding: 12px;
+    }
+    
+    button.show {
+        display: block !important;
+        min-height: 50px;
+    }
 }
 
 .main-container.ticket-generated .queue-info {
@@ -784,10 +814,21 @@ button:active {
     
     .form-row {
         order: 2;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .form-row .form-group select {
+        z-index: 3000;
+    }
+    
+    .form-row .form-group select:focus {
+        z-index: 3001;
     }
     
     #otherServiceGroup {
         order: 3;
+        z-index: 1;
     }
     
     .form-section button {
