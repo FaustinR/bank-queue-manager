@@ -464,7 +464,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
             <div class="message-body">
-                ${message.content.replace(/\\n/g, '<br>')}
+                ${message.messageType === 'voice-note' ? 
+                    `<div class="voice-note-container">
+                        <div class="voice-note-info">
+                            <i class="fas fa-microphone"></i>
+                            <span>Voice Note</span>
+                        </div>
+                        <div class="voice-note-player">
+                            <button class="play-voice-note" data-audio="${message.voiceNoteData}">
+                                <i class="fas fa-play"></i> Play
+                            </button>
+                            <span class="voice-note-duration">Voice message</span>
+                        </div>
+                    </div>` : 
+                    message.content.replace(/\\n/g, '<br>')}
             </div>
             ${message.relatedTicket ? `
                 <div class="message-related-ticket">
@@ -512,6 +525,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userId = callBtn.dataset.userId;
                 const userName = callBtn.dataset.userName;
                 startCall(userId, userName);
+            });
+        }
+        
+        // Add voice note playback functionality
+        const playVoiceBtn = messageView.querySelector('.play-voice-note');
+        if (playVoiceBtn) {
+            playVoiceBtn.addEventListener('click', () => {
+                playVoiceNote(playVoiceBtn);
             });
         }
     }
@@ -1442,6 +1463,69 @@ document.addEventListener('DOMContentLoaded', function() {
             cleanup();
         }
     });
+    
+    // Voice note playback functionality
+    let currentAudio = null;
+    
+    function playVoiceNote(button) {
+        const audioData = button.dataset.audio;
+        const icon = button.querySelector('i');
+        
+        if (!audioData) {
+            window.notifications.error('Error', 'Voice note data not found');
+            return;
+        }
+        
+        // Stop any currently playing audio
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+            // Reset all play buttons
+            document.querySelectorAll('.play-voice-note').forEach(btn => {
+                btn.querySelector('i').className = 'fas fa-play';
+                btn.innerHTML = '<i class="fas fa-play"></i> Play';
+            });
+        }
+        
+        // If this button was playing, just stop
+        if (icon.classList.contains('fa-pause')) {
+            return;
+        }
+        
+        try {
+            // Create audio element from base64 data
+            currentAudio = new Audio(audioData);
+            
+            // Update button to show playing state
+            icon.className = 'fas fa-pause';
+            button.innerHTML = '<i class="fas fa-pause"></i> Pause';
+            
+            // Set up event listeners
+            currentAudio.onended = () => {
+                icon.className = 'fas fa-play';
+                button.innerHTML = '<i class="fas fa-play"></i> Play';
+                currentAudio = null;
+            };
+            
+            currentAudio.onerror = () => {
+                window.notifications.error('Error', 'Failed to play voice note');
+                icon.className = 'fas fa-play';
+                button.innerHTML = '<i class="fas fa-play"></i> Play';
+                currentAudio = null;
+            };
+            
+            // Play the audio
+            currentAudio.play().catch(error => {
+                window.notifications.error('Error', 'Failed to play voice note');
+                icon.className = 'fas fa-play';
+                button.innerHTML = '<i class="fas fa-play"></i> Play';
+                currentAudio = null;
+            });
+            
+        } catch (error) {
+            window.notifications.error('Error', 'Invalid voice note format');
+        }
+    }
     
     // Debug function to create a test message (can be called from console)
     window.createTestMessage = function() {

@@ -80,8 +80,10 @@ async function loadCallLogs() {
                     type: callType,
                     contact: contactName,
                     counter: 'Voice Call',
-                    duration: call.duration > 0 ? formatDuration(call.duration) : (call.status === 'declined' ? null : '0:00'),
-                    timestamp: new Date(call.createdAt)
+                    duration: call.status === 'declined' ? null : (call.duration > 0 ? formatDuration(call.duration) : (call.status === 'answered' || call.status === 'ended' ? '0:00' : null)),
+                    timestamp: new Date(call.createdAt),
+                    callDate: formatCallDate(new Date(call.createdAt)),
+                    callTime: formatCallTime(new Date(call.createdAt))
                 };
             });
             
@@ -130,10 +132,11 @@ function displayCallLogs(callLogs) {
             </div>
             <div class="call-info">
                 <div class="call-contact">${log.contact}</div>
-                <div class="call-details">${log.counter} • ${timeText}</div>
+                <div class="call-details">${log.counter}</div>
+                <div class="call-datetime">${log.callDate} at ${log.callTime}</div>
             </div>
             <div class="call-duration ${log.type === 'missed' ? 'missed' : ''}">
-                ${durationText}
+                Duration: ${durationText}
             </div>
         `;
         
@@ -218,6 +221,24 @@ function formatDuration(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function formatCallDate(date) {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString();
+    }
+}
+
+function formatCallTime(date) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function updateDeleteButton() {

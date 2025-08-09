@@ -552,6 +552,30 @@ body:not(.embedded-display) .counter {
     background-color: #218838 !important;
 }
 
+/* Voice Note Button */
+.voice-note-btn {
+    background-color: #17a2b8 !important;
+    color: white !important;
+    border: none;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 9px;
+    cursor: pointer;
+    display: inline-block;
+    white-space: nowrap;
+    min-width: 45px;
+    text-align: center;
+    line-height: 1.2;
+    box-shadow: 0 1px 3px rgba(23, 162, 184, 0.3);
+    vertical-align: middle;
+    height: 26px;
+    box-sizing: border-box;
+}
+
+.voice-note-btn:hover {
+    background-color: #138496 !important;
+}
+
 /* Call Modal */
 .call-modal {
     background-color: #2c3e50;
@@ -617,6 +641,13 @@ body:not(.embedded-display) .counter {
     }
     
     .call-btn {
+        font-size: 8px;
+        padding: 2px 4px;
+        min-width: 35px;
+        height: 22px;
+    }
+    
+    .voice-note-btn {
         font-size: 8px;
         padding: 2px 4px;
         min-width: 35px;

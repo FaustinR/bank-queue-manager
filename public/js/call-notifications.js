@@ -111,42 +111,26 @@
                 autoGainControl: false
             };
             
-            // Try microphone with retry for multiple browser sessions
-            let retryCount = 0;
-            const maxRetries = 3;
-            
-            while (retryCount < maxRetries) {
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true,
-                            sampleRate: 44100
-                        },
-                        video: false
-                    });
-
-                    break;
-                } catch (error) {
-                    retryCount++;
-
-                    
-                    if (error.name === 'NotAllowedError') {
-                        alert('Microphone access denied. Please allow microphone access and refresh the page.');
-                        throw error;
-                    } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-                        if (retryCount >= maxRetries) {
-                            alert('Microphone is being used by another browser tab. Please close other tabs using the microphone and try again.');
-                            throw error;
-                        }
-                        // Wait before retry
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                    } else {
-                        alert('Failed to access microphone: ' + error.message);
-                        throw error;
-                    }
+            // Get microphone with better error handling
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        deviceId: 'default'
+                    },
+                    video: false
+                });
+            } catch (error) {
+                if (error.name === 'NotAllowedError') {
+                    alert('Microphone access denied. Please allow microphone access.');
+                } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                    alert('Microphone is busy. Please close other browser tabs or applications using the microphone.');
+                } else {
+                    alert('Failed to access microphone: ' + error.message);
                 }
+                throw error;
             }
             
             // Set local audio stream (muted to prevent echo)
@@ -204,13 +188,17 @@
                 
 
                 
-                // Force play for better compatibility
-                setTimeout(() => {
-                    remoteAudio.play().then(() => {
-                        // Audio playing automatically
-                    }).catch(e => {
+                // Force play with Bluetooth speaker support
+                setTimeout(async () => {
+                    try {
+                        // Set audio output to default device (Bluetooth speaker)
+                        if (remoteAudio.setSinkId && typeof remoteAudio.setSinkId === 'function') {
+                            await remoteAudio.setSinkId('default');
+                        }
+                        await remoteAudio.play();
+                    } catch (e) {
                         showAudioEnableButton();
-                    });
+                    }
                 }, 100);
             };
             

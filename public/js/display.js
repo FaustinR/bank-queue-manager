@@ -302,9 +302,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Setup message modal event listeners
     setupMessageModal();
     
-    // Remove all incoming call listeners to prevent duplicate notifications
+    // Completely disable incoming call notifications in display screen
     socket.off('incoming-call');
     socket.removeAllListeners('incoming-call');
+    
+    // Prevent any incoming call handling in display screen
+    socket.on('incoming-call', function() {
+        // Do nothing - notifications handled by parent page only
+        return;
+    });
     
     // Authenticate socket for calls immediately with retry mechanism
     let authRetries = 0;
@@ -393,6 +399,7 @@ function updateDisplay(data) {
                     `<div class="counter-actions">
                         <button class="message-btn" style="position: relative;" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="${isCurrentUserCounter ? 'fas fa-inbox' : 'fas fa-envelope'}"></i> ${isCurrentUserCounter ? 'Inbox' : 'Message'}</button>
                         ${!isCurrentUserCounter && window.innerWidth > 768 && !('ontouchstart' in window) ? `<button class="call-btn" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="fas fa-phone"></i> Call</button>` : ''}
+                        ${!isCurrentUserCounter ? `<button class="voice-note-btn" data-counter="${counterId}" data-teller="${counterStaff[counterId]}" data-teller-id="${counterStaffIds[counterId]}"><i class="fas fa-microphone"></i> Voice Note</button>` : ''}
                     </div>` : 
                     ''}
             </div>
@@ -421,6 +428,11 @@ function updateDisplay(data) {
             const callBtn = counterDiv.querySelector('.call-btn');
             if (callBtn) {
                 callBtn.addEventListener('click', initiateCall);
+            }
+            
+            const voiceNoteBtn = counterDiv.querySelector('.voice-note-btn');
+            if (voiceNoteBtn) {
+                voiceNoteBtn.addEventListener('click', startVoiceNote);
             }
         }
     });
@@ -907,29 +919,25 @@ async function initiateCall(e) {
             autoGainControl: false
         };
         
-        // Try system audio first, fallback to microphone
+        // Get microphone with better device handling
         try {
-            // First try to capture system audio (includes background music)
-            try {
-                localStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: false,
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
-                    }
-                });
-                // System audio captured
-            } catch (e) {
-                // Fallback to microphone if system audio denied
-                localStream = await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: false
-                });
-                // Microphone captured
-            }
+            localStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    deviceId: 'default' // Use default audio device
+                },
+                video: false
+            });
         } catch (error) {
-            alert('Please allow audio access');
+            if (error.name === 'NotAllowedError') {
+                alert('Please allow microphone access for voice calls');
+            } else if (error.name === 'NotReadableError') {
+                alert('Microphone is busy. Please close other applications using the microphone and try again.');
+            } else {
+                alert('Failed to access microphone: ' + error.message);
+            }
             throw error;
         }
         
@@ -992,20 +1000,32 @@ async function initiateCall(e) {
             remoteAudio.srcObject = remoteStream;
             window.remoteAudio = remoteAudio;
             
-            // Force play for better compatibility
-            setTimeout(() => {
-                remoteAudio.play().then(() => {
-                    // Audio playing automatically
-                }).catch(e => {
-                    // Fallback: enable on user interaction
-                    const enableAudio = () => {
-                        remoteAudio.play();
-                        document.removeEventListener('click', enableAudio);
-                        document.removeEventListener('touchstart', enableAudio);
+            // Force play with better Bluetooth speaker support
+            setTimeout(async () => {
+                try {
+                    // Set audio output to default device (Bluetooth speaker if connected)
+                    if (remoteAudio.setSinkId && typeof remoteAudio.setSinkId === 'function') {
+                        await remoteAudio.setSinkId('default');
+                    }
+                    await remoteAudio.play();
+                } catch (e) {
+                    // Show enable audio button if autoplay fails
+                    const enableBtn = document.createElement('button');
+                    enableBtn.textContent = '🔊 Click to Enable Audio';
+                    enableBtn.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100000; background: #007bff; color: white; border: none; padding: 15px 25px; border-radius: 8px; font-size: 16px; cursor: pointer;';
+                    enableBtn.onclick = async () => {
+                        try {
+                            if (remoteAudio.setSinkId) {
+                                await remoteAudio.setSinkId('default');
+                            }
+                            await remoteAudio.play();
+                            enableBtn.remove();
+                        } catch (err) {
+                            alert('Failed to play audio: ' + err.message);
+                        }
                     };
-                    document.addEventListener('click', enableAudio, { once: true });
-                    document.addEventListener('touchstart', enableAudio, { once: true });
-                });
+                    document.body.appendChild(enableBtn);
+                }
             }, 100);
         };
         
@@ -1261,6 +1281,118 @@ socket.on('call-ended-disconnect', (data) => {
         }
     }
 });
+
+// Voice note functionality
+let isRecording = false;
+let mediaRecorder = null;
+let recordedChunks = [];
+
+async function startVoiceNote(e) {
+    e.stopPropagation();
+    
+    const btn = e.currentTarget;
+    const tellerId = btn.getAttribute('data-teller-id');
+    const tellerName = btn.getAttribute('data-teller');
+    const counterId = btn.getAttribute('data-counter');
+    
+    if (!tellerId) {
+        window.notifications.error('Error', 'Cannot send voice note: Teller information not available');
+        return;
+    }
+    
+    if (isRecording) {
+        stopRecording(btn);
+        return;
+    }
+    
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                deviceId: 'default'
+            }
+        });
+        
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'audio/webm;codecs=opus'
+        });
+        
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+        
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+            await sendVoiceNote(audioBlob, tellerId, tellerName, counterId);
+            
+            // Stop all tracks
+            stream.getTracks().forEach(track => track.stop());
+        };
+        
+        mediaRecorder.start();
+        isRecording = true;
+        
+        // Update button appearance
+        btn.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+        btn.style.background = '#dc3545';
+        
+        window.notifications.info('Recording', 'Voice note recording started');
+        
+    } catch (error) {
+        window.notifications.error('Error', 'Failed to access microphone: ' + error.message);
+    }
+}
+
+function stopRecording(btn) {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        
+        // Reset button appearance
+        btn.innerHTML = '<i class="fas fa-microphone"></i> Voice Note';
+        btn.style.background = '#17a2b8';
+        
+        window.notifications.info('Processing', 'Sending voice note...');
+    }
+}
+
+async function sendVoiceNote(audioBlob, tellerId, tellerName, counterId) {
+    try {
+        // Convert blob to base64
+        const reader = new FileReader();
+        reader.onloadend = async function() {
+            const base64data = reader.result;
+            
+            const response = await fetch('/api/messages/voice-note', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tellerId,
+                    tellerName,
+                    counterId,
+                    audioData: base64data
+                })
+            });
+            
+            if (response.ok) {
+                window.notifications.success('Success', `Voice note sent to ${tellerName}`);
+            } else {
+                const error = await response.text();
+                window.notifications.error('Error', 'Failed to send voice note: ' + error);
+            }
+        };
+        reader.readAsDataURL(audioBlob);
+    } catch (error) {
+        window.notifications.error('Error', 'Failed to send voice note: ' + error.message);
+    }
+}
 
 // Remove all incoming call handling from display.js - handled by notification system only
 

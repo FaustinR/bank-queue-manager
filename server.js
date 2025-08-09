@@ -11,6 +11,7 @@ const Ticket = require('./models/Ticket');
 const Counter = require('./models/Counter');
 const User = require('./models/User');
 const Call = require('./models/Call');
+const Message = require('./models/Message');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -41,7 +42,8 @@ const io = socketIo(server, {
 app.set('io', io);
 
 app.use(express.static('public'));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Session middleware
 const sessionStore = MongoStore.create({ 
@@ -342,6 +344,73 @@ app.delete('/api/call-logs', isAuthenticated, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Voice note endpoint (base64 audio data)
+app.post('/api/messages/voice-note', async (req, res) => {
+  try {
+    const { tellerId, tellerName, counterId, audioData } = req.body;
+    
+    if (!audioData) {
+      return res.status(400).send('No voice note data provided');
+    }
+    
+    // Get sender info from session
+    if (!req.session || !req.session.userId) {
+      return res.status(401).send('Authentication required');
+    }
+    
+    const sender = await User.findById(req.session.userId);
+    if (!sender) {
+      return res.status(401).send('User not found');
+    }
+    
+    const senderName = `${sender.firstName} ${sender.lastName}`;
+    
+    // Create message with voice note data
+    const messageData = {
+      tellerId,
+      senderEmail: sender.email,
+      senderName,
+      subject: `Voice Note from Display Screen - Counter ${counterId}`,
+      content: '[Voice Note]',
+      voiceNoteData: audioData,
+      messageType: 'voice-note'
+    };
+    
+    // Create message directly
+    const recipient = await User.findById(tellerId);
+    if (!recipient) {
+      return res.status(404).send('Recipient not found');
+    }
+    
+    const newMessage = new Message({
+      sender: sender._id,
+      recipient: tellerId,
+      subject: messageData.subject,
+      content: messageData.content,
+      messageType: 'voice-note',
+      voiceNoteData: audioData
+    });
+    
+    await newMessage.save();
+    
+    // Emit socket notification
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('newMessage', { 
+        recipientId: tellerId, 
+        messageId: newMessage._id,
+        subject: messageData.subject,
+        senderName: senderName
+      });
+    }
+    
+    res.json({ success: true, message: 'Voice note sent successfully' });
+    
+  } catch (error) {
+    res.status(500).send('Server error: ' + error.message);
   }
 });
 
@@ -978,7 +1047,7 @@ io.on('connection', async (socket) => {
   
   socket.on('answer-call', async (data) => {
     try {
-      // Update call record to answered
+      // Update call record to answered with start time
       await Call.updateOne(
         { 
           $or: [
@@ -987,7 +1056,10 @@ io.on('connection', async (socket) => {
           ],
           status: 'initiated'
         },
-        { status: 'answered' }
+        { 
+          status: 'answered',
+          startTime: new Date()
+        }
       );
     } catch (error) {
       console.error('Error updating call status:', error);
@@ -1010,10 +1082,42 @@ io.on('connection', async (socket) => {
     });
   });
   
-  socket.on('end-call', (data) => {
+  socket.on('end-call', async (data) => {
     console.log('=== CALL END REQUEST ===');
     console.log('From socket:', socket.id, 'userId:', socket.userId);
     console.log('Target user:', data.targetId);
+    
+    // Update call record with end time and duration
+    try {
+      const call = await Call.findOne({
+        $or: [
+          { callerId: socket.userId, recipientId: data.targetId },
+          { callerId: data.targetId, recipientId: socket.userId }
+        ],
+        status: { $in: ['answered', 'initiated'] }
+      }).sort({ createdAt: -1 });
+      
+      if (call) {
+        const endTime = new Date();
+        let duration = 0;
+        
+        // Only calculate duration if call was answered (has startTime)
+        if (call.startTime && call.status === 'answered') {
+          duration = Math.floor((endTime - call.startTime) / 1000); // in seconds
+        }
+        
+        await Call.updateOne(
+          { _id: call._id },
+          { 
+            status: 'ended',
+            endTime: endTime,
+            duration: Math.max(0, duration)
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error updating call duration:', error);
+    }
     
     // Send call-ended to target user
     const targetSockets = Array.from(io.sockets.sockets.values())

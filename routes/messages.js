@@ -13,7 +13,8 @@ router.get('/', isAuthenticated, async (req, res) => {
     const receivedMessages = await Message.find({ recipient: userId })
       .populate('sender', 'firstName lastName email')
       .populate('relatedTicket', 'ticketNumber')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .select('sender recipient subject content messageType voiceNoteData relatedTicket read isSystemMessage systemSender createdAt');
       
     // Add system sender information for system messages
     receivedMessages.forEach(message => {
@@ -30,7 +31,8 @@ router.get('/', isAuthenticated, async (req, res) => {
     const sentMessages = await Message.find({ sender: userId })
       .populate('recipient', 'firstName lastName')
       .populate('relatedTicket', 'ticketNumber')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .select('sender recipient subject content messageType voiceNoteData relatedTicket read isSystemMessage systemSender createdAt');
     
     res.json({ receivedMessages, sentMessages });
   } catch (error) {
@@ -297,7 +299,7 @@ router.get('/users/list', isAuthenticated, async (req, res) => {
 // Send a message from display screen to teller
 router.post('/display-to-teller', async (req, res) => {
   try {
-    const { tellerId, senderEmail, senderName, subject, content } = req.body;
+    const { tellerId, senderEmail, senderName, subject, content, voiceNoteData, messageType } = req.body;
     
     // Process message data
     
@@ -336,7 +338,9 @@ router.post('/display-to-teller', async (req, res) => {
         sender: sender._id,
         recipient: tellerId,
         subject,
-        content
+        content,
+        messageType: messageType || 'text',
+        voiceNoteData: voiceNoteData || null
       });
       
       await newMessage.save();

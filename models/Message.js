@@ -37,6 +37,15 @@ const messageSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  messageType: {
+    type: String,
+    enum: ['text', 'voice-note'],
+    default: 'text'
+  },
+  voiceNoteData: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
