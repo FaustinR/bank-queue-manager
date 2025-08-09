@@ -7,13 +7,14 @@
 .add-user-btn {
     background: #2c5aa0;
     color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
+    padding: 4px 10px;
+    border-radius: 4px;
     text-decoration: none;
     font-weight: bold;
     display: inline-flex;
     align-items: center;
     transition: all 0.3s;
+    font-size: 12px;
 }
 
 .add-user-btn:hover {
@@ -41,12 +42,12 @@
 }
 
 /* Column width distribution */
-.users-table th:nth-child(1) { width: 14%; } /* Name */
+.users-table th:nth-child(1) { width: 15%; } /* Name */
 .users-table th:nth-child(2) { width: 22%; } /* Email */
 .users-table th:nth-child(3) { width: 14%; } /* Role */
-.users-table th:nth-child(4) { width: 25%; } /* Connected */
+.users-table th:nth-child(4) { width: 22%; } /* Connected */
 .users-table th:nth-child(5) { width: 18%; } /* Created */
-.users-table th:nth-child(6) { width: 7%; } /* Actions */
+.users-table th:nth-child(6) { width: 9%; text-align: center; } /* Actions */
 
 .users-table th,
 .users-table td {
@@ -59,6 +60,18 @@
     background-color: #f8f9fa;
     color: #333;
     font-weight: bold;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.users-table th .filter-input {
+    margin-left: 4px;
+    width: 60%;
+    padding: 3px 4px;
+    font-size: 11px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background: white;
 }
 
 .users-table tbody tr:hover {
@@ -89,160 +102,12 @@
     color: white;
 }
 
-/* Connected status styles */
 .connected-status {
     display: inline-block;
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: bold;
-}
-
-/* Accordion styles - matching admin.css */
-.accordion-section {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    margin-bottom: 20px;
-    overflow: hidden;
-}
-
-.accordion-header {
-    padding: 15px 20px;
-    background: #f5f7fa;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    transition: background-color 0.3s;
-}
-
-.accordion-header:hover {
-    background: #edf2f7;
-}
-
-.accordion-header h3 {
-    margin: 0;
-    color: #2c5aa0;
-    font-size: 16px;
-}
-
-.accordion-icon {
-    color: #2c5aa0;
-    transition: transform 0.3s;
-}
-
-.accordion-icon i {
-    font-size: 16px;
-}
-
-.accordion-content {
-    padding: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out, padding 0.3s ease;
-}
-
-.accordion-section.active .accordion-content {
-    padding: 20px;
-    max-height: 2000px; /* Increased to accommodate connected users */
-}
-
-.accordion-section.active .accordion-icon {
-    transform: rotate(180deg);
-}
-
-/* Connected Users list styles */
-.connected-users-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.connected-user-card {
-    background-color: #f8f9fa;
-    border-left: 4px solid #28a745;
-    border-radius: 4px;
-    padding: 10px 15px;
-    width: calc(25% - 10px);
-    min-width: 200px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.connected-user-card h3 {
-    color: #2c3e50;
-    font-size: 1rem;
-    margin: 0 0 5px 0;
-}
-
-.connected-user-card p {
-    color: #6c757d;
-    font-size: 0.9rem;
-    margin: 0;
-}
-
-.connected-user-card .user-role {
-    display: inline-block;
-    border-radius: 3px;
-    font-size: 0.8rem;
-    margin-top: 5px;
-    padding: 2px 6px;
-}
-
-.connected-user-card .counter-badge {
-    display: inline-block;
-    background-color: #007bff;
-    border-radius: 3px;
-    color: white;
-    font-size: 0.8rem;
-    margin-left: 5px;
-    padding: 2px 6px;
-}
-
-.disconnect-btn {
-    display: inline-block;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    font-size: 0.8rem;
-    margin-top: 5px;
-    padding: 3px 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.disconnect-btn:hover {
-    background-color: #c82333;
-}
-
-/* Current user styles */
-.connected-user-card.current-user {
-    background-color: #d1e6ff !important; /* Increased opacity blue background */
-    border-left: 4px solid #007bff !important;
-    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3) !important;
-}
-
-/* Current user row in table */
-.current-user-row {
-    background-color: #d1e6ff !important;
-    border-left: 4px solid #007bff !important;
-}
-
-/* You flag styles */
-.you-flag {
-    display: inline-block;
-    background-color: #007bff !important;
-    color: white !important;
-    font-size: 0.8rem !important;
-    padding: 3px 8px !important;
-    border-radius: 3px !important;
-    margin-right: 5px !important;
-    vertical-align: middle !important;
-    font-weight: bold !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
 .connected-yes {
@@ -292,90 +157,6 @@
     transform: scale(1.1);
 }
 
-/* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal.show {
-    display: flex;
-}
-
-.modal-content {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.modal-content h3 {
-    margin-top: 0;
-    color: #333;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.modal-actions button {
-    padding: 8px 15px;
-    border-radius: 5px;
-    font-weight: bold;
-    cursor: pointer;
-    border: none;
-}
-
-.modal-actions .delete-btn {
-    background: #dc3545;
-    color: white;
-}
-
-.modal-actions .cancel-btn {
-    background: #6c757d;
-    color: white;
-}
-
-.read-only-message {
-    color: #6c757d;
-    font-style: italic;
-    font-size: 0.9em;
-}
-
-/* Header with inline filters */
-.users-table th {
-    padding: 12px 15px;
-    background-color: lightgray;
-    color: #333;
-    font-weight: bold;
-    vertical-align: middle;
-    white-space: nowrap;
-}
-
-.users-table th .filter-input {
-    margin-left: 4px;
-    width: 60%;
-    padding: 3px 4px;
-    font-size: 11px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    background: white;
-}
-
-/* Sort arrows */
 .sort-arrow {
     margin-left: 5px;
     cursor: pointer;
@@ -388,31 +169,17 @@
     color: #000;
 }
 
-.filter-input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    margin: 5px 0;
-}
-
-.filter-input:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
 .clear-filters-btn {
     background: #28a745;
     color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
+    padding: 4px 10px;
+    border-radius: 4px;
     border: none;
     font-weight: bold;
     cursor: pointer;
     margin-left: 10px;
     transition: all 0.3s;
+    font-size: 12px;
 }
 
 .clear-filters-btn:hover {
@@ -420,6 +187,87 @@
     transform: translateY(-2px);
 }
 
+/* Accordion styles */
+.accordion-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.accordion-header {
+    padding: 15px 20px;
+    background: #f5f7fa;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.3s;
+}
+
+.accordion-header:hover {
+    background: #edf2f7;
+}
+
+.accordion-header h3 {
+    margin: 0;
+    color: #2c5aa0;
+    font-size: 16px;
+}
+
+.accordion-icon {
+    color: #2c5aa0;
+    transition: transform 0.3s;
+}
+
+.accordion-content {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease;
+}
+
+.accordion-section.active .accordion-content {
+    padding: 20px;
+    max-height: 2000px;
+}
+
+.accordion-section.active .accordion-icon {
+    transform: rotate(180deg);
+}
+
+.connected-users-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.connected-user-card {
+    background-color: #f8f9fa;
+    border-left: 4px solid #28a745;
+    border-radius: 4px;
+    padding: 10px 15px;
+    width: calc(25% - 10px);
+    min-width: 200px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.connected-user-card h3 {
+    color: #2c3e50;
+    font-size: 1rem;
+    margin: 0 0 5px 0;
+}
+
+.connected-user-card p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Responsive */
 @media (max-width: 1024px) and (min-width: 769px) {
     .users-table th .filter-input {
         width: 50%;
@@ -435,13 +283,17 @@
         padding: 10px 6px;
         font-size: 12px;
     }
+    
+    .users-table td {
+        font-size: 10px;
+    }
 }
 
 @media (max-width: 768px) {
     .users-table th,
     .users-table td {
         padding: 8px 5px;
-        font-size: 12px;
+        font-size: 9px;
     }
     
     .users-table th .filter-input {
@@ -457,15 +309,37 @@
     
     .users-table th {
         white-space: nowrap;
+        font-size: 10px;
+    }
+    
+    .users-actions {
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
+    }
+    
+    .add-user-btn,
+    .clear-filters-btn {
+        padding: 3px 8px;
         font-size: 11px;
     }
     
     .user-actions {
         flex-direction: column;
-        gap: 5px;
+        gap: 3px;
+        align-items: center;
+    }
+    
+    .edit-btn,
+    .delete-btn {
+        font-size: 14px;
+        padding: 6px;
     }
     
     .connected-user-card {
         width: 100%;
+        min-width: auto;
+        margin-bottom: 10px;
     }
 }
