@@ -1308,16 +1308,30 @@ async function startVoiceNote(e) {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
-                deviceId: 'default'
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
+                deviceId: 'default',
+                sampleRate: 48000,
+                channelCount: 2,
+                volume: 1.0
             }
         });
         
         recordedChunks = [];
+        
+        // Try different MIME types for better quality
+        let mimeType = 'audio/webm;codecs=opus';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'audio/webm';
+        }
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'audio/mp4';
+        }
+        
         mediaRecorder = new MediaRecorder(stream, {
-            mimeType: 'audio/webm;codecs=opus'
+            mimeType: mimeType,
+            audioBitsPerSecond: 128000
         });
         
         mediaRecorder.ondataavailable = (event) => {

@@ -472,9 +472,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="voice-note-player">
                             <button class="play-voice-note" data-audio="${message.voiceNoteData}">
-                                <i class="fas fa-play"></i> Play
+                                <i class="fas fa-play"></i>
                             </button>
-                            <span class="voice-note-duration">Voice message</span>
+                            <div class="voice-note-controls">
+                                <div class="voice-note-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill"></div>
+                                        <div class="progress-handle"></div>
+                                    </div>
+                                </div>
+                                <div class="voice-note-time">
+                                    <span class="current-time">0:00</span>
+                                    <span class="total-time">0:00</span>
+                                </div>
+                            </div>
                         </div>
                     </div>` : 
                     message.content.replace(/\\n/g, '<br>')}
@@ -1470,62 +1481,178 @@ document.addEventListener('DOMContentLoaded', function() {
     function playVoiceNote(button) {
         const audioData = button.dataset.audio;
         const icon = button.querySelector('i');
+        const container = button.closest('.voice-note-container');
+        const progressBar = container.querySelector('.progress-bar');
+        const progressFill = container.querySelector('.progress-fill');
+        const progressHandle = container.querySelector('.progress-handle');
+        const currentTimeEl = container.querySelector('.current-time');
+        const totalTimeEl = container.querySelector('.total-time');
         
         if (!audioData) {
             window.notifications.error('Error', 'Voice note data not found');
             return;
         }
         
-        // Stop any currently playing audio
-        if (currentAudio) {
+        // Stop any currently playing audio from other players
+        if (currentAudio && currentAudio !== button.audioInstance) {
             currentAudio.pause();
-            currentAudio = null;
-            // Reset all play buttons
-            document.querySelectorAll('.play-voice-note').forEach(btn => {
-                btn.querySelector('i').className = 'fas fa-play';
-                btn.innerHTML = '<i class="fas fa-play"></i> Play';
-            });
+            resetAllPlayers();
         }
         
-        // If this button was playing, just stop
+        // If this button has a paused audio instance, resume it
+        if (button.audioInstance && button.audioInstance.paused) {
+            button.audioInstance.play();
+            return;
+        }
+        
+        // If this button was playing, pause it
         if (icon.classList.contains('fa-pause')) {
+            if (currentAudio) {
+                currentAudio.pause();
+                icon.className = 'fas fa-play';
+            }
             return;
         }
         
         try {
             // Create audio element from base64 data
-            currentAudio = new Audio(audioData);
+            currentAudio = new Audio();
+            currentAudio.src = audioData;
+            currentAudio.volume = 1.0;
+            currentAudio.preload = 'auto';
+            button.audioInstance = currentAudio;
             
             // Update button to show playing state
             icon.className = 'fas fa-pause';
-            button.innerHTML = '<i class="fas fa-pause"></i> Pause';
             
             // Set up event listeners
+            currentAudio.onloadedmetadata = () => {
+                if (currentAudio.duration && isFinite(currentAudio.duration)) {
+                    totalTimeEl.textContent = formatTime(currentAudio.duration);
+                } else {
+                    totalTimeEl.textContent = '0:00';
+                }
+            };
+            
+            currentAudio.oncanplaythrough = () => {
+                // Audio is ready to play
+            };
+            
+            currentAudio.onloadstart = () => {
+                // Audio loading started
+            };
+            
+            currentAudio.ontimeupdate = () => {
+                if (currentAudio.duration && isFinite(currentAudio.duration) && currentAudio.duration > 0) {
+                    const progress = (currentAudio.currentTime / currentAudio.duration) * 100;
+                    progressFill.style.width = progress + '%';
+                    progressHandle.style.left = progress + '%';
+                }
+                currentTimeEl.textContent = formatTime(currentAudio.currentTime);
+            };
+            
             currentAudio.onended = () => {
+                resetPlayer(button, container);
+            };
+            
+            currentAudio.onpause = () => {
                 icon.className = 'fas fa-play';
-                button.innerHTML = '<i class="fas fa-play"></i> Play';
-                currentAudio = null;
+            };
+            
+            currentAudio.onplay = () => {
+                icon.className = 'fas fa-pause';
             };
             
             currentAudio.onerror = () => {
                 window.notifications.error('Error', 'Failed to play voice note');
-                icon.className = 'fas fa-play';
-                button.innerHTML = '<i class="fas fa-play"></i> Play';
-                currentAudio = null;
+                resetPlayer(button, container);
             };
             
-            // Play the audio
-            currentAudio.play().catch(error => {
-                window.notifications.error('Error', 'Failed to play voice note');
-                icon.className = 'fas fa-play';
-                button.innerHTML = '<i class="fas fa-play"></i> Play';
-                currentAudio = null;
-            });
+            // Add progress bar click handler
+            progressBar.onclick = (e) => {
+                if (currentAudio) {
+                    const rect = progressBar.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const progress = clickX / rect.width;
+                    currentAudio.currentTime = progress * currentAudio.duration;
+                }
+            };
+            
+            // Load and play the audio
+            currentAudio.load();
+            
+            // Wait a moment for loading then play
+            setTimeout(() => {
+                currentAudio.play().then(() => {
+                    // Audio started playing successfully
+                }).catch(error => {
+                    console.error('Audio play error:', error);
+                    window.notifications.error('Error', 'Failed to play voice note. Check audio format.');
+                    resetPlayer(button, container);
+                });
+            }, 100);
             
         } catch (error) {
             window.notifications.error('Error', 'Invalid voice note format');
         }
     }
+    
+    function resetAllPlayers() {
+        document.querySelectorAll('.play-voice-note').forEach(btn => {
+            const container = btn.closest('.voice-note-container');
+            resetPlayer(btn, container);
+        });
+        currentAudio = null;
+    }
+    
+    function resetPlayer(button, container) {
+        const icon = button.querySelector('i');
+        const progressFill = container.querySelector('.progress-fill');
+        const progressHandle = container.querySelector('.progress-handle');
+        const currentTimeEl = container.querySelector('.current-time');
+        
+        icon.className = 'fas fa-play';
+        progressFill.style.width = '0%';
+        progressHandle.style.left = '0%';
+        currentTimeEl.textContent = '0:00';
+        
+        if (button.audioInstance) {
+            button.audioInstance.pause();
+            button.audioInstance = null;
+        }
+        
+        if (currentAudio === button.audioInstance) {
+            currentAudio = null;
+        }
+    }
+    
+    function formatTime(seconds) {
+        if (!seconds || !isFinite(seconds) || isNaN(seconds)) {
+            return '0:00';
+        }
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // Debug function to check voice note data
+    window.debugVoiceNote = function(button) {
+        const audioData = button.dataset.audio;
+        console.log('Audio data length:', audioData ? audioData.length : 'No data');
+        console.log('Audio data type:', audioData ? audioData.substring(0, 50) : 'No data');
+        
+        if (audioData) {
+            const testAudio = new Audio(audioData);
+            testAudio.onloadedmetadata = () => {
+                console.log('Audio duration:', testAudio.duration);
+                console.log('Audio ready state:', testAudio.readyState);
+            };
+            testAudio.onerror = (e) => {
+                console.error('Audio error:', e);
+            };
+            testAudio.load();
+        }
+    };
     
     // Debug function to create a test message (can be called from console)
     window.createTestMessage = function() {
