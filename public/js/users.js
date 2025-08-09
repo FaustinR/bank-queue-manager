@@ -301,8 +301,18 @@ function setupFilters() {
     // Direct event binding for Firefox compatibility
     document.getElementById('nameFilter').oninput = function() { applyFilters(); };
     document.getElementById('emailFilter').oninput = function() { applyFilters(); };
-    document.getElementById('roleFilter').onchange = function() { applyFilters(); };
-    document.getElementById('connectedFilter').onchange = function() { applyFilters(); };
+    
+    // Multiple events for dropdowns to ensure Firefox compatibility
+    const roleFilter = document.getElementById('roleFilter');
+    roleFilter.onchange = function() { applyFilters(); };
+    roleFilter.onclick = function() { setTimeout(applyFilters, 10); };
+    roleFilter.onblur = function() { applyFilters(); };
+    
+    const connectedFilter = document.getElementById('connectedFilter');
+    connectedFilter.onchange = function() { applyFilters(); };
+    connectedFilter.onclick = function() { setTimeout(applyFilters, 10); };
+    connectedFilter.onblur = function() { applyFilters(); };
+    
     document.getElementById('dateFilter').onchange = function() { applyFilters(); };
     document.getElementById('clearFiltersBtn').onclick = function() { clearFilters(); };
 }
