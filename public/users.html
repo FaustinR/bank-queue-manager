@@ -48,11 +48,6 @@
                 </div>
             </header>
             
-            <div class="users-actions">
-                <a href="/signup" class="add-user-btn">Add New User</a>
-                <button id="clearFiltersBtn" class="clear-filters-btn">Clear Filters</button>
-            </div>
-            
             <div class="accordion-section active" id="connectedUsersSection">
                 <div class="accordion-header">
                     <h3>Connected Users</h3>
@@ -65,21 +60,18 @@
                 </div>
             </div>
             
+            <div class="users-actions">
+                <a href="/signup" class="add-user-btn">Add New User</a>
+                <button id="clearFiltersBtn" class="clear-filters-btn">Clear Filters</button>
+            </div>
+            
             <div class="users-table-container">
                 <table class="users-table">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Connected</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                        <tr class="filter-row">
-                            <th><input type="text" class="filter-input" id="nameFilter" placeholder="Filter by name"></th>
-                            <th><input type="text" class="filter-input" id="emailFilter" placeholder="Filter by email"></th>
-                            <th>
+                            <th class="sortable" data-column="name">Name: <input type="text" class="filter-input" id="nameFilter" placeholder="Filter by name"></th>
+                            <th class="sortable" data-column="email">Email: <input type="text" class="filter-input" id="emailFilter" placeholder="Filter by email"></th>
+                            <th class="sortable" data-column="role">Role: 
                                 <select class="filter-input" id="roleFilter">
                                     <option value="">All roles</option>
                                     <option value="admin">Admin</option>
@@ -87,15 +79,15 @@
                                     <option value="employee">Employee</option>
                                 </select>
                             </th>
-                            <th>
+                            <th class="sortable" data-column="connected">Connected: 
                                 <select class="filter-input" id="connectedFilter">
                                     <option value="">All</option>
                                     <option value="yes">Yes</option>
                                     <option value="no">No</option>
                                 </select>
                             </th>
-                            <th><input type="date" class="filter-input" id="dateFilter"></th>
-                            <th></th>
+                            <th class="sortable" data-column="created">Created: <input type="date" class="filter-input" id="dateFilter"></th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">

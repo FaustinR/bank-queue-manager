@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up filters
     setupFilters();
     
+    // Set up sorting
+    setupSorting();
+    
     // Modal functionality
     const modal = document.getElementById('deleteModal');
     const cancelDelete = document.getElementById('cancelDelete');
@@ -140,6 +143,8 @@ async function fetchUsers() {
             allUsers = data.users;
             // Display users (apply any active filters)
             applyFilters();
+            // Re-setup filters after users are loaded
+            setupFilters();
         } else {
             document.getElementById('usersTableBody').innerHTML = 
                 `<tr><td colspan="6">Error loading users: ${data.message || 'Unknown error'}</td></tr>`;
@@ -152,6 +157,9 @@ async function fetchUsers() {
 
 function displayUsers(users) {
     const tableBody = document.getElementById('usersTableBody');
+    if (!tableBody) {
+        return;
+    }
     tableBody.innerHTML = '';
     
     if (users.length === 0) {
@@ -222,6 +230,8 @@ function displayUsers(users) {
         tableBody.appendChild(row);
     });
     
+
+    
     // Add event listeners to buttons only if not in read-only mode
     if (!window.isReadOnly) {
         addButtonEventListeners();
@@ -288,23 +298,13 @@ async function deleteUser(userId) {
 
 // Set up filter event listeners
 function setupFilters() {
-    // Get filter elements
-    const nameFilter = document.getElementById('nameFilter');
-    const emailFilter = document.getElementById('emailFilter');
-    const roleFilter = document.getElementById('roleFilter');
-    const connectedFilter = document.getElementById('connectedFilter');
-    const dateFilter = document.getElementById('dateFilter');
-    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-    
-    // Add event listeners for each filter
-    nameFilter.addEventListener('input', applyFilters);
-    emailFilter.addEventListener('input', applyFilters);
-    roleFilter.addEventListener('change', applyFilters);
-    connectedFilter.addEventListener('change', applyFilters);
-    dateFilter.addEventListener('change', applyFilters);
-    
-    // Add event listener for clear filters button
-    clearFiltersBtn.addEventListener('click', clearFilters);
+    // Direct event binding for Firefox compatibility
+    document.getElementById('nameFilter').oninput = function() { applyFilters(); };
+    document.getElementById('emailFilter').oninput = function() { applyFilters(); };
+    document.getElementById('roleFilter').onchange = function() { applyFilters(); };
+    document.getElementById('connectedFilter').onchange = function() { applyFilters(); };
+    document.getElementById('dateFilter').onchange = function() { applyFilters(); };
+    document.getElementById('clearFiltersBtn').onclick = function() { clearFilters(); };
 }
 
 // Clear all filters
@@ -322,49 +322,139 @@ function clearFilters() {
 
 // Apply filters to the users list
 function applyFilters() {
+    if (!allUsers || allUsers.length === 0) {
+        return;
+    }
+    
     // Get filter values
-    const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
-    const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
     const roleFilter = document.getElementById('roleFilter').value;
     const connectedFilter = document.getElementById('connectedFilter').value;
+    const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
+    const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
     const dateFilter = document.getElementById('dateFilter').value;
     
-    // Filter users based on filter values
-    const filteredUsers = allUsers.filter(user => {
-        // Name filter
-        const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
-        if (nameFilter && !fullName.includes(nameFilter)) {
-            return false;
-        }
-        
-        // Email filter
-        if (emailFilter && !user.email.toLowerCase().includes(emailFilter)) {
-            return false;
-        }
-        
-        // Role filter
-        if (roleFilter && user.role !== roleFilter) {
-            return false;
-        }
-        
-        // Connected filter
-        if (connectedFilter && (user.connected || 'no') !== connectedFilter) {
-            return false;
-        }
-        
-        // Date filter
-        if (dateFilter) {
+    // Start with all users
+    let filteredUsers = allUsers;
+    
+    // Apply role filter
+    if (roleFilter) {
+        filteredUsers = filteredUsers.filter(user => user.role === roleFilter);
+    }
+    
+    // Apply connected filter
+    if (connectedFilter) {
+        filteredUsers = filteredUsers.filter(user => (user.connected || 'no') === connectedFilter);
+    }
+    
+    // Apply name filter
+    if (nameFilter) {
+        filteredUsers = filteredUsers.filter(user => 
+            `${user.firstName} ${user.lastName}`.toLowerCase().includes(nameFilter)
+        );
+    }
+    
+    // Apply email filter
+    if (emailFilter) {
+        filteredUsers = filteredUsers.filter(user => 
+            user.email.toLowerCase().includes(emailFilter)
+        );
+    }
+    
+    // Apply date filter
+    if (dateFilter) {
+        filteredUsers = filteredUsers.filter(user => {
             const userDate = new Date(user.createdAt).toISOString().split('T')[0];
-            if (userDate !== dateFilter) {
-                return false;
-            }
-        }
-        
-        return true;
-    });
+            return userDate === dateFilter;
+        });
+    }
     
     // Display filtered users
     displayUsers(filteredUsers);
 }
 
-// Function removed - now handled in connected-users.js
+// Make applyFilters globally accessible
+window.applyFilters = applyFilters;
+
+// Clear all filters
+function clearFilters() {
+    // Reset filter inputs
+    document.getElementById('nameFilter').value = '';
+    document.getElementById('emailFilter').value = '';
+    document.getElementById('roleFilter').value = '';
+    document.getElementById('connectedFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    
+    // Apply filters (will show all users since filters are cleared)
+    applyFilters();
+}
+
+// Set up sorting functionality
+function setupSorting() {
+    const sortableHeaders = document.querySelectorAll('.users-table th.sortable');
+    
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function(e) {
+            // Don't sort if clicking on filter input
+            if (e.target.classList.contains('filter-input')) {
+                return;
+            }
+            
+            const column = this.getAttribute('data-column');
+            
+            // Remove sort classes from all headers
+            sortableHeaders.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            
+            // Determine sort direction
+            let direction = 'asc';
+            if (this.classList.contains('sort-asc')) {
+                direction = 'desc';
+            }
+            
+            // Add appropriate class
+            this.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            
+            // Sort the users
+            sortUsers(column, direction);
+        });
+    });
+}
+
+// Sort users by column
+function sortUsers(column, direction) {
+    const sortedUsers = [...allUsers].sort((a, b) => {
+        let valueA, valueB;
+        
+        switch(column) {
+            case 'name':
+                valueA = `${a.firstName} ${a.lastName}`.toLowerCase();
+                valueB = `${b.firstName} ${b.lastName}`.toLowerCase();
+                break;
+            case 'email':
+                valueA = a.email.toLowerCase();
+                valueB = b.email.toLowerCase();
+                break;
+            case 'role':
+                valueA = a.role.toLowerCase();
+                valueB = b.role.toLowerCase();
+                break;
+            case 'connected':
+                valueA = (a.connected || 'no').toLowerCase();
+                valueB = (b.connected || 'no').toLowerCase();
+                break;
+            case 'created':
+                valueA = new Date(a.createdAt);
+                valueB = new Date(b.createdAt);
+                break;
+            default:
+                return 0;
+        }
+        
+        if (direction === 'asc') {
+            return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
+        } else {
+            return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;
+        }
+    });
+    
+    displayUsers(sortedUsers);
+}
