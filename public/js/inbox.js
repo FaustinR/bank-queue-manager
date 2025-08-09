@@ -500,6 +500,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button class="btn-reply" data-id="${message._id}">
                         <i class="fas fa-reply"></i> Reply
                     </button>
+                    <button class="btn-voice-reply" data-sender-id="${message.sender._id}" data-sender-name="${sender}">
+                        <i class="fas fa-microphone"></i> Voice Reply
+                    </button>
                     <button class="btn-call" data-user-id="${message.sender._id}" data-user-name="${sender}">
                         <i class="fas fa-phone"></i> Call
                     </button>
@@ -544,6 +547,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (playVoiceBtn) {
             playVoiceBtn.addEventListener('click', () => {
                 playVoiceNote(playVoiceBtn);
+            });
+        }
+        
+        // Add voice reply functionality
+        const voiceReplyBtn = messageView.querySelector('.btn-voice-reply');
+        if (voiceReplyBtn) {
+            voiceReplyBtn.addEventListener('click', () => {
+                startVoiceReply(voiceReplyBtn.dataset.senderId, voiceReplyBtn.dataset.senderName, message.subject);
             });
         }
     }
@@ -1515,58 +1526,68 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            // Create audio element from base64 data
-            currentAudio = new Audio();
-            currentAudio.src = audioData;
-            currentAudio.volume = 1.0;
+            // Create simple audio element
+            currentAudio = document.createElement('audio');
+            currentAudio.controls = false;
             currentAudio.preload = 'auto';
+            currentAudio.volume = 1.0;
+            
+            // Convert base64 to blob for better compatibility
+            const byteCharacters = atob(audioData.split(',')[1]);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(blob);
+            
+            currentAudio.src = audioUrl;
+            
+            // Mobile compatibility settings
+            currentAudio.playsInline = true;
+            currentAudio.setAttribute('playsinline', 'true');
+            currentAudio.setAttribute('webkit-playsinline', 'true');
+            
+            // Desktop: Try to route to headphones/default audio
+            if (currentAudio.setSinkId && typeof currentAudio.setSinkId === 'function' && !('ontouchstart' in window)) {
+                currentAudio.setSinkId('default').catch(() => {});
+            }
+            
+            // Add to DOM temporarily for better browser support
+            currentAudio.style.display = 'none';
+            document.body.appendChild(currentAudio);
+            
             button.audioInstance = currentAudio;
             
             // Update button to show playing state
             icon.className = 'fas fa-pause';
             
             // Set up event listeners
-            currentAudio.onloadedmetadata = () => {
-                if (currentAudio.duration && isFinite(currentAudio.duration)) {
-                    totalTimeEl.textContent = formatTime(currentAudio.duration);
-                } else {
-                    totalTimeEl.textContent = '0:00';
-                }
-            };
+            currentAudio.addEventListener('loadedmetadata', () => {
+                totalTimeEl.textContent = formatTime(currentAudio.duration || 0);
+            });
             
-            currentAudio.oncanplaythrough = () => {
-                // Audio is ready to play
-            };
-            
-            currentAudio.onloadstart = () => {
-                // Audio loading started
-            };
-            
-            currentAudio.ontimeupdate = () => {
-                if (currentAudio.duration && isFinite(currentAudio.duration) && currentAudio.duration > 0) {
+            currentAudio.addEventListener('timeupdate', () => {
+                if (currentAudio.duration > 0) {
                     const progress = (currentAudio.currentTime / currentAudio.duration) * 100;
                     progressFill.style.width = progress + '%';
                     progressHandle.style.left = progress + '%';
                 }
                 currentTimeEl.textContent = formatTime(currentAudio.currentTime);
-            };
+            });
             
-            currentAudio.onended = () => {
+            currentAudio.addEventListener('ended', () => {
                 resetPlayer(button, container);
-            };
+                URL.revokeObjectURL(audioUrl);
+            });
             
-            currentAudio.onpause = () => {
-                icon.className = 'fas fa-play';
-            };
-            
-            currentAudio.onplay = () => {
-                icon.className = 'fas fa-pause';
-            };
-            
-            currentAudio.onerror = () => {
+            currentAudio.addEventListener('error', (e) => {
+                console.error('Audio error:', e);
                 window.notifications.error('Error', 'Failed to play voice note');
                 resetPlayer(button, container);
-            };
+                URL.revokeObjectURL(audioUrl);
+            });
             
             // Add progress bar click handler
             progressBar.onclick = (e) => {
@@ -1578,19 +1599,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             };
             
-            // Load and play the audio
+            // Load and play the audio with user interaction handling
             currentAudio.load();
             
-            // Wait a moment for loading then play
-            setTimeout(() => {
-                currentAudio.play().then(() => {
-                    // Audio started playing successfully
-                }).catch(error => {
-                    console.error('Audio play error:', error);
-                    window.notifications.error('Error', 'Failed to play voice note. Check audio format.');
-                    resetPlayer(button, container);
-                });
-            }, 100);
+            // Ensure audio context is resumed (Chrome fix)
+            if (window.AudioContext || window.webkitAudioContext) {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    // Force audio to be ready
+                    currentAudio.muted = false;
+                    currentAudio.volume = 1.0;
+                } catch (e) {
+                    console.log('Audio context resume failed:', e);
+                }
+            }
+            
+            // Update button state
+            icon.className = 'fas fa-pause';
+            
+            // Play with user interaction
+            currentAudio.play().catch(error => {
+                console.error('Play failed:', error);
+                icon.className = 'fas fa-play';
+                window.notifications.error('Error', 'Click play button again to enable audio');
+            });
             
         } catch (error) {
             window.notifications.error('Error', 'Invalid voice note format');
@@ -1618,6 +1653,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (button.audioInstance) {
             button.audioInstance.pause();
+            // Remove from DOM if it was added
+            if (button.audioInstance.parentNode) {
+                button.audioInstance.parentNode.removeChild(button.audioInstance);
+            }
             button.audioInstance = null;
         }
         
@@ -1634,6 +1673,211 @@ document.addEventListener('DOMContentLoaded', function() {
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
+    
+    function showClickToPlay(button, container) {
+        const clickToPlayBtn = document.createElement('button');
+        clickToPlayBtn.className = 'click-to-play-btn';
+        clickToPlayBtn.innerHTML = '<i class="fas fa-volume-up"></i> Click to Enable Audio';
+        clickToPlayBtn.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        `;
+        
+        clickToPlayBtn.onclick = () => {
+            if (button.audioInstance) {
+                button.audioInstance.play().then(() => {
+                    clickToPlayBtn.remove();
+                }).catch(e => {
+                    window.notifications.error('Error', 'Audio playback failed');
+                });
+            }
+        };
+        
+        container.style.position = 'relative';
+        container.appendChild(clickToPlayBtn);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (clickToPlayBtn.parentNode) {
+                clickToPlayBtn.remove();
+            }
+        }, 10000);
+    }
+    
+    // Voice reply functionality
+    let isRecordingReply = false;
+    let replyMediaRecorder = null;
+    let replyRecordedChunks = [];
+    let replyStream = null;
+    
+    async function startVoiceReply(recipientId, recipientName, originalSubject) {
+        if (isRecordingReply) {
+            stopVoiceReply();
+            return;
+        }
+        
+        // Get available audio input devices
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+        
+        // Try to find built-in microphone
+        let micDeviceId = 'default';
+        const builtInMic = audioInputs.find(device => 
+            device.label.toLowerCase().includes('built-in') ||
+            device.label.toLowerCase().includes('internal') ||
+            device.label.toLowerCase().includes('array') ||
+            device.deviceId === 'default'
+        );
+        
+        if (builtInMic) {
+            micDeviceId = builtInMic.deviceId;
+        }
+        
+        navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
+                deviceId: micDeviceId,
+                sampleRate: 48000,
+                channelCount: 2,
+                volume: 1.0,
+                latency: 0,
+                googEchoCancellation: false,
+                googAutoGainControl: false,
+                googNoiseSuppression: false,
+                googHighpassFilter: false,
+                googTypingNoiseDetection: false
+            }
+        })
+        .then(stream => {
+            replyStream = stream;
+            replyRecordedChunks = [];
+            
+            let mimeType = 'audio/webm;codecs=opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'audio/webm';
+            }
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'audio/mp4';
+            }
+            
+            replyMediaRecorder = new MediaRecorder(stream, {
+                mimeType: mimeType,
+                audioBitsPerSecond: 128000
+            });
+            
+            replyMediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    replyRecordedChunks.push(event.data);
+                }
+            };
+            
+            replyMediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(replyRecordedChunks, { type: mimeType });
+                await sendVoiceReply(audioBlob, recipientId, recipientName, originalSubject);
+                
+                if (replyStream) {
+                    replyStream.getTracks().forEach(track => track.stop());
+                    replyStream = null;
+                }
+            };
+            
+            replyMediaRecorder.start();
+            isRecordingReply = true;
+            
+            showRecordingIndicator(recipientName);
+            
+        })
+        .catch(error => {
+            window.notifications.error('Error', 'Failed to access microphone: ' + error.message);
+        });
+    }
+    
+    function stopVoiceReply() {
+        if (replyMediaRecorder && isRecordingReply) {
+            replyMediaRecorder.stop();
+            isRecordingReply = false;
+            hideRecordingIndicator();
+        }
+    }
+    
+    function showRecordingIndicator(recipientName) {
+        const indicator = document.createElement('div');
+        indicator.id = 'voiceReplyIndicator';
+        indicator.className = 'voice-reply-indicator';
+        indicator.innerHTML = `
+            <div class="recording-animation">
+                <i class="fas fa-microphone"></i>
+                <div class="pulse"></div>
+            </div>
+            <div class="recording-text">
+                <div>Recording voice reply to ${recipientName}</div>
+                <button class="stop-recording-btn" onclick="stopVoiceReply()">
+                    <i class="fas fa-stop"></i> Stop & Send
+                </button>
+            </div>
+        `;
+        document.body.appendChild(indicator);
+    }
+    
+    function hideRecordingIndicator() {
+        const indicator = document.getElementById('voiceReplyIndicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+    
+    async function sendVoiceReply(audioBlob, recipientId, recipientName, originalSubject) {
+        try {
+            const reader = new FileReader();
+            reader.onloadend = async function() {
+                const base64data = reader.result;
+                
+                const subject = originalSubject.startsWith('Re:') ? originalSubject : 'Re: ' + originalSubject;
+                
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipientId: recipientId,
+                        subject: subject,
+                        content: '[Voice Reply]',
+                        messageType: 'voice-note',
+                        voiceNoteData: base64data
+                    })
+                });
+                
+                if (response.ok) {
+                    window.notifications.success('Success', `Voice reply sent to ${recipientName}`);
+                    // Refresh messages to show the sent reply
+                    loadMessages();
+                } else {
+                    const error = await response.text();
+                    window.notifications.error('Error', 'Failed to send voice reply: ' + error);
+                }
+            };
+            reader.readAsDataURL(audioBlob);
+        } catch (error) {
+            window.notifications.error('Error', 'Failed to send voice reply: ' + error.message);
+        }
+    }
+    
+    // Expose stop function globally
+    window.stopVoiceReply = stopVoiceReply;
     
     // Debug function to check voice note data
     window.debugVoiceNote = function(button) {

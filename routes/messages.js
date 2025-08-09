@@ -178,7 +178,7 @@ router.get('/:id', isAuthenticated, async (req, res) => {
 // Send a new message
 router.post('/', isAuthenticated, async (req, res) => {
   try {
-    const { recipientId, recipientEmail, subject, content, relatedTicket } = req.body;
+    const { recipientId, recipientEmail, subject, content, relatedTicket, messageType, voiceNoteData } = req.body;
     
     if (!recipientId || !subject || !content) {
       return res.status(400).json({ message: 'Recipient, subject and content are required' });
@@ -198,7 +198,9 @@ router.post('/', isAuthenticated, async (req, res) => {
       recipient: recipientId,
       subject,
       content,
-      relatedTicket: relatedTicket || null
+      relatedTicket: relatedTicket || null,
+      messageType: messageType || 'text',
+      voiceNoteData: voiceNoteData || null
     });
     
     await newMessage.save();

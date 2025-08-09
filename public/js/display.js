@@ -1306,15 +1306,38 @@ async function startVoiceNote(e) {
     }
     
     try {
+        // Get available audio input devices
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+        
+        // Try to find built-in microphone (usually contains 'built-in', 'internal', or 'default')
+        let micDeviceId = 'default';
+        const builtInMic = audioInputs.find(device => 
+            device.label.toLowerCase().includes('built-in') ||
+            device.label.toLowerCase().includes('internal') ||
+            device.label.toLowerCase().includes('array') ||
+            device.deviceId === 'default'
+        );
+        
+        if (builtInMic) {
+            micDeviceId = builtInMic.deviceId;
+        }
+        
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 echoCancellation: false,
                 noiseSuppression: false,
                 autoGainControl: false,
-                deviceId: 'default',
+                deviceId: micDeviceId,
                 sampleRate: 48000,
                 channelCount: 2,
-                volume: 1.0
+                volume: 1.0,
+                latency: 0,
+                googEchoCancellation: false,
+                googAutoGainControl: false,
+                googNoiseSuppression: false,
+                googHighpassFilter: false,
+                googTypingNoiseDetection: false
             }
         });
         
