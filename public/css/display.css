@@ -68,6 +68,8 @@ body {
     text-align: center; 
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
@@ -129,6 +131,8 @@ body {
     margin: 5px 0 15px;
     text-align: center;
     transition: all 0.3s ease;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .counter-staff-container.has-staff {
@@ -522,10 +526,13 @@ body:not(.embedded-display) .counter {
 /* Counter Actions Container */
 .counter-actions {
     display: flex;
-    gap: 3px;
+    gap: 10px;
     justify-content: center;
-    align-items: baseline;
+    align-items: center;
     margin-top: 3px;
+    flex-wrap: wrap;
+    overflow: hidden;
+    max-width: 100%;
 }
 
 /* Call Button */
