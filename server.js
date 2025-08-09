@@ -1391,6 +1391,62 @@ app.get('/api/tickets/by-number/:number', async (req, res) => {
   }
 });
 
+// API endpoint to delete tickets (admin only)
+app.delete('/api/tickets/delete', isAdmin, async (req, res) => {
+  try {
+    const { ticketIds } = req.body;
+    
+    if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0) {
+      return res.status(400).json({ error: 'No ticket IDs provided' });
+    }
+    
+    // Delete tickets from database
+    const result = await Ticket.deleteMany({ _id: { $in: ticketIds } });
+    
+    // Remove deleted tickets from in-memory queues
+    Object.keys(queues).forEach(counterId => {
+      queues[counterId] = queues[counterId].filter(ticket => 
+        !ticketIds.includes(ticket.id.toString())
+      );
+    });
+    
+    // Update counters if any deleted tickets were being served
+    for (const counterId of Object.keys(counters)) {
+      if (counters[counterId].current && 
+          ticketIds.includes(counters[counterId].current.id.toString())) {
+        counters[counterId].current = null;
+        counters[counterId].status = 'available';
+        
+        // Update counter in database
+        await Counter.findOneAndUpdate(
+          { counterId: parseInt(counterId) },
+          { status: 'available', currentTicket: null }
+        );
+      }
+    }
+    
+    // Get counter staff information
+    const staffInfo = await getCounterStaffInfo();
+    
+    // Broadcast update to all clients
+    const queuesCopy = {};
+    Object.keys(queues).forEach(key => {
+      queuesCopy[key] = [...queues[key]];
+    });
+    
+    io.emit('queueUpdate', { 
+      queues: queuesCopy, 
+      counters, 
+      counterStaff: staffInfo.counterStaff,
+      counterStaffIds: staffInfo.counterStaffIds
+    });
+    
+    res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // API endpoint for ticket history (public)
 app.get('/api/tickets/history', async (req, res) => {
   try {

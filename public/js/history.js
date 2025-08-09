@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('embedded-history');
     }
     
+    // Check if user is admin and show delete controls
+    checkAdminStatus();
+    
     // Fetch counter staff information first
     fetchCounterStaff().then(() => {
         // Then fetch ticket history
@@ -90,7 +93,119 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up sortable columns
     setupSortableColumns();
+    
+    // Set up delete functionality
+    setupDeleteFunctionality();
 });
+
+// Check if user is admin
+async function checkAdminStatus() {
+    try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.user && data.user.role === 'admin') {
+                // Show admin controls
+                document.getElementById('admin-controls').style.display = 'table-cell';
+                document.getElementById('admin-actions').style.display = 'table-cell';
+                document.getElementById('deleteSelectedBtn').style.display = 'inline-block';
+            }
+        }
+    } catch (error) {
+        // Not admin or error
+    }
+}
+
+// Set up delete functionality
+function setupDeleteFunctionality() {
+    // Select all checkbox
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.ticket-checkbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        updateDeleteButton();
+    });
+    
+    // Delete selected button
+    document.getElementById('deleteSelectedBtn').addEventListener('click', function() {
+        const selectedIds = getSelectedTicketIds();
+        if (selectedIds.length > 0) {
+            showDeleteModal(selectedIds, selectedIds.length > 1);
+        }
+    });
+}
+
+// Get selected ticket IDs
+function getSelectedTicketIds() {
+    const checkboxes = document.querySelectorAll('.ticket-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.dataset.ticketId);
+}
+
+// Update delete button state
+function updateDeleteButton() {
+    const selectedCount = document.querySelectorAll('.ticket-checkbox:checked').length;
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    deleteBtn.textContent = selectedCount > 0 ? `Delete Selected (${selectedCount})` : 'Delete Selected';
+    deleteBtn.disabled = selectedCount === 0;
+}
+
+// Delete tickets
+async function deleteTickets(ticketIds) {
+    try {
+        const response = await fetch('/api/tickets/delete', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ticketIds })
+        });
+        
+        if (response.ok) {
+            window.notifications.success('Success', `${ticketIds.length} ticket(s) deleted successfully`);
+            // Refresh the ticket list
+            await fetchCounterStaff();
+            fetchTicketHistory();
+            // Reset select all checkbox
+            document.getElementById('selectAll').checked = false;
+        } else {
+            const error = await response.text();
+            window.notifications.error('Error', `Failed to delete tickets: ${error}`);
+        }
+    } catch (error) {
+        window.notifications.error('Error', 'Failed to delete tickets');
+    }
+}
+
+// Delete single ticket
+function deleteSingleTicket(ticketId) {
+    showDeleteModal([ticketId], false);
+}
+
+// Global variable to store tickets to delete
+let ticketsToDelete = [];
+
+// Show delete confirmation modal
+function showDeleteModal(ticketIds, isMultiple) {
+    ticketsToDelete = ticketIds;
+    const message = isMultiple ? 
+        `Are you sure you want to delete ${ticketIds.length} tickets?` : 
+        'Are you sure you want to delete this ticket?';
+    document.getElementById('deleteMessage').textContent = message;
+    document.getElementById('deleteModal').style.display = 'block';
+}
+
+// Close delete modal
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+    ticketsToDelete = [];
+}
+
+// Confirm delete action
+async function confirmDelete() {
+    if (ticketsToDelete.length > 0) {
+        await deleteTickets(ticketsToDelete);
+        closeDeleteModal();
+    }
+}
 
 function setupColumnFilters() {
     // Ticket number filter
@@ -310,7 +425,9 @@ function displayTickets(tickets) {
     tableBody.innerHTML = '';
     
     if (tickets.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="9">No tickets found</td></tr>';
+        const isAdmin = document.getElementById('admin-controls').style.display !== 'none';
+        const colspan = isAdmin ? '11' : '9';
+        tableBody.innerHTML = `<tr><td colspan="${colspan}">No tickets found</td></tr>`;
         return;
     }
     
@@ -420,7 +537,11 @@ function displayTickets(tickets) {
             tellerName = window.counterStaff[ticket.counterId];
         }
         
+        // Check if admin controls are visible
+        const isAdmin = document.getElementById('admin-controls').style.display !== 'none';
+        
         row.innerHTML = `
+            ${isAdmin ? `<td><input type="checkbox" class="ticket-checkbox" data-ticket-id="${ticket._id}" onchange="updateDeleteButton()"></td>` : ''}
             <td>${ticket.ticketNumber}</td>
             <td>${ticket.customerName}</td>
             <td>${serviceDisplay}</td>
@@ -430,6 +551,7 @@ function displayTickets(tickets) {
             <td>${createdDate}</td>
             <td>${waitTime}</td>
             <td>${serviceTime}</td>
+            ${isAdmin ? `<td><button class="delete-single-btn" onclick="deleteSingleTicket('${ticket._id}')">🗑️</button></td>` : ''}
         `;
         
         tableBody.appendChild(row);

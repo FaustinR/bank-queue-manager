@@ -469,34 +469,39 @@ button:active {
     }
 }
 
-/* Large screens - extra spacing */
-@media (min-height: 900px) and (min-width: 1200px) {
+/* Large screens - reduced sizes for better presentation */
+@media (min-width: 1200px) {
     .form-group {
-        margin-bottom: 25px;
+        margin-bottom: 15px;
     }
     
     .form-logo {
-        width: 100px;
-        height: 100px;
+        width: 60px;
+        height: 60px;
     }
     
     h1 {
-        font-size: clamp(2em, 3vw + 1rem, 3em);
-        margin-bottom: 25px;
+        font-size: 1.5em;
+        margin-bottom: 15px;
     }
     
     input, select {
-        padding: 12px;
-        font-size: clamp(18px, 2vw + 0.5rem, 24px);
+        padding: 8px;
+        font-size: 14px;
     }
     
     button {
-        padding: 22px;
-        font-size: clamp(20px, 2.2vw + 0.5rem, 26px);
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    label {
+        font-size: 12px;
     }
     
     .form-section {
         max-height: 88vh;
+        padding: 15px;
     }
     
     .main-container.ticket-generated .form-section {
