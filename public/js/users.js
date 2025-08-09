@@ -143,8 +143,9 @@ async function fetchUsers() {
             allUsers = data.users;
             // Display users (apply any active filters)
             applyFilters();
-            // Re-setup filters after users are loaded
+            // Re-setup filters and sorting after users are loaded
             setupFilters();
+            setupSorting();
         } else {
             document.getElementById('usersTableBody').innerHTML = 
                 `<tr><td colspan="6">Error loading users: ${data.message || 'Unknown error'}</td></tr>`;
@@ -221,8 +222,8 @@ function displayUsers(users) {
                 <td><span class="connected-status ${connectedClass}">${connectedText}</span></td>
                 <td>${createdDate}</td>
                 <td class="user-actions">
-                    <button class="edit-btn" data-id="${user._id}">Edit</button>
-                    <button class="delete-btn" data-id="${user._id}">Delete</button>
+                    <button class="edit-btn" data-id="${user._id}" title="Edit User">✏️</button>
+                    <button class="delete-btn" data-id="${user._id}" title="Delete User">🗑️</button>
                 </td>
             `;
         }
@@ -382,56 +383,66 @@ function applyFilters() {
     displayUsers(filteredUsers);
 }
 
-// Make applyFilters globally accessible
+// Make functions globally accessible
 window.applyFilters = applyFilters;
 
-// Clear all filters
-function clearFilters() {
-    // Reset filter inputs
-    document.getElementById('nameFilter').value = '';
-    document.getElementById('emailFilter').value = '';
-    document.getElementById('roleFilter').value = '';
-    document.getElementById('connectedFilter').value = '';
-    document.getElementById('dateFilter').value = '';
-    
-    // Apply filters (will show all users since filters are cleared)
-    applyFilters();
-}
+// Global sort state
+let currentSort = { column: null, direction: null };
 
-// Set up sorting functionality
-function setupSorting() {
-    const sortableHeaders = document.querySelectorAll('.users-table th.sortable');
-    
-    sortableHeaders.forEach(header => {
-        header.addEventListener('click', function(e) {
-            // Don't sort if clicking on filter input
-            if (e.target.classList.contains('filter-input')) {
-                return;
-            }
-            
-            const column = this.getAttribute('data-column');
-            
-            // Remove sort classes from all headers
-            sortableHeaders.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
-            
-            // Determine sort direction
-            let direction = 'asc';
-            if (this.classList.contains('sort-asc')) {
-                direction = 'desc';
-            }
-            
-            // Add appropriate class
-            this.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
-            
-            // Sort the users
-            sortUsers(column, direction);
-        });
+// Toggle sort function
+function toggleSort(column) {
+    // Reset all arrows
+    document.querySelectorAll('.sort-arrow').forEach(arrow => {
+        arrow.textContent = '↕';
     });
-}
-
-// Sort users by column
-function sortUsers(column, direction) {
-    const sortedUsers = [...allUsers].sort((a, b) => {
+    
+    let direction = 'asc';
+    
+    // If clicking the same column, toggle direction
+    if (currentSort.column === column) {
+        direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    }
+    
+    // Update sort state
+    currentSort = { column, direction };
+    
+    // Update arrow display
+    const arrow = document.getElementById(column + 'Sort');
+    if (arrow) {
+        arrow.textContent = direction === 'asc' ? '↑' : '↓';
+    }
+    
+    // Sort the users immediately
+    if (!allUsers || allUsers.length === 0) {
+        return;
+    }
+    
+    // Get filtered users and sort them
+    let users = [...allUsers];
+    
+    // Apply current filters
+    const nameFilter = document.getElementById('nameFilter')?.value.toLowerCase() || '';
+    const emailFilter = document.getElementById('emailFilter')?.value.toLowerCase() || '';
+    const roleFilter = document.getElementById('roleFilter')?.value || '';
+    const connectedFilter = document.getElementById('connectedFilter')?.value || '';
+    const dateFilter = document.getElementById('dateFilter')?.value || '';
+    
+    if (nameFilter || emailFilter || roleFilter || connectedFilter || dateFilter) {
+        users = users.filter(user => {
+            if (nameFilter && !`${user.firstName} ${user.lastName}`.toLowerCase().includes(nameFilter)) return false;
+            if (emailFilter && !user.email.toLowerCase().includes(emailFilter)) return false;
+            if (roleFilter && user.role !== roleFilter) return false;
+            if (connectedFilter && (user.connected || 'no') !== connectedFilter) return false;
+            if (dateFilter) {
+                const userDate = new Date(user.createdAt).toISOString().split('T')[0];
+                if (userDate !== dateFilter) return false;
+            }
+            return true;
+        });
+    }
+    
+    // Sort users
+    users.sort((a, b) => {
         let valueA, valueB;
         
         switch(column) {
@@ -466,5 +477,150 @@ function sortUsers(column, direction) {
         }
     });
     
-    displayUsers(sortedUsers);
+    // Force table update
+    const tableBody = document.getElementById('usersTableBody');
+    if (!tableBody) {
+        return;
+    }
+    
+    // Clear table completely
+    tableBody.innerHTML = '';
+    
+    // Rebuild table with sorted users
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.firstName} ${user.lastName}</td>
+            <td>${user.email}</td>
+            <td><span class="user-role role-${user.role}">${user.role}</span></td>
+            <td><span class="connected-status connected-${user.connected || 'no'}">${user.connected || 'No'}</span></td>
+            <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+            <td class="user-actions">
+                <button class="edit-btn" data-id="${user._id}" title="Edit User">✏️</button>
+                <button class="delete-btn" data-id="${user._id}" title="Delete User">🗑️</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Make toggleSort globally accessible
+window.toggleSort = toggleSort;
+
+// Clear all filters
+function clearFilters() {
+    // Reset filter inputs
+    document.getElementById('nameFilter').value = '';
+    document.getElementById('emailFilter').value = '';
+    document.getElementById('roleFilter').value = '';
+    document.getElementById('connectedFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    
+    // Apply filters (will show all users since filters are cleared)
+    applyFilters();
+}
+
+// Set up sorting functionality
+function setupSorting() {
+    const sortableHeaders = document.querySelectorAll('.users-table th.sortable');
+    
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function(e) {
+            // Don't sort if clicking on filter input or select
+            if (e.target.classList.contains('filter-input') || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') {
+                e.stopPropagation();
+                return;
+            }
+            
+            const column = this.getAttribute('data-column');
+            
+            // Remove sort classes from all headers
+            sortableHeaders.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            
+            // Determine sort direction
+            let direction = 'asc';
+            if (this.classList.contains('sort-asc')) {
+                direction = 'desc';
+            }
+            
+            // Add appropriate class
+            this.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            
+            // Sort the users
+            sortUsers(column, direction);
+        });
+        
+        // Prevent filter inputs from triggering sort
+        const filterInput = header.querySelector('.filter-input');
+        if (filterInput) {
+            filterInput.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+    });
+}
+
+// Sort users by column
+function sortUsers(column, direction) {
+    if (!allUsers || allUsers.length === 0) {
+        return;
+    }
+    
+    // Get currently filtered users first
+    const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
+    const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
+    const roleFilter = document.getElementById('roleFilter').value;
+    const connectedFilter = document.getElementById('connectedFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    // Apply filters first
+    let filteredUsers = allUsers.filter(user => {
+        if (nameFilter && !`${user.firstName} ${user.lastName}`.toLowerCase().includes(nameFilter)) return false;
+        if (emailFilter && !user.email.toLowerCase().includes(emailFilter)) return false;
+        if (roleFilter && user.role !== roleFilter) return false;
+        if (connectedFilter && (user.connected || 'no') !== connectedFilter) return false;
+        if (dateFilter) {
+            const userDate = new Date(user.createdAt).toISOString().split('T')[0];
+            if (userDate !== dateFilter) return false;
+        }
+        return true;
+    });
+    
+    // Sort the filtered users
+    filteredUsers.sort((a, b) => {
+        let valueA, valueB;
+        
+        if (column === 'name') {
+            valueA = `${a.firstName} ${a.lastName}`;
+            valueB = `${b.firstName} ${b.lastName}`;
+        } else if (column === 'email') {
+            valueA = a.email;
+            valueB = b.email;
+        } else if (column === 'role') {
+            valueA = a.role;
+            valueB = b.role;
+        } else if (column === 'connected') {
+            valueA = a.connected || 'no';
+            valueB = b.connected || 'no';
+        } else if (column === 'created') {
+            valueA = new Date(a.createdAt);
+            valueB = new Date(b.createdAt);
+        }
+        
+        if (typeof valueA === 'string') {
+            valueA = valueA.toLowerCase();
+            valueB = valueB.toLowerCase();
+        }
+        
+        if (direction === 'asc') {
+            return valueA > valueB ? 1 : -1;
+        } else {
+            return valueA < valueB ? 1 : -1;
+        }
+    });
+    
+    // Clear and rebuild table
+    const tableBody = document.getElementById('usersTableBody');
+    tableBody.innerHTML = '';
+    displayUsers(filteredUsers);
 }

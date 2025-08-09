@@ -69,24 +69,24 @@
                 <table class="users-table">
                     <thead>
                         <tr>
-                            <th class="sortable" data-column="name">Name: <input type="text" class="filter-input" id="nameFilter" placeholder="Filter by name"></th>
-                            <th class="sortable" data-column="email">Email: <input type="text" class="filter-input" id="emailFilter" placeholder="Filter by email"></th>
-                            <th class="sortable" data-column="role">Role: 
+                            <th>Name: <input type="text" class="filter-input" id="nameFilter" placeholder="Filter by name"><span class="sort-arrow" onclick="toggleSort('name')" id="nameSort">↕</span></th>
+                            <th>Email: <input type="text" class="filter-input" id="emailFilter" placeholder="Filter by email"><span class="sort-arrow" onclick="toggleSort('email')" id="emailSort">↕</span></th>
+                            <th>Role: 
                                 <select class="filter-input" id="roleFilter">
                                     <option value="">All roles</option>
                                     <option value="admin">Admin</option>
                                     <option value="supervisor">Supervisor</option>
                                     <option value="employee">Employee</option>
-                                </select>
+                                </select><span class="sort-arrow" onclick="toggleSort('role')" id="roleSort">↕</span>
                             </th>
-                            <th class="sortable" data-column="connected">Connected: 
+                            <th>Connected: 
                                 <select class="filter-input" id="connectedFilter">
                                     <option value="">All</option>
                                     <option value="yes">Yes</option>
                                     <option value="no">No</option>
-                                </select>
+                                </select><span class="sort-arrow" onclick="toggleSort('connected')" id="connectedSort">↕</span>
                             </th>
-                            <th class="sortable" data-column="created">Created: <input type="date" class="filter-input" id="dateFilter"></th>
+                            <th>Created: <input type="date" class="filter-input" id="dateFilter"><span class="sort-arrow" onclick="toggleSort('created')" id="createdSort">↕</span></th>
                             <th>Actions</th>
                         </tr>
                     </thead>
