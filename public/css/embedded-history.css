@@ -18,7 +18,7 @@ body.embedded-history .container {
 
 body.embedded-history .filter-section {
     padding: 15px;
-    background: #f5f7fa;
+    background: lightgray;
     border-radius: 8px;
     margin-bottom: 15px;
 }

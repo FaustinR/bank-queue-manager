@@ -73,6 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add active class to show button is clicked
         refreshBtn.classList.add('active');
         
+        // Clear all filters first
+        clearAllFilters();
+        
         // Fetch data
         await fetchCounterStaff();
         fetchTicketHistory();
@@ -328,6 +331,23 @@ function sortTickets(columnIndex, direction) {
     displayTickets(sortedTickets);
 }
 
+// Clear all filters including main filters and column filters
+function clearAllFilters() {
+    // Clear main filters
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('serviceFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    
+    // Clear column filters
+    document.getElementById('ticketNumberFilter').value = '';
+    document.getElementById('customerFilter').value = '';
+    document.getElementById('serviceColumnFilter').value = '';
+    document.getElementById('counterFilter').value = '';
+    document.getElementById('tellerFilter').value = '';
+    document.getElementById('statusColumnFilter').value = '';
+    document.getElementById('createdFilter').value = '';
+}
+
 function filterTickets() {
     // Get filter values
     const ticketNumberFilter = document.getElementById('ticketNumberFilter').value.toLowerCase();
@@ -551,7 +571,7 @@ function displayTickets(tickets) {
             <td>${createdDate}</td>
             <td>${waitTime}</td>
             <td>${serviceTime}</td>
-            ${isAdmin ? `<td><button class="delete-single-btn" onclick="deleteSingleTicket('${ticket._id}')">🗑️</button></td>` : ''}
+            ${isAdmin ? `<td><button class="delete-single-btn" onclick="deleteSingleTicket('${ticket._id}')">✖</button></td>` : ''}
         `;
         
         tableBody.appendChild(row);

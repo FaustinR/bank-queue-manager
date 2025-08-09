@@ -81,20 +81,23 @@ h1 {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
-    align-items: flex-end;
+    align-items: flex-start;
 }
 
 .filter-group {
     flex: 1;
     min-width: 150px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 label {
-    display: block;
-    margin-bottom: 5px;
     color: #333;
     font-weight: bold;
     font-size: 14px;
+    white-space: nowrap;
+    margin: 0;
 }
 
 select, input[type="date"] {
@@ -103,6 +106,7 @@ select, input[type="date"] {
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 14px;
+    background: white;
 }
 
 .filter-btn, .refresh-btn {
@@ -117,7 +121,7 @@ select, input[type="date"] {
 }
 
 .refresh-btn {
-    background: #6c757d;
+    background: #28a745;
 }
 
 .filter-btn:hover {
@@ -128,9 +132,12 @@ select, input[type="date"] {
     background: #5a6268;
 }
 
-.refresh-btn.active {
-    background: #28a745;
-    transform: scale(0.95);
+#refreshBtn.active {
+    background: #28a745 !important;
+    color: white !important;
+    transform: scale(0.95) !important;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5) !important;
+    border: 1px solid #28a745 !important;
 }
 
 .delete-btn {
@@ -158,14 +165,18 @@ select, input[type="date"] {
     background: none;
     border: none;
     cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 4px;
+    transition: all 0.3s;
+    color: #dc3545;
     font-size: 16px;
-    padding: 4px;
-    border-radius: 3px;
-    transition: background 0.3s;
+    font-weight: bold;
 }
 
 .delete-single-btn:hover {
     background: #f8d7da;
+    color: #721c24;
+    transform: scale(1.1);
 }
 
 .ticket-checkbox {
@@ -298,6 +309,51 @@ select, input[type="date"] {
     border-collapse: collapse;
 }
 
+/* Standard column width for most columns */
+.ticket-table th,
+.ticket-table td {
+    width: 100px;
+    max-width: 100px;
+}
+
+/* Checkbox column - smallest */
+.ticket-table th:nth-child(1), .ticket-table td:nth-child(1) {
+    width: 20px;
+    max-width: 20px;
+    text-align: center;
+    padding: 8px 4px;
+}
+
+/* Mobile responsiveness for checkbox */
+@media (max-width: 768px) {
+    .ticket-table th:nth-child(1), .ticket-table td:nth-child(1) {
+        width: 15px;
+        max-width: 15px;
+        padding: 4px 2px;
+    }
+}
+
+/* Other smaller columns */
+.ticket-table th:nth-child(2), .ticket-table td:nth-child(2), /* Ticket # */
+.ticket-table th:nth-child(5), .ticket-table td:nth-child(5), /* Counter (regular) */
+.ticket-table th:nth-child(6), .ticket-table td:nth-child(6), /* Counter (admin) */
+.ticket-table th:nth-child(7), .ticket-table td:nth-child(7), /* Status (regular) */
+.ticket-table th:nth-child(8), .ticket-table td:nth-child(8) /* Status (admin) */ {
+    width: 80px;
+    max-width: 80px;
+}
+
+/* Larger columns for text content */
+.ticket-table th:nth-child(3), .ticket-table td:nth-child(3), /* Customer (regular) */
+.ticket-table th:nth-child(4), .ticket-table td:nth-child(4), /* Customer (admin) */
+.ticket-table th:nth-child(4), .ticket-table td:nth-child(4), /* Service (regular) */
+.ticket-table th:nth-child(5), .ticket-table td:nth-child(5), /* Service (admin) */
+.ticket-table th:nth-child(6), .ticket-table td:nth-child(6), /* Teller (regular) */
+.ticket-table th:nth-child(7), .ticket-table td:nth-child(7) /* Teller (admin) */ {
+    width: 150px;
+    max-width: 150px;
+}
+
 .ticket-table th, .ticket-table td {
     padding: 12px 15px;
     text-align: left;
@@ -323,6 +379,29 @@ select, input[type="date"] {
     margin-bottom: 8px;
     font-size: 14px;
     text-align: left;
+}
+
+/* Align columns without filters with filtered columns */
+.ticket-table th:not([data-title])::before {
+    content: attr(data-column-title);
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 14px;
+    text-align: left;
+}
+
+/* Fallback for columns without data-column-title */
+.ticket-table th:not([data-title]):not([data-column-title]) {
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.ticket-table th:not([data-title]):not([data-column-title])::before {
+    content: '';
+    display: block;
+    height: 22px;
+    margin-bottom: 8px;
 }
 
 .ticket-table tbody tr:hover {
