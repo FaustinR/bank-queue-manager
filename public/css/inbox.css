@@ -611,4 +611,12 @@
     .modal-content {
         width: 90%;
     }
+    
+    .content-header h1 {
+        display: none;
+    }
+    
+    .compose-btn {
+        margin: 0 20px 20px 5px;
+    }
 }

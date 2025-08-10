@@ -475,13 +475,30 @@ select, input[type="date"] {
 }
 
 @media (max-width: 768px) {
+    .table-container {
+        overflow-x: scroll;
+    }
+    
+    .table-container::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .table-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
     .filter-row {
         flex-direction: column;
         gap: 10px;
     }
     
     .filter-row:last-child {
-        flex-direction: row;
+        flex-direction: column;
         justify-content: space-between;
         align-items: flex-start;
     }
@@ -528,5 +545,19 @@ select, input[type="date"] {
     
     .filter-group[style*="margin-left"] {
         margin-left: 0 !important;
+    }
+    
+    /* Mobile button layout - side by side */
+    .button-group {
+        display: flex !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+    
+    .button-group .filter-btn,
+    .button-group .refresh-btn {
+        width: 48% !important;
+        margin: 0 !important;
     }
 }

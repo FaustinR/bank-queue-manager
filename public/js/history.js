@@ -48,11 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('embedded-history');
     }
     
-    // Check if user is admin and show delete controls
-    checkAdminStatus();
-    
-    // Fetch counter staff information first, then ticket history
-    Promise.all([fetchCounterStaff()]).then(() => {
+    // Load all data simultaneously
+    Promise.all([checkAdminStatus(), fetchCounterStaff()]).then(() => {
         fetchTicketHistory();
     });
     

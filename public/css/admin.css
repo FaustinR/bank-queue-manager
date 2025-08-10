@@ -374,6 +374,7 @@ body {
     .content-header h1 {
         font-size: 1.4rem;
         margin-left: 15px;
+        margin-top: -40px;
     }
     
     .user-info {
@@ -381,7 +382,7 @@ body {
         justify-content: space-between;
         font-size: 14px;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 5px;
         margin-left: 15px;
         margin-right: 20px;
     }

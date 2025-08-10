@@ -714,6 +714,85 @@ html {
         padding: 15px;
     }
     
+    /* Call logs mobile layout - override call-logs.css */
+    .call-logs-list .call-log-item {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 5px !important;
+        padding: 10px 8px !important;
+    }
+    
+    .call-logs-list .call-log-checkbox {
+        margin-right: 5px !important;
+    }
+    
+    .call-logs-list .call-log-delete {
+        margin-right: 5px !important;
+        padding: 3px 6px !important;
+        font-size: 10px !important;
+    }
+    
+    .call-logs-list .call-direction {
+        margin-right: 5px !important;
+        font-size: 16px !important;
+        width: 18px !important;
+    }
+    
+    .call-logs-list .call-info {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+    
+    .call-logs-list .call-contact {
+        font-size: 13px !important;
+        margin-bottom: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    
+    .call-logs-list .call-details,
+    .call-logs-list .call-datetime {
+        display: none !important;
+    }
+    
+    .call-logs-list .call-duration {
+        margin-left: 5px !important;
+        font-size: 11px !important;
+        font-weight: bold !important;
+        color: #2c5aa0 !important;
+        white-space: nowrap !important;
+        align-self: center !important;
+    }
+    
+    .call-logs-list .call-duration.missed {
+        color: #dc3545 !important;
+    }
+
+    /* Ticket history filter buttons mobile layout */
+    .filter-row {
+        flex-wrap: wrap !important;
+        position: relative !important;
+    }
+    
+    .filter-row .filter-group {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .filter-row .filter-group:last-child {
+        order: 10 !important;
+        width: 48% !important;
+        margin: 10px 0 0 0 !important;
+    }
+    
+    .filter-row .refresh-btn {
+        order: 11 !important;
+        width: 48% !important;
+        margin: 10px 0 0 4% !important;
+    }
+
     /* Hide all call-related elements on mobile */
     #callNotification,
     .call-btn,
