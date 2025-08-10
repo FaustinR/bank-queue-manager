@@ -209,6 +209,8 @@ select, input[type="date"] {
     max-width: 90%;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     animation: slideIn 0.3s;
+    position: relative;
+    cursor: move;
 }
 
 .modal-header {
@@ -478,8 +480,15 @@ select, input[type="date"] {
         gap: 10px;
     }
     
+    .filter-row:last-child {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
     .filter-group {
         width: 100%;
+        align-items: center;
     }
     
     .ticket-table {
@@ -509,5 +518,15 @@ select, input[type="date"] {
     
     .column-filter {
         width: 100%;
+    }
+    
+    .filter-group select,
+    .filter-group input[type="date"] {
+        width: 100%;
+        flex: 1;
+    }
+    
+    .filter-group[style*="margin-left"] {
+        margin-left: 0 !important;
     }
 }

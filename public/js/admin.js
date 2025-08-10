@@ -78,6 +78,18 @@ function setupAccordions() {
             // Toggle active class on the clicked section
             section.classList.toggle('active');
             
+            // Hide sidebar toggle when display screen is active
+            if (section.id === 'displayScreenSection') {
+                const sidebarToggle = document.querySelector('.sidebar-toggle');
+                if (sidebarToggle) {
+                    if (section.classList.contains('active')) {
+                        sidebarToggle.style.display = 'none';
+                    } else {
+                        sidebarToggle.style.display = 'flex';
+                    }
+                }
+            }
+            
             // If this is the ticket history section and it's being opened, load the iframe
             if (section.id === 'ticketHistorySection' && section.classList.contains('active')) {
                 const iframe = section.querySelector('iframe');

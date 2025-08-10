@@ -62,9 +62,12 @@
                         <button type="submit" class="filter-btn">Apply Filters</button>
                     </div>
                     <button type="button" id="refreshBtn" class="refresh-btn">Refresh</button>
-                    <button type="button" id="deleteSelectedBtn" class="delete-btn" style="display: none;">Delete Selected</button>
                 </div>
             </form>
+        </div>
+        
+        <div class="delete-actions" style="display: none;" id="deleteActions">
+            <button type="button" id="deleteSelectedBtn" class="delete-btn">Delete Selected</button>
         </div>
         
         <div class="table-container">
@@ -109,9 +112,21 @@
                                 <input type="text" class="column-filter" id="createdFilter" placeholder="Filter...">
                             </div>
                         </th>
-                        <th data-title="Wait Time"></th>
-                        <th data-title="Service Time"></th>
-                        <th id="admin-actions" style="display: none;" data-title="Actions"></th>
+                        <th class="sortable has-filter" data-title="Wait Time">
+                            <div class="filter-container">
+                                <input type="text" class="column-filter" id="waitTimeFilter" placeholder="Filter...">
+                            </div>
+                        </th>
+                        <th class="sortable has-filter" data-title="Service Time">
+                            <div class="filter-container">
+                                <input type="text" class="column-filter" id="serviceTimeFilter" placeholder="Filter...">
+                            </div>
+                        </th>
+                        <th id="admin-actions" style="display: none;" class="has-filter" data-title="Actions">
+                            <div class="filter-container">
+                                <input type="text" class="column-filter" id="actionsFilter" placeholder="Filter...">
+                            </div>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="ticketTable">

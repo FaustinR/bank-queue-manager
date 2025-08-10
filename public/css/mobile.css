@@ -8,6 +8,15 @@ html {
 
 /* Mobile-first approach */
 @media (max-width: 768px) {
+    /* Hide sidebar toggle only in iframe contexts */
+    body.embedded-display .sidebar-toggle,
+    body.embedded-display .sidebar-toggle::before,
+    body.embedded-display .sidebar-toggle::after,
+    body.embedded-display::before {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
     /* Full width mobile layout */
     html, body {
         margin: 0;
@@ -75,6 +84,14 @@ html {
     /* Hide original toggle button on mobile */
     .sidebar .sidebar-toggle {
         display: none !important;
+    }
+    
+    /* Hide sidebar toggle in embedded contexts */
+    body.embedded-display .sidebar-toggle,
+    body.embedded-display .sidebar-toggle::before,
+    body.embedded-display .sidebar-toggle::after {
+        display: none !important;
+        visibility: hidden !important;
     }
     
     /* Sidebar toggle button - always visible at top right */

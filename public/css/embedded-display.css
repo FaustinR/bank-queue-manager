@@ -20,3 +20,12 @@ body.embedded-display .container {
 body.embedded-display .container > *:not(.display-screen):not(.queue-status) {
     display: none;
 }
+
+.sidebar-toggle {
+    display: none !important;
+}
+
+body.embedded-display .sidebar-toggle,
+body.embedded-display .sidebar-toggle::before {
+    display: none !important;
+}

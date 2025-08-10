@@ -373,14 +373,17 @@ body {
     
     .content-header h1 {
         font-size: 1.4rem;
+        margin-left: 15px;
     }
     
     .user-info {
-        width: 100%;
+        width: calc(100% - 30px);
         justify-content: space-between;
         font-size: 14px;
         flex-wrap: wrap;
         gap: 8px;
+        margin-left: 15px;
+        margin-right: 20px;
     }
 }
 /* Dashboard Stats */
@@ -642,6 +645,83 @@ body {
         height: 14px;
         line-height: 12px;
         margin-left: 5px;
+    }
+    
+    .stat-card {
+        flex-direction: row;
+        align-items: center;
+        padding: 15px;
+    }
+    
+    .stat-icon {
+        font-size: 1.2rem;
+        margin-right: 8px;
+    }
+    
+    .stat-content {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .stat-content h3 {
+        margin: 0;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    
+    .stat-value {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    
+    .dashboard-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .dashboard-stats .stat-card:nth-child(n+5) {
+        grid-column: 1 / -1;
+    }
+    
+    .chart-card {
+        padding: 15px;
+    }
+    
+    .chart-card h3 {
+        display: inline;
+        margin: 0 5px 0 0;
+        font-size: 12px;
+    }
+    
+    .time-display {
+        display: inline;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    
+    .time-unit {
+        font-size: 1rem;
+        margin-left: 2px;
+    }
+    
+    iframe .sidebar-toggle,
+    #displayScreenFrame .sidebar-toggle {
+        display: none !important;
+    }
+    
+    /* Hide sidebar toggle when display screen is active */
+    #displayScreenSection.active ~ * .sidebar-toggle,
+    .accordion-section.active .sidebar-toggle {
+        display: none !important;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar-toggle {
+            display: none !important;
+        }
     }
 }
 /* Additional role badge classes for JavaScript */

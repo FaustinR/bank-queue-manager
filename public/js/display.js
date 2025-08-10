@@ -257,6 +257,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (isInIframe) {
         // We're in an iframe
         document.body.classList.add('embedded-display');
+        
+        // Hide any sidebar toggle buttons
+        const sidebarToggles = document.querySelectorAll('.sidebar-toggle');
+        sidebarToggles.forEach(toggle => {
+            toggle.style.display = 'none';
+            toggle.style.visibility = 'hidden';
+        });
     } else {
         // We're in a new tab - hide and remove the message modal
         const messageModal = document.getElementById('messageModal');

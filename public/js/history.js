@@ -51,9 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if user is admin and show delete controls
     checkAdminStatus();
     
-    // Fetch counter staff information first
-    fetchCounterStaff().then(() => {
-        // Then fetch ticket history
+    // Fetch counter staff information first, then ticket history
+    Promise.all([fetchCounterStaff()]).then(() => {
         fetchTicketHistory();
     });
     
@@ -111,7 +110,7 @@ async function checkAdminStatus() {
                 // Show admin controls
                 document.getElementById('admin-controls').style.display = 'table-cell';
                 document.getElementById('admin-actions').style.display = 'table-cell';
-                document.getElementById('deleteSelectedBtn').style.display = 'inline-block';
+                document.getElementById('deleteActions').style.display = 'block';
             }
         }
     } catch (error) {
@@ -193,13 +192,70 @@ function showDeleteModal(ticketIds, isMultiple) {
         `Are you sure you want to delete ${ticketIds.length} tickets?` : 
         'Are you sure you want to delete this ticket?';
     document.getElementById('deleteMessage').textContent = message;
-    document.getElementById('deleteModal').style.display = 'block';
+    const modal = document.getElementById('deleteModal');
+    modal.style.display = 'block';
+    makeDraggable(modal);
 }
 
 // Close delete modal
 function closeDeleteModal() {
     document.getElementById('deleteModal').style.display = 'none';
     ticketsToDelete = [];
+}
+
+// Make modal draggable
+function makeDraggable(modal) {
+    const modalContent = modal.querySelector('.modal-content');
+    const header = modal.querySelector('.modal-header');
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+    
+    header.addEventListener('mousedown', dragStart);
+    header.addEventListener('touchstart', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('touchend', dragEnd);
+    
+    function dragStart(e) {
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        initialX = clientX - xOffset;
+        initialY = clientY - yOffset;
+        
+        if (e.target === header || header.contains(e.target)) {
+            isDragging = true;
+            modalContent.style.margin = '0';
+            modalContent.style.position = 'absolute';
+        }
+    }
+    
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            currentX = clientX - initialX;
+            currentY = clientY - initialY;
+            xOffset = currentX;
+            yOffset = currentY;
+            
+            modalContent.style.transform = `translate(${currentX}px, ${currentY}px)`;
+        }
+    }
+    
+    function dragEnd() {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+    }
 }
 
 // Confirm delete action
@@ -418,6 +474,9 @@ function filterTickets() {
 
 async function fetchTicketHistory() {
     try {
+        // Ensure counter staff data is loaded first
+        await fetchCounterStaff();
+        
         const status = document.getElementById('statusFilter').value;
         const service = document.getElementById('serviceFilter').value;
         const date = document.getElementById('dateFilter').value;

@@ -172,3 +172,15 @@ body.in-iframe {
     padding: 0 !important;
     background: white !important;
 }
+
+.sidebar-toggle,
+.sidebar-toggle::before {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle,
+    .sidebar-toggle::before {
+        display: none !important;
+    }
+}

@@ -11,3 +11,7 @@ body.in-iframe .container {
 body.in-iframe .header-bar {
     padding-left: 20px !important;
 }
+
+.sidebar-toggle {
+    display: none !important;
+}
