@@ -38,7 +38,6 @@
 .users-table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
 }
 
 /* Column width distribution */
@@ -326,7 +325,7 @@
     }
     
     .user-actions {
-        flex-direction: column;
+        flex-direction: row;
         gap: 3px;
         align-items: center;
     }

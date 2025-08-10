@@ -793,6 +793,148 @@ html {
         margin: 10px 0 0 4% !important;
     }
 
+    /* Users table mobile scroll */
+    .users-table-container {
+        overflow-x: auto !important;
+    }
+    
+    .users-table-container::-webkit-scrollbar {
+        height: 8px !important;
+    }
+    
+    .users-table-container::-webkit-scrollbar-track {
+        background: #f1f1f1 !important;
+    }
+    
+    .users-table-container::-webkit-scrollbar-thumb {
+        background: #888 !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Users table column widths on mobile */
+    .users-table {
+        min-width: 800px !important;
+    }
+    
+    .users-table th,
+    .users-table td {
+        min-width: 120px !important;
+        max-width: 120px !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        white-space: normal !important;
+        padding: 8px 6px !important;
+        vertical-align: top !important;
+    }
+    
+    /* Column widths sized for longest expected content */
+    .users-table th:nth-child(1),
+    .users-table td:nth-child(1) {
+        min-width: 200px !important;
+        max-width: 200px !important;
+    }
+    
+    .users-table th:nth-child(2),
+    .users-table td:nth-child(2) {
+        min-width: 240px !important;
+        max-width: 240px !important;
+    }
+    
+    .users-table th:nth-child(3),
+    .users-table td:nth-child(3) {
+        min-width: 150px !important;
+        max-width: 150px !important;
+    }
+    
+    .users-table th:nth-child(4),
+    .users-table td:nth-child(4) {
+        min-width: 150px !important;
+        max-width: 150px !important;
+    }
+    
+    .users-table th:nth-child(5),
+    .users-table td:nth-child(5) {
+        min-width: 170px !important;
+        max-width: 170px !important;
+    }
+    
+    .users-table th:nth-child(6),
+    .users-table td:nth-child(6) {
+        min-width: 80px !important;
+        max-width: 80px !important;
+    }
+    
+    /* Actions column - keep icons side by side */
+    .users-table td:last-child {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 5px !important;
+    }
+    
+    .users-table td:last-child a,
+    .users-table td:last-child button {
+        display: inline-block !important;
+        margin: 0 !important;
+    }
+    
+    /* Ensure full width background coverage */
+    .users-table-container {
+        width: 100vw !important;
+        margin-left: calc(-50vw + 50%) !important;
+        border-radius: 0 !important;
+    }
+    
+    .users-table {
+        width: 100% !important;
+    }
+    
+    .users-table th,
+    .users-table td {
+        background-color: inherit !important;
+    }
+    
+    .users-table tbody tr:hover {
+        background-color: #f1f1f1 !important;
+    }
+    
+    /* Consistent column header styling on mobile */
+    .users-table th {
+        white-space: nowrap !important;
+    }
+    
+    .users-table th .sort-arrow {
+        display: inline !important;
+        margin-left: 5px !important;
+    }
+    
+    /* Reduce Connected column filter width */
+    .users-table th:nth-child(4) .filter-input {
+        width: 50px !important;
+    }
+    
+    /* Consistent font size regardless of sidebar state */
+    .users-table th,
+    .users-table td,
+    body.sidebar-folded .users-table th,
+    body.sidebar-folded .users-table td {
+        font-size: 12px !important;
+    }
+    
+    /* Users actions button positioning */
+    .users-actions {
+        justify-content: space-between !important;
+        flex-direction: row !important;
+    }
+    
+    .add-user-btn {
+        margin-left: 10px !important;
+    }
+    
+    .clear-filters-btn {
+        margin-right: 10px !important;
+    }
+
     /* Hide all call-related elements on mobile */
     #callNotification,
     .call-btn,
