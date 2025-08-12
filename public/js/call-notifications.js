@@ -104,21 +104,16 @@
             initAudioContext();
             createAudioElements();
             
-            // Simple audio constraints for reliability
-            const audioConstraints = {
-                echoCancellation: false,
-                noiseSuppression: false,
-                autoGainControl: false
-            };
-            
-            // Get microphone with better error handling
+            // Get microphone with better error handling and same-device support
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         echoCancellation: true,
                         noiseSuppression: true,
                         autoGainControl: true,
-                        deviceId: 'default'
+                        sampleRate: 44100,
+                        channelCount: 1,
+                        volume: 1.0
                     },
                     video: false
                 });
@@ -136,6 +131,7 @@
             // Set local audio stream (muted to prevent echo)
             if (localAudio) {
                 localAudio.srcObject = localStream;
+                localAudio.volume = 0; // Prevent local echo
             }
             
             // Create peer connection with optimized STUN servers
@@ -156,27 +152,29 @@
             
             // Handle remote stream
             peerConnection.ontrack = (event) => {
-
+                console.log('Remote stream received:', event.streams[0]);
                 remoteStream = event.streams[0];
                 
                 if (!remoteStream || remoteStream.getAudioTracks().length === 0) {
+                    console.log('No remote audio tracks found');
                     return;
                 }
                 
-
+                console.log('Remote audio tracks:', remoteStream.getAudioTracks().length);
                 
                 // Remove existing audio element
                 if (remoteAudio) {
                     remoteAudio.remove();
                 }
                 
-                // Create hidden audio element with autoplay
+                // Create audio element with better configuration
                 remoteAudio = document.createElement('audio');
-                remoteAudio.autoplay = true;
+                remoteAudio.autoplay = false; // Start false, enable after user interaction
                 remoteAudio.controls = false;
                 remoteAudio.playsInline = true;
                 remoteAudio.volume = 1.0;
                 remoteAudio.muted = false;
+                remoteAudio.preload = 'auto';
                 remoteAudio.setAttribute('playsinline', 'true');
                 remoteAudio.setAttribute('webkit-playsinline', 'true');
                 remoteAudio.style.display = 'none';
@@ -186,17 +184,73 @@
                 remoteAudio.srcObject = remoteStream;
                 window.remoteAudio = remoteAudio;
                 
-
+                console.log('Remote audio element created and stream set');
+                
+                // Enable autoplay after setting stream
+                remoteAudio.autoplay = true;
+                
+                // Add event listeners for debugging
+                remoteAudio.addEventListener('loadeddata', () => {
+                    console.log('Remote audio loaded data');
+                });
+                remoteAudio.addEventListener('canplay', () => {
+                    console.log('Remote audio can play');
+                });
+                remoteAudio.addEventListener('play', () => {
+                    console.log('Remote audio started playing');
+                });
+                remoteAudio.addEventListener('pause', () => {
+                    console.log('Remote audio paused');
+                });
+                remoteAudio.addEventListener('error', (e) => {
+                    console.error('Remote audio error:', e);
+                });
                 
                 // Force play with Bluetooth speaker support
                 setTimeout(async () => {
                     try {
-                        // Set audio output to default device (Bluetooth speaker)
+                        console.log('Attempting to play remote audio');
+                        
+                        // Try to set audio output to Bluetooth speaker if available
                         if (remoteAudio.setSinkId && typeof remoteAudio.setSinkId === 'function') {
-                            await remoteAudio.setSinkId('default');
+                            try {
+                                // Get available audio devices
+                                const devices = await navigator.mediaDevices.enumerateDevices();
+                                const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+                                
+                                console.log('Available audio outputs:', audioOutputs.map(d => d.label || d.deviceId));
+                                
+                                // Look for Bluetooth speaker (contains 'bluetooth' or common BT speaker names)
+                                const bluetoothDevice = audioOutputs.find(device => 
+                                    device.label.toLowerCase().includes('bluetooth') ||
+                                    device.label.toLowerCase().includes('wireless') ||
+                                    device.label.toLowerCase().includes('headphones') ||
+                                    device.label.toLowerCase().includes('speaker') ||
+                                    device.label.toLowerCase().includes('airpods') ||
+                                    device.label.toLowerCase().includes('buds')
+                                );
+                                
+                                if (bluetoothDevice) {
+                                    console.log('Setting audio output to Bluetooth device:', bluetoothDevice.label);
+                                    await remoteAudio.setSinkId(bluetoothDevice.deviceId);
+                                } else {
+                                    console.log('No Bluetooth device found, using default');
+                                    await remoteAudio.setSinkId('default');
+                                }
+                            } catch (sinkError) {
+                                console.log('Failed to set audio output device:', sinkError);
+                                // Continue with default device
+                            }
                         }
+                        
+                        // Ensure volume is maximum for Bluetooth speakers
+                        remoteAudio.volume = 1.0;
+                        remoteAudio.muted = false;
+                        
                         await remoteAudio.play();
+                        console.log('Remote audio playing successfully');
                     } catch (e) {
+                        console.log('Autoplay failed, showing enable button:', e);
                         showAudioEnableButton();
                     }
                 }, 100);
@@ -223,19 +277,113 @@
     
     // Debug function to check audio state
     window.debugAudio = function() {
-        // Debug function for audio state
         const audioElement = window.remoteAudio || remoteAudio;
+        const localAudioElement = window.localAudio || localAudio;
         return {
             remoteAudio: !!remoteAudio,
             windowRemoteAudio: !!window.remoteAudio,
             remoteStream: !!remoteStream,
+            localStream: !!localStream,
             audioElement: !!audioElement,
+            localAudioElement: !!localAudioElement,
             srcObject: audioElement ? !!audioElement.srcObject : false,
+            localSrcObject: localAudioElement ? !!localAudioElement.srcObject : false,
             volume: audioElement ? audioElement.volume : null,
             muted: audioElement ? audioElement.muted : null,
             paused: audioElement ? audioElement.paused : null,
-            readyState: audioElement ? audioElement.readyState : null
+            readyState: audioElement ? audioElement.readyState : null,
+            localVolume: localAudioElement ? localAudioElement.volume : null,
+            localMuted: localAudioElement ? localAudioElement.muted : null,
+            peerConnectionState: peerConnection ? peerConnection.connectionState : null,
+            iceConnectionState: peerConnection ? peerConnection.iceConnectionState : null
         };
+    };
+    
+    // Add global function to test audio
+    window.testAudio = function() {
+        const audioElement = window.remoteAudio || remoteAudio;
+        if (audioElement && audioElement.srcObject) {
+            audioElement.volume = 1.0;
+            audioElement.muted = false;
+            return audioElement.play();
+        }
+        return Promise.reject('No audio element or stream');
+    };
+    
+    // Function to list available audio devices
+    window.listAudioDevices = async function() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+            console.log('Available audio output devices:');
+            audioOutputs.forEach((device, index) => {
+                console.log(`${index}: ${device.label || 'Unknown Device'} (${device.deviceId})`);
+            });
+            return audioOutputs;
+        } catch (error) {
+            console.error('Error listing audio devices:', error);
+            return [];
+        }
+    };
+    
+    // Function to manually set audio output device
+    window.setAudioOutput = async function(deviceId) {
+        const audioElement = window.remoteAudio || remoteAudio;
+        if (audioElement && audioElement.setSinkId) {
+            try {
+                await audioElement.setSinkId(deviceId);
+                console.log('Audio output device changed successfully');
+                // Test audio after changing device
+                if (audioElement.srcObject) {
+                    audioElement.volume = 1.0;
+                    audioElement.muted = false;
+                    await audioElement.play();
+                    console.log('Audio playing on new device');
+                }
+                return true;
+            } catch (error) {
+                console.error('Failed to set audio output device:', error);
+                return false;
+            }
+        } else {
+            console.error('Audio element not available or setSinkId not supported');
+            return false;
+        }
+    };
+    
+    // Function to automatically select Bluetooth speaker
+    window.selectBluetoothSpeaker = async function() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+            
+            const bluetoothDevice = audioOutputs.find(device => 
+                device.label.toLowerCase().includes('bluetooth') ||
+                device.label.toLowerCase().includes('wireless') ||
+                device.label.toLowerCase().includes('headphones') ||
+                device.label.toLowerCase().includes('speaker') ||
+                device.label.toLowerCase().includes('airpods') ||
+                device.label.toLowerCase().includes('buds')
+            );
+            
+            if (bluetoothDevice) {
+                console.log('Found Bluetooth device:', bluetoothDevice.label);
+                const success = await window.setAudioOutput(bluetoothDevice.deviceId);
+                if (success) {
+                    alert(`Audio output set to: ${bluetoothDevice.label}`);
+                } else {
+                    alert('Failed to set Bluetooth speaker as output');
+                }
+                return bluetoothDevice;
+            } else {
+                alert('No Bluetooth audio device found');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error selecting Bluetooth speaker:', error);
+            alert('Error accessing audio devices');
+            return null;
+        }
     };
     
     // Show button to enable audio if auto-play is blocked
@@ -245,16 +393,46 @@
             enableBtn.className = 'enable-audio-btn';
             enableBtn.textContent = '🔊 Tap to Enable Audio';
             enableBtn.style.cssText = 'background: #ff6b35; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; margin: 10px auto; display: block; font-size: 16px; font-weight: bold;';
-            enableBtn.onclick = () => {
+            enableBtn.onclick = async () => {
                 const audioElement = window.remoteAudio || remoteAudio;
                 
                 if (audioElement && audioElement.srcObject) {
-                    audioElement.play().then(() => {
+                    try {
+                        // Ensure volume is set correctly
+                        audioElement.volume = 1.0;
+                        audioElement.muted = false;
+                        
+                        // Try to set Bluetooth speaker as output
+                        if (audioElement.setSinkId && typeof audioElement.setSinkId === 'function') {
+                            try {
+                                const devices = await navigator.mediaDevices.enumerateDevices();
+                                const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+                                const bluetoothDevice = audioOutputs.find(device => 
+                                    device.label.toLowerCase().includes('bluetooth') ||
+                                    device.label.toLowerCase().includes('wireless') ||
+                                    device.label.toLowerCase().includes('headphones') ||
+                                    device.label.toLowerCase().includes('speaker')
+                                );
+                                
+                                if (bluetoothDevice) {
+                                    await audioElement.setSinkId(bluetoothDevice.deviceId);
+                                    console.log('Audio output set to Bluetooth device');
+                                }
+                            } catch (e) {
+                                console.log('Could not set Bluetooth output:', e);
+                            }
+                        }
+                        
+                        // Try to play
+                        await audioElement.play();
+                        console.log('Audio enabled successfully');
                         enableBtn.remove();
-                    }).catch(e => {
+                    } catch (e) {
+                        console.error('Audio enable failed:', e);
                         enableBtn.textContent = '❌ Audio Failed - Check Settings';
-                    });
+                    }
                 } else {
+                    console.error('No audio element or stream found');
                     enableBtn.textContent = '❌ No Audio Stream';
                 }
             };
@@ -323,6 +501,7 @@
                 <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
                     <button onclick="toggleMute()" id="muteBtn" style="background: #6c757d; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">🎤 Mute</button>
                     <button onclick="toggleSpeaker()" id="speakerBtn" style="background: #17a2b8; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">🔊 Speaker</button>
+                    <button onclick="selectBluetoothSpeaker()" style="background: #6f42c1; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">📶 BT</button>
                     <button onclick="endCall()" style="background: #dc3545; color: white; border: none; padding: 12px 16px; border-radius: 5px; cursor: pointer; min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation;">End Call</button>
                 </div>
             `;
@@ -595,31 +774,74 @@
     };
     
     // Speaker toggle with debugging
-    let isSpeakerOn = false;
+    let isSpeakerOn = true; // Default to on
     window.toggleSpeaker = function() {
         const audioElement = window.remoteAudio || remoteAudio;
+        
+        console.log('Toggle speaker - Audio element:', !!audioElement);
+        console.log('Audio element srcObject:', audioElement ? !!audioElement.srcObject : 'N/A');
         
         if (audioElement) {
             if (audioElement.srcObject) {
                 isSpeakerOn = !isSpeakerOn;
-                audioElement.volume = isSpeakerOn ? 1.0 : 0.5;
-                audioElement.muted = false;
+                audioElement.volume = isSpeakerOn ? 1.0 : 0.0;
+                audioElement.muted = !isSpeakerOn;
                 
-                audioElement.play().then(() => {
-                    // Audio play successful
-                }).catch(e => {
-                    showAudioEnableButton();
-                });
+                console.log('Speaker toggled - On:', isSpeakerOn, 'Volume:', audioElement.volume, 'Muted:', audioElement.muted);
+                
+                // Ensure audio is playing with Bluetooth support
+                if (isSpeakerOn) {
+                    // Try to route to Bluetooth speaker
+                    if (audioElement.setSinkId && typeof audioElement.setSinkId === 'function') {
+                        navigator.mediaDevices.enumerateDevices().then(devices => {
+                            const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+                            const bluetoothDevice = audioOutputs.find(device => 
+                                device.label.toLowerCase().includes('bluetooth') ||
+                                device.label.toLowerCase().includes('wireless') ||
+                                device.label.toLowerCase().includes('headphones') ||
+                                device.label.toLowerCase().includes('speaker')
+                            );
+                            
+                            if (bluetoothDevice) {
+                                audioElement.setSinkId(bluetoothDevice.deviceId).then(() => {
+                                    console.log('Audio routed to Bluetooth speaker');
+                                    return audioElement.play();
+                                }).then(() => {
+                                    console.log('Audio playing on Bluetooth speaker');
+                                }).catch(e => {
+                                    console.error('Bluetooth audio failed:', e);
+                                    showAudioEnableButton();
+                                });
+                            } else {
+                                audioElement.play().then(() => {
+                                    console.log('Audio playing after speaker toggle');
+                                }).catch(e => {
+                                    console.error('Audio play failed after speaker toggle:', e);
+                                    showAudioEnableButton();
+                                });
+                            }
+                        });
+                    } else {
+                        audioElement.play().then(() => {
+                            console.log('Audio playing after speaker toggle');
+                        }).catch(e => {
+                            console.error('Audio play failed after speaker toggle:', e);
+                            showAudioEnableButton();
+                        });
+                    }
+                }
                 
                 const speakerBtn = document.getElementById('speakerBtn');
                 if (speakerBtn) {
-                    speakerBtn.textContent = isSpeakerOn ? '🔊 ON' : '🔊 Speaker';
-                    speakerBtn.style.background = isSpeakerOn ? '#28a745' : '#17a2b8';
+                    speakerBtn.textContent = isSpeakerOn ? '🔊 ON' : '🔊 OFF';
+                    speakerBtn.style.background = isSpeakerOn ? '#28a745' : '#dc3545';
                 }
             } else {
+                console.error('No audio stream found');
                 alert('No audio stream found');
             }
         } else {
+            console.error('No audio element found');
             alert('No audio element found');
         }
     };

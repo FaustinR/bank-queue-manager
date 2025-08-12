@@ -69,23 +69,32 @@ async function loadCallLogs() {
             const userData = await userResponse.json();
             const currentUserId = userData.user._id;
             
-            // Transform database calls to display format
-            const transformedCalls = callData.calls.map(call => {
-                const isOutgoing = call.callerId._id === currentUserId;
-                const contactName = isOutgoing ? call.recipientName : call.callerName;
-                const callType = call.status === 'declined' ? 'missed' : (isOutgoing ? 'outgoing' : 'incoming');
-                
-                return {
-                    id: call._id,
-                    type: callType,
-                    contact: contactName,
-                    counter: 'Voice Call',
-                    duration: call.status === 'declined' ? null : (call.duration > 0 ? formatDuration(call.duration) : (call.status === 'answered' || call.status === 'ended' ? '0:00' : null)),
-                    timestamp: new Date(call.createdAt),
-                    callDate: formatCallDate(new Date(call.createdAt)),
-                    callTime: formatCallTime(new Date(call.createdAt))
-                };
-            });
+            // Transform database calls to display format - avoid duplicates
+            const seenCallIds = new Set();
+            const transformedCalls = callData.calls
+                .filter(call => {
+                    if (seenCallIds.has(call._id.toString())) {
+                        return false;
+                    }
+                    seenCallIds.add(call._id.toString());
+                    return true;
+                })
+                .map(call => {
+                    const isOutgoing = call.callerId._id === currentUserId;
+                    const contactName = isOutgoing ? call.recipientName : call.callerName;
+                    const callType = call.status === 'declined' ? 'missed' : (isOutgoing ? 'outgoing' : 'incoming');
+                    
+                    return {
+                        id: call._id,
+                        type: callType,
+                        contact: contactName,
+                        counter: 'Voice Call',
+                        duration: call.status === 'declined' ? null : (call.duration > 0 ? formatDuration(call.duration) : (call.status === 'answered' || call.status === 'ended' ? '0:00' : null)),
+                        timestamp: new Date(call.createdAt),
+                        callDate: formatCallDate(new Date(call.createdAt)),
+                        callTime: formatCallTime(new Date(call.createdAt))
+                    };
+                });
             
             callLogsData = transformedCalls;
             displayCallLogs(transformedCalls);
