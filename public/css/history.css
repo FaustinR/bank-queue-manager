@@ -311,49 +311,62 @@ select, input[type="date"] {
     border-collapse: collapse;
 }
 
-/* Standard column width for most columns */
-.ticket-table th,
-.ticket-table td {
-    width: 100px;
-    max-width: 100px;
-}
-
-/* Checkbox column - smallest */
-.ticket-table th:nth-child(1), .ticket-table td:nth-child(1) {
-    width: 20px;
-    max-width: 20px;
+/* Desktop column widths - optimized to fit viewport */
+.ticket-table th:nth-child(1), .ticket-table td:nth-child(1) { /* Checkbox */
+    width: 40px;
+    max-width: 40px;
     text-align: center;
     padding: 8px 4px;
 }
 
-/* Mobile responsiveness for checkbox */
-@media (max-width: 768px) {
-    .ticket-table th:nth-child(1), .ticket-table td:nth-child(1) {
-        width: 15px;
-        max-width: 15px;
-        padding: 4px 2px;
-    }
-}
-
-/* Other smaller columns */
-.ticket-table th:nth-child(2), .ticket-table td:nth-child(2), /* Ticket # */
-.ticket-table th:nth-child(5), .ticket-table td:nth-child(5), /* Counter (regular) */
-.ticket-table th:nth-child(6), .ticket-table td:nth-child(6), /* Counter (admin) */
-.ticket-table th:nth-child(7), .ticket-table td:nth-child(7), /* Status (regular) */
-.ticket-table th:nth-child(8), .ticket-table td:nth-child(8) /* Status (admin) */ {
+.ticket-table th:nth-child(2), .ticket-table td:nth-child(2) { /* Ticket # */
     width: 80px;
     max-width: 80px;
 }
 
-/* Larger columns for text content */
-.ticket-table th:nth-child(3), .ticket-table td:nth-child(3), /* Customer (regular) */
-.ticket-table th:nth-child(4), .ticket-table td:nth-child(4), /* Customer (admin) */
-.ticket-table th:nth-child(4), .ticket-table td:nth-child(4), /* Service (regular) */
-.ticket-table th:nth-child(5), .ticket-table td:nth-child(5), /* Service (admin) */
-.ticket-table th:nth-child(6), .ticket-table td:nth-child(6), /* Teller (regular) */
-.ticket-table th:nth-child(7), .ticket-table td:nth-child(7) /* Teller (admin) */ {
-    width: 150px;
-    max-width: 150px;
+.ticket-table th:nth-child(3), .ticket-table td:nth-child(3) { /* Customer */
+    width: 120px;
+    max-width: 120px;
+}
+
+.ticket-table th:nth-child(4), .ticket-table td:nth-child(4) { /* Service */
+    width: 130px;
+    max-width: 130px;
+}
+
+.ticket-table th:nth-child(5), .ticket-table td:nth-child(5) { /* Counter */
+    width: 70px;
+    max-width: 70px;
+}
+
+.ticket-table th:nth-child(6), .ticket-table td:nth-child(6) { /* Teller */
+    width: 100px;
+    max-width: 100px;
+}
+
+.ticket-table th:nth-child(7), .ticket-table td:nth-child(7) { /* Status */
+    width: 80px;
+    max-width: 80px;
+}
+
+.ticket-table th:nth-child(8), .ticket-table td:nth-child(8) { /* Created */
+    width: 120px;
+    max-width: 120px;
+}
+
+.ticket-table th:nth-child(9), .ticket-table td:nth-child(9) { /* Wait Time */
+    width: 90px;
+    max-width: 90px;
+}
+
+.ticket-table th:nth-child(10), .ticket-table td:nth-child(10) { /* Service Time */
+    width: 100px;
+    max-width: 100px;
+}
+
+.ticket-table th:nth-child(11), .ticket-table td:nth-child(11) { /* Actions */
+    width: 80px;
+    max-width: 80px;
 }
 
 .ticket-table th, .ticket-table td {
@@ -559,5 +572,106 @@ select, input[type="date"] {
     .button-group .refresh-btn {
         width: 48% !important;
         margin: 0 !important;
+    }
+    
+    /* Ticket history table mobile styles */
+    .table-container .ticket-table {
+        min-width: 1800px !important;
+        width: auto !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(1),
+    .table-container .ticket-table td:nth-child(1) {
+        min-width: 80px !important;
+        width: 80px !important;
+        max-width: 80px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(2),
+    .table-container .ticket-table td:nth-child(2) {
+        min-width: 90px !important;
+        width: 90px !important;
+        max-width: 90px !important;
+        white-space: nowrap !important;
+        word-wrap: normal !important;
+        word-break: keep-all !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(3),
+    .table-container .ticket-table td:nth-child(3) {
+        min-width: 180px !important;
+        width: 180px !important;
+        max-width: 180px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(4),
+    .table-container .ticket-table td:nth-child(4) {
+        min-width: 200px !important;
+        width: 200px !important;
+        max-width: 200px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(5),
+    .table-container .ticket-table td:nth-child(5) {
+        min-width: 80px !important;
+        width: 80px !important;
+        max-width: 80px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(6),
+    .table-container .ticket-table td:nth-child(6) {
+        min-width: 150px !important;
+        width: 150px !important;
+        max-width: 150px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(7),
+    .table-container .ticket-table td:nth-child(7) {
+        min-width: 130px !important;
+        width: 130px !important;
+        max-width: 130px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(8),
+    .table-container .ticket-table td:nth-child(8) {
+        min-width: 180px !important;
+        width: 180px !important;
+        max-width: 180px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(9),
+    .table-container .ticket-table td:nth-child(9) {
+        min-width: 100px !important;
+        width: 100px !important;
+        max-width: 100px !important;
+        white-space: nowrap !important;
+        word-wrap: normal !important;
+        word-break: keep-all !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(10),
+    .table-container .ticket-table td:nth-child(10) {
+        min-width: 120px !important;
+        width: 120px !important;
+        max-width: 120px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(11),
+    .table-container .ticket-table td:nth-child(11) {
+        min-width: 80px !important;
+        width: 80px !important;
+        max-width: 80px !important;
+    }
+    
+    .table-container .ticket-table th {
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+        overflow: hidden !important;
+    }
+    
+    .table-container .ticket-table th::before {
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+        overflow: hidden !important;
     }
 }

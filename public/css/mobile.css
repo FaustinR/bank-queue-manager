@@ -934,7 +934,181 @@ html {
     .clear-filters-btn {
         margin-right: 10px !important;
     }
+    
+    /* Ticket history table column widths on mobile - increased for better fit */
+    .table-container .ticket-table {
+        min-width: 1800px !important;
+        width: auto !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(1),
+    .table-container .ticket-table td:nth-child(1) {
+        min-width: 80px !important;
+        width: 80px !important;
+        max-width: 80px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(2),
+    .table-container .ticket-table td:nth-child(2) {
+        min-width: 180px !important;
+        width: 180px !important;
+        max-width: 180px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(3),
+    .table-container .ticket-table td:nth-child(3) {
+        min-width: 180px !important;
+        width: 180px !important;
+        max-width: 180px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(4),
+    .table-container .ticket-table td:nth-child(4) {
+        min-width: 200px !important;
+        width: 200px !important;
+        max-width: 200px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(5),
+    .table-container .ticket-table td:nth-child(5) {
+        min-width: 130px !important;
+        width: 130px !important;
+        max-width: 130px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(6),
+    .table-container .ticket-table td:nth-child(6) {
+        min-width: 150px !important;
+        width: 150px !important;
+        max-width: 150px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(7),
+    .table-container .ticket-table td:nth-child(7) {
+        min-width: 130px !important;
+        width: 130px !important;
+        max-width: 130px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(8),
+    .table-container .ticket-table td:nth-child(8) {
+        min-width: 180px !important;
+        width: 180px !important;
+        max-width: 180px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(9),
+    .table-container .ticket-table td:nth-child(9) {
+        min-width: 340px !important;
+        width: 340px !important;
+        max-width: 340px !important;
+        white-space: nowrap !important;
+        word-wrap: normal !important;
+        word-break: keep-all !important;
+        overflow: visible !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(10),
+    .table-container .ticket-table td:nth-child(10) {
+        min-width: 180px !important;
+        width: 180px !important;
+        max-width: 180px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(11),
+    .table-container .ticket-table td:nth-child(11) {
+        min-width: 130px !important;
+        width: 130px !important;
+        max-width: 130px !important;
+    }
+    
+    /* Prevent column header text wrapping on mobile */
+    .table-container .ticket-table th {
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+        overflow: hidden !important;
+    }
+    
+    .table-container .ticket-table th::before {
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+        overflow: hidden !important;
+    }
+    
+    /* Force filters to display inline with column labels on mobile */
+    .table-container .ticket-table th.has-filter {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 8px 6px !important;
+    }
+    
+    .table-container .ticket-table th .filter-container {
+        margin-top: 0 !important;
+        margin-left: 8px !important;
+        flex-shrink: 0 !important;
+        width: auto !important;
+    }
+    
+    .table-container .ticket-table th .column-filter {
+        width: 60px !important;
+        padding: 2px 4px !important;
+        font-size: 10px !important;
+        border: 1px solid #ccc !important;
+    }
+    
+    /* Force Ticket # column header to stay on one line */
+    .table-container .ticket-table th:nth-child(2).has-filter {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(2)::before {
+        display: inline !important;
+        white-space: nowrap !important;
+        margin-bottom: 4px !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(2) .filter-container {
+        margin-top: 4px !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    .table-container .ticket-table th:nth-child(2) .column-filter {
+        width: 90% !important;
+        min-width: 80px !important;
+        padding: 4px 6px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Override all possible text wrapping for Ticket # column */
+    .table-container .ticket-table th:nth-child(2),
+    .table-container .ticket-table th:nth-child(2) *,
+    .table-container .ticket-table th[data-title="Ticket #"],
+    .table-container .ticket-table th[data-title="Ticket #"] * {
+        white-space: nowrap !important;
+        word-wrap: normal !important;
+        word-break: keep-all !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }
+    
+    /* Increase width further if needed */
+    .table-container .ticket-table th:nth-child(2),
+    .table-container .ticket-table td:nth-child(2) {
+        min-width: 200px !important;
+        width: 200px !important;
+        max-width: 200px !important;
+    }
 
+    /* Ensure mobile.css loads after history.css */
+    .container .table-container {
+        overflow-x: auto !important;
+    }
+    
     /* Hide all call-related elements on mobile */
     #callNotification,
     .call-btn,

@@ -557,7 +557,6 @@ body {
 }
 
 .accordion-section.active .accordion-content {
-    padding: 20px;
     max-height: 2000px;
 }
 
