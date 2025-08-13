@@ -44,4 +44,5 @@ body.embedded-history .ticket-table td {
 /* Hide elements when in iframe */
 body.embedded-history .container > *:not(.filter-section):not(.table-container) {
     display: none;
+    margin-bottom: 1em;
 }

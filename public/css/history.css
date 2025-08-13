@@ -313,64 +313,64 @@ select, input[type="date"] {
 
 /* Desktop column widths - optimized to fit viewport */
 .ticket-table th:nth-child(1), .ticket-table td:nth-child(1) { /* Checkbox */
-    width: 40px;
-    max-width: 40px;
+    width: 30px;
+    max-width: 30px;
     text-align: center;
-    padding: 8px 4px;
+    padding: 6px 2px;
 }
 
 .ticket-table th:nth-child(2), .ticket-table td:nth-child(2) { /* Ticket # */
-    width: 80px;
-    max-width: 80px;
+    width: 60px;
+    max-width: 60px;
 }
 
 .ticket-table th:nth-child(3), .ticket-table td:nth-child(3) { /* Customer */
-    width: 120px;
-    max-width: 120px;
-}
-
-.ticket-table th:nth-child(4), .ticket-table td:nth-child(4) { /* Service */
-    width: 130px;
-    max-width: 130px;
-}
-
-.ticket-table th:nth-child(5), .ticket-table td:nth-child(5) { /* Counter */
-    width: 70px;
-    max-width: 70px;
-}
-
-.ticket-table th:nth-child(6), .ticket-table td:nth-child(6) { /* Teller */
-    width: 100px;
-    max-width: 100px;
-}
-
-.ticket-table th:nth-child(7), .ticket-table td:nth-child(7) { /* Status */
-    width: 80px;
-    max-width: 80px;
-}
-
-.ticket-table th:nth-child(8), .ticket-table td:nth-child(8) { /* Created */
-    width: 120px;
-    max-width: 120px;
-}
-
-.ticket-table th:nth-child(9), .ticket-table td:nth-child(9) { /* Wait Time */
     width: 90px;
     max-width: 90px;
 }
 
-.ticket-table th:nth-child(10), .ticket-table td:nth-child(10) { /* Service Time */
+.ticket-table th:nth-child(4), .ticket-table td:nth-child(4) { /* Service */
     width: 100px;
     max-width: 100px;
 }
 
-.ticket-table th:nth-child(11), .ticket-table td:nth-child(11) { /* Actions */
+.ticket-table th:nth-child(5), .ticket-table td:nth-child(5) { /* Counter */
+    width: 50px;
+    max-width: 50px;
+}
+
+.ticket-table th:nth-child(6), .ticket-table td:nth-child(6) { /* Teller */
+    width: 70px;
+    max-width: 70px;
+}
+
+.ticket-table th:nth-child(7), .ticket-table td:nth-child(7) { /* Status */
+    width: 60px;
+    max-width: 60px;
+}
+
+.ticket-table th:nth-child(8), .ticket-table td:nth-child(8) { /* Created */
+    width: 90px;
+    max-width: 90px;
+}
+
+.ticket-table th:nth-child(9), .ticket-table td:nth-child(9) { /* Wait Time */
+    width: 70px;
+    max-width: 70px;
+}
+
+.ticket-table th:nth-child(10), .ticket-table td:nth-child(10) { /* Service Time */
     width: 80px;
     max-width: 80px;
 }
 
+.ticket-table th:nth-child(11), .ticket-table td:nth-child(11) { /* Actions */
+    width: 60px;
+    max-width: 60px;
+}
+
 .ticket-table th, .ticket-table td {
-    padding: 12px 15px;
+    padding: 6px 4px;
     text-align: left;
     border-bottom: 1px solid #ddd;
 }
@@ -487,9 +487,24 @@ select, input[type="date"] {
     opacity: 1;
 }
 
+/* Add bottom margin to delete selected button */
+.delete-selected-btn {
+    margin-bottom: 20px;
+}
+
+/* Add bottom margin to table container */
+.table-container {
+    margin-bottom: 30px;
+}
+
 @media (max-width: 768px) {
     .table-container {
         overflow-x: scroll;
+        margin-bottom: 20px;
+    }
+    
+    .delete-selected-btn {
+        margin-bottom: 15px;
     }
     
     .table-container::-webkit-scrollbar {
@@ -580,87 +595,77 @@ select, input[type="date"] {
         width: auto !important;
     }
     
+    .table-container .ticket-table th,
+    .table-container .ticket-table td {
+        padding: 2px 1px !important;
+    }
+    
     .table-container .ticket-table th:nth-child(1),
     .table-container .ticket-table td:nth-child(1) {
-        min-width: 80px !important;
-        width: 80px !important;
-        max-width: 80px !important;
+        min-width: 20px !important;
+        max-width: 20px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(2),
     .table-container .ticket-table td:nth-child(2) {
-        min-width: 90px !important;
-        width: 90px !important;
-        max-width: 90px !important;
-        white-space: nowrap !important;
-        word-wrap: normal !important;
-        word-break: keep-all !important;
+        min-width: 35px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(3),
     .table-container .ticket-table td:nth-child(3) {
-        min-width: 180px !important;
-        width: 180px !important;
-        max-width: 180px !important;
+        min-width: 60px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(4),
     .table-container .ticket-table td:nth-child(4) {
-        min-width: 200px !important;
-        width: 200px !important;
-        max-width: 200px !important;
+        min-width: 70px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(5),
     .table-container .ticket-table td:nth-child(5) {
-        min-width: 80px !important;
-        width: 80px !important;
-        max-width: 80px !important;
+        min-width: 30px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(6),
     .table-container .ticket-table td:nth-child(6) {
-        min-width: 150px !important;
-        width: 150px !important;
-        max-width: 150px !important;
+        min-width: 40px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(7),
     .table-container .ticket-table td:nth-child(7) {
-        min-width: 130px !important;
-        width: 130px !important;
-        max-width: 130px !important;
+        min-width: 50px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(8),
     .table-container .ticket-table td:nth-child(8) {
-        min-width: 180px !important;
-        width: 180px !important;
-        max-width: 180px !important;
+        min-width: 45px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(9),
     .table-container .ticket-table td:nth-child(9) {
-        min-width: 100px !important;
-        width: 100px !important;
-        max-width: 100px !important;
+        min-width: 50px !important;
+        padding: 1px !important;
         white-space: nowrap !important;
-        word-wrap: normal !important;
-        word-break: keep-all !important;
     }
     
     .table-container .ticket-table th:nth-child(10),
     .table-container .ticket-table td:nth-child(10) {
-        min-width: 120px !important;
-        width: 120px !important;
-        max-width: 120px !important;
+        min-width: 60px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(11),
     .table-container .ticket-table td:nth-child(11) {
-        min-width: 80px !important;
-        width: 80px !important;
-        max-width: 80px !important;
+        min-width: 45px !important;
+        padding: 1px !important;
     }
     
     .table-container .ticket-table th {
@@ -673,5 +678,93 @@ select, input[type="date"] {
         white-space: nowrap !important;
         text-overflow: ellipsis !important;
         overflow: hidden !important;
+    }
+    
+    /* Reduce checkbox column filter width on mobile */
+    .table-container .ticket-table th:nth-child(1) .column-filter {
+        width: 20px !important;
+        min-width: 20px !important;
+        padding: 1px !important;
+        font-size: 8px !important;
+    }
+    
+    /* Reduce Ticket # column filter width on mobile */
+    .table-container .ticket-table th:nth-child(2) .column-filter {
+        width: 50px !important;
+        min-width: 50px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Customer column filter width on mobile */
+    .table-container .ticket-table th:nth-child(3) .column-filter {
+        width: 80px !important;
+        min-width: 80px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Service column filter width on mobile */
+    .table-container .ticket-table th:nth-child(4) .column-filter {
+        width: 80px !important;
+        min-width: 80px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Counter column filter width on mobile */
+    .table-container .ticket-table th:nth-child(5) .column-filter {
+        width: 40px !important;
+        min-width: 40px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Teller column filter width on mobile */
+    .table-container .ticket-table th:nth-child(6) .column-filter {
+        width: 40px !important;
+        min-width: 40px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Status column filter width on mobile */
+    .table-container .ticket-table th:nth-child(7) .column-filter {
+        width: 60px !important;
+        min-width: 60px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Created column filter width on mobile */
+    .table-container .ticket-table th:nth-child(8) .column-filter {
+        width: 50px !important;
+        min-width: 50px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Wait Time column filter width on mobile */
+    .table-container .ticket-table th:nth-child(9) .column-filter {
+        width: 70px !important;
+        min-width: 70px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Service Time column filter width on mobile */
+    .table-container .ticket-table th:nth-child(10) .column-filter {
+        width: 80px !important;
+        min-width: 80px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Reduce Actions column filter width on mobile */
+    .table-container .ticket-table th:nth-child(11) .column-filter {
+        width: 50px !important;
+        min-width: 50px !important;
+        padding: 2px !important;
+        font-size: 10px !important;
     }
 }
