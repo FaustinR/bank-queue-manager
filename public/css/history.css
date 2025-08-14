@@ -464,7 +464,7 @@ select, input[type="date"] {
 }
 
 .ticket-table th.sortable:hover {
-    background-color: #e9ecef;
+    background-color: steelblue;
 }
 
 /* Only show sort arrows on columns with filters */
