@@ -558,6 +558,7 @@ body {
 
 .accordion-section.active .accordion-content {
     max-height: 2000px;
+    margin-top: 5px;
 }
 
 .accordion-section.active .accordion-icon {

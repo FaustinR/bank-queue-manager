@@ -149,7 +149,6 @@ select, input[type="date"] {
     cursor: pointer;
     font-weight: bold;
     transition: background 0.3s;
-    margin-left: 10px;
 }
 
 .delete-btn:hover {
@@ -300,7 +299,6 @@ select, input[type="date"] {
 
 .table-container {
     background: white;
-    border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     overflow-x: auto;
@@ -325,18 +323,18 @@ select, input[type="date"] {
 }
 
 .ticket-table th:nth-child(3), .ticket-table td:nth-child(3) { /* Customer */
-    width: 90px;
-    max-width: 90px;
+    width: 60px;
+    max-width: 60px;
 }
 
 .ticket-table th:nth-child(4), .ticket-table td:nth-child(4) { /* Service */
-    width: 100px;
-    max-width: 100px;
+    width: 70px;
+    max-width: 70px;
 }
 
 .ticket-table th:nth-child(5), .ticket-table td:nth-child(5) { /* Counter */
-    width: 50px;
-    max-width: 50px;
+    width: 30px;
+    max-width: 30px;
 }
 
 .ticket-table th:nth-child(6), .ticket-table td:nth-child(6) { /* Teller */
@@ -345,28 +343,28 @@ select, input[type="date"] {
 }
 
 .ticket-table th:nth-child(7), .ticket-table td:nth-child(7) { /* Status */
-    width: 60px;
-    max-width: 60px;
+    width: 50px;
+    max-width: 50px;
 }
 
 .ticket-table th:nth-child(8), .ticket-table td:nth-child(8) { /* Created */
-    width: 90px;
-    max-width: 90px;
+    width: 60px;
+    max-width: 60px;
 }
 
 .ticket-table th:nth-child(9), .ticket-table td:nth-child(9) { /* Wait Time */
-    width: 70px;
-    max-width: 70px;
+    width: 50px;
+    max-width: 50px;
 }
 
 .ticket-table th:nth-child(10), .ticket-table td:nth-child(10) { /* Service Time */
-    width: 80px;
-    max-width: 80px;
+    width: 60px;
+    max-width: 60px;
 }
 
 .ticket-table th:nth-child(11), .ticket-table td:nth-child(11) { /* Actions */
-    width: 60px;
-    max-width: 60px;
+    width: 45px;
+    max-width: 45px;
 }
 
 .ticket-table th, .ticket-table td {
@@ -376,8 +374,8 @@ select, input[type="date"] {
 }
 
 .ticket-table th {
-    background-color: #f8f9fa;
-    color: #333;
+    background-color: #2c5aa0;
+    color: white;
     font-weight: bold;
     position: relative;
     padding: 15px;
@@ -497,6 +495,17 @@ select, input[type="date"] {
     margin-bottom: 30px;
 }
 
+/* Service Distribution section margins */
+#serviceDistributionSection .accordion-content {
+    margin: 0 20px;
+}
+
+@media (max-width: 768px) {
+    #serviceDistributionSection .accordion-content {
+        margin: 0 10px;
+    }
+}
+
 @media (max-width: 768px) {
     .table-container {
         overflow-x: scroll;
@@ -602,70 +611,71 @@ select, input[type="date"] {
     
     .table-container .ticket-table th:nth-child(1),
     .table-container .ticket-table td:nth-child(1) {
-        min-width: 20px !important;
-        max-width: 20px !important;
+        min-width: 10px !important;
+        max-width: 15px !important;
         padding: 1px !important;
     }
     
     .table-container .ticket-table th:nth-child(2),
     .table-container .ticket-table td:nth-child(2) {
-        min-width: 35px !important;
-        padding: 1px !important;
+        min-width: 25px !important;
+        max-width: 30px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th:nth-child(3),
     .table-container .ticket-table td:nth-child(3) {
         min-width: 60px !important;
-        padding: 1px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th:nth-child(4),
     .table-container .ticket-table td:nth-child(4) {
         min-width: 70px !important;
-        padding: 1px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th:nth-child(5),
     .table-container .ticket-table td:nth-child(5) {
         min-width: 30px !important;
-        padding: 1px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th:nth-child(6),
     .table-container .ticket-table td:nth-child(6) {
         min-width: 40px !important;
-        padding: 1px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th:nth-child(7),
     .table-container .ticket-table td:nth-child(7) {
         min-width: 50px !important;
-        padding: 1px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th:nth-child(8),
     .table-container .ticket-table td:nth-child(8) {
         min-width: 45px !important;
-        padding: 1px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th:nth-child(9),
     .table-container .ticket-table td:nth-child(9) {
         min-width: 50px !important;
-        padding: 1px !important;
+        padding: 5px !important;
         white-space: nowrap !important;
     }
     
     .table-container .ticket-table th:nth-child(10),
     .table-container .ticket-table td:nth-child(10) {
         min-width: 60px !important;
-        padding: 1px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th:nth-child(11),
     .table-container .ticket-table td:nth-child(11) {
         min-width: 45px !important;
-        padding: 1px !important;
+        padding: 5px !important;
     }
     
     .table-container .ticket-table th {
