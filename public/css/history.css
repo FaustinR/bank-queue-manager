@@ -500,6 +500,23 @@ select, input[type="date"] {
     margin: 0 20px;
 }
 
+/* Empty message styling */
+#emptyMessage {
+    background: white !important;
+    padding: 40px !important;
+    text-align: center !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+    margin: 20px 0 !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+#emptyMessage h3 {
+    color: #666 !important;
+    margin: 0 !important;
+    font-size: 18px !important;
+}
+
 @media (max-width: 768px) {
     #serviceDistributionSection .accordion-content {
         margin: 0 10px;

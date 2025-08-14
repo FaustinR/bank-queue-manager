@@ -498,14 +498,42 @@ async function fetchTicketHistory() {
 
 function displayTickets(tickets) {
     const tableBody = document.getElementById('ticketTable');
-    tableBody.innerHTML = '';
+    const tableContainer = document.querySelector('.table-container');
+    const filterSection = document.querySelector('.filter-section');
+    const deleteActions = document.getElementById('deleteActions');
+    const container = document.querySelector('.container');
     
     if (tickets.length === 0) {
-        const isAdmin = document.getElementById('admin-controls').style.display !== 'none';
-        const colspan = isAdmin ? '11' : '9';
-        tableBody.innerHTML = `<tr><td colspan="${colspan}">No tickets found</td></tr>`;
+        // Hide table, filters, and delete actions
+        if (tableContainer) tableContainer.style.display = 'none';
+        if (filterSection) filterSection.style.display = 'none';
+        if (deleteActions) deleteActions.style.display = 'none';
+        
+        // Show empty message
+        let emptyMessage = document.getElementById('emptyMessage');
+        if (!emptyMessage) {
+            emptyMessage = document.createElement('div');
+            emptyMessage.id = 'emptyMessage';
+            emptyMessage.innerHTML = '<h3>No tickets available</h3>';
+            container.appendChild(emptyMessage);
+        }
+        emptyMessage.style.display = 'block';
         return;
     }
+    
+    // Show table and filters when tickets exist
+    if (tableContainer) tableContainer.style.display = 'block';
+    if (filterSection) filterSection.style.display = 'block';
+    const isAdmin = document.getElementById('admin-controls').style.display !== 'none';
+    if (deleteActions && isAdmin) deleteActions.style.display = 'block';
+    
+    // Remove empty message if it exists
+    const emptyMessage = document.getElementById('emptyMessage');
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+    
+    tableBody.innerHTML = '';
     
     tickets.forEach(ticket => {
         const row = document.createElement('tr');
