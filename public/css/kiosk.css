@@ -750,6 +750,18 @@ button:active {
         width: 100vw !important;
         max-width: 100vw !important;
         margin: 0;
+        margin-bottom: 80px;
+    }
+    
+    .main-container.ticket-generated .queue-info {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        z-index: 100;
     }
     
     .ticket-section {
