@@ -66,7 +66,7 @@ html::-webkit-scrollbar {
     max-width: 550px;
     max-height: 95vh; /* Limit height to prevent scrollbar */
     transform: scale(1.1); /* 10% zoom in for signup page */
-    transform-origin: center top; /* Keep the top centered */
+    /* transform-origin: center top;  */
     margin-bottom: 30px; /* Add some margin to account for increased size */
 }
 
@@ -281,6 +281,7 @@ input:focus, select:focus {
         height: auto;
         min-height: 100vh;
         width: 100%;
+        margin-top: 35px;
     }
     
     .signup-container html,
@@ -325,6 +326,7 @@ input:focus, select:focus {
     body.signup-page {
         overflow: auto !important;
         height: auto !important;
+        padding: 5px;
     }
     
     body.signup-page html {
@@ -378,6 +380,9 @@ input:focus, select:focus {
         padding: 6px;
         font-size: 12px;
         height: 32px;
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .signup-page .auth-button {
@@ -402,6 +407,29 @@ input:focus, select:focus {
     
     .signup-page .cancel-button {
         margin-bottom: 5px;
+    }
+    
+    /* Force dropdown options to match select width */
+    .signup-page select {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    @media (max-width: 768px) {
+        .signup-page select {
+            -webkit-appearance: menulist !important;
+            -moz-appearance: menulist !important;
+            appearance: menulist !important;
+            width: 100% !important;
+            max-width: calc(100vw - 30px) !important;
+            min-width: 0 !important;
+        }
+        
+        .signup-page .form-group {
+            width: 100% !important;
+            max-width: calc(100vw - 30px) !important;
+            overflow: hidden !important;
+        }
     }
     
     .auth-button {

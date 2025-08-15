@@ -891,7 +891,7 @@ html {
     
     .users-table th,
     .users-table td {
-        background-color: inherit !important;
+        background-color: aliceblue;
     }
     
     .users-table tbody tr:hover {
@@ -901,6 +901,7 @@ html {
     /* Consistent column header styling on mobile */
     .users-table th {
         white-space: nowrap !important;
+        background-color: #b3d9ff;
     }
     
     .users-table th .sort-arrow {
