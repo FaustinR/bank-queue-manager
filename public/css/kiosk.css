@@ -10,6 +10,16 @@ body {
     transform-origin: center center;
 }
 
+/* Hide toggle button on kiosk page */
+.sidebar-toggle {
+    display: none !important;
+}
+
+/* Override mobile.css body::before toggle button on kiosk page */
+body::before {
+    display: none !important;
+}
+
 .main-container {
     width: 100%;
     max-width: 1200px;
@@ -642,7 +652,7 @@ button:active {
         height: auto;
         min-height: 100vh;
         overflow-x: hidden;
-        overflow-y: auto;
+        overflow-y: hidden;
         transform: none;
         transform-origin: initial;
     }
@@ -651,7 +661,8 @@ button:active {
         position: relative;
         width: 90%;
         max-width: 500px;
-        margin: 15px auto 0;
+        margin: 0 auto;
+        min-height: 100vh;
     }
     
     .main-container.ticket-generated {
@@ -863,13 +874,13 @@ button:active {
     
     .mobile-queue-info {
         display: block;
-        margin: 0 auto 20px;
+        margin: 0 15px 20px 15px;
         padding: 6px;
         font-size: 13px;
         flex-shrink: 0;
         background: rgba(255,255,255,0.95);
         border-radius: 8px;
-        width: 100%;
+        width: calc(100% - 30px);
         box-sizing: border-box;
     }
     
