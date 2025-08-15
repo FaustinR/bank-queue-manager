@@ -253,9 +253,9 @@ input:focus, select:focus {
         max-width: none;
         padding: 0;
         position: fixed;
-        top: 0;
-        left: 0;
-        transform: none;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         display: flex;
         align-items: center;
         justify-content: center;
