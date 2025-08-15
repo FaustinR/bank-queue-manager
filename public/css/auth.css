@@ -261,6 +261,11 @@ input:focus, select:focus {
         justify-content: center;
     }
     
+    .auth-container:not(.signup-container) {
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
     .auth-card {
         width: 100%;
         height: 100%;
@@ -271,8 +276,8 @@ input:focus, select:focus {
     
     .signup-container {
         overflow-y: auto;
-        align-items: stretch;
-        justify-content: stretch;
+        align-items: center;
+        justify-content: center;
         padding: 0;
         height: 100vh;
     }
