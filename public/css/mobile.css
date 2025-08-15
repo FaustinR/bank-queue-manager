@@ -176,7 +176,8 @@ html {
         padding: 0;
         padding-top: 60px;
         width: 100vw;
-        height: 100vh;
+        height: auto;
+        min-height: 100vh;
         box-sizing: border-box;
         transition: padding-top 0.3s ease;
         overflow-y: auto;
@@ -186,12 +187,9 @@ html {
     .sidebar.folded + .main-content,
     body.sidebar-folded .main-content {
         padding-top: 60px;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        height: auto;
+        min-height: 100vh;
+        position: relative;
         overflow-y: auto;
     }
     

@@ -794,4 +794,68 @@ select, input[type="date"] {
         padding: 2px !important;
         font-size: 10px !important;
     }
+    
+    /* Ensure delete buttons are red on mobile */
+    .delete-single-btn {
+        color: #dc3545 !important;
+        background: none !important;
+        border: none !important;
+        font-weight: bold !important;
+    }
+    
+    .delete-single-btn:hover,
+    .delete-single-btn:active,
+    .delete-single-btn:focus {
+        color: #721c24 !important;
+        background: #f8d7da !important;
+    }
+    
+    /* Make date input more visible on mobile */
+    input[type="date"] {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        background: white !important;
+        border: 2px solid #ddd !important;
+        padding: 10px !important;
+        border-radius: 5px !important;
+        font-size: 16px !important;
+        position: relative !important;
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="%23666" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>') no-repeat !important;
+        background-size: 16px 16px !important;
+        width: 16px !important;
+        height: 16px !important;
+        cursor: pointer !important;
+    }
+    
+    /* Android-specific date input styling */
+    input[type="date"]::-webkit-inner-spin-button,
+    input[type="date"]::-webkit-outer-spin-button {
+        -webkit-appearance: none !important;
+        margin: 0 !important;
+    }
+    
+    input[type="date"]::-moz-calendar-picker-indicator {
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="%23666" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>') no-repeat !important;
+        background-size: 16px 16px !important;
+        width: 16px !important;
+        height: 16px !important;
+    }
+    
+    input[type="date"]:before {
+        content: attr(placeholder) !important;
+        color: #999 !important;
+        position: absolute !important;
+        left: 10px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        pointer-events: none !important;
+    }
+    
+    input[type="date"]:focus:before,
+    input[type="date"]:valid:before {
+        display: none !important;
+    }
 }
