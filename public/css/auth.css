@@ -339,17 +339,7 @@ input:focus, select:focus {
         height: auto !important;
     }
     
-    .signup-page .signup-container {
-        position: static !important;
-        overflow: visible !important;
-        display: block !important;
-    }
-    
-    .signup-page .auth-card {
-        position: static !important;
-        height: auto !important;
-        display: block !important;
-    }
+
     
     .auth-header {
         padding: 20px 20px 15px;
