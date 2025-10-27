@@ -2,9 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    console.log('Connecting to MongoDB...');
     const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue';
-    console.log('MongoDB URI:', mongoUri.replace(/:[^:@]*@/, ':***@'));
     
     const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 10000,
@@ -13,8 +11,6 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
-    
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
     
     // Initialize counters if they don't exist
     const Counter = require('../models/Counter');
@@ -35,7 +31,6 @@ const connectDB = async () => {
     }
     
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
     process.exit(1);
   }
 };

@@ -54,11 +54,8 @@ router.post('/mark-connected', isAuthenticated, async (req, res) => {
       return res.status(400).json({ message: 'No user ID provided' });
     }
     
-    console.log('Force marking user as connected:', userId);
-    
     // Update user's connected status
     const result = await User.findByIdAndUpdate(userId, { connected: 'yes' }, { new: true });
-    console.log('User update result:', result ? 'success' : 'failed');
     
     // Emit user connection event using Socket.io
     const io = req.app.get('io');
@@ -68,7 +65,6 @@ router.post('/mark-connected', isAuthenticated, async (req, res) => {
     
     res.json({ success: true, userId, updated: !!result });
   } catch (error) {
-    console.error('Error marking user as connected:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

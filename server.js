@@ -923,29 +923,23 @@ io.on('connection', async (socket) => {
     if (userId) {
       socket.userId = userId.toString();
       socket.isAuthenticated = true;
-      console.log('=== SOCKET AUTHENTICATED ===');
-      console.log('Socket:', socket.id, 'User:', socket.userId);
       
       try {
         // Verify user exists before updating
         const user = await User.findById(userId);
         if (user) {
           await User.findByIdAndUpdate(userId, { connected: 'yes' }, { new: true });
-          console.log('User connected:', `${user.firstName} ${user.lastName}`);
           socket.emit('authenticated', { userId: socket.userId });
           
           // Broadcast user connection update
           io.emit('userConnectionUpdate', { userId: socket.userId, connected: 'yes' });
         } else {
-          console.log('User not found for authentication:', userId);
           socket.emit('authentication-failed', { reason: 'User not found' });
         }
       } catch (error) {
-        console.error('Authentication error:', error);
         socket.emit('authentication-failed', { reason: 'Authentication failed' });
       }
     } else {
-      console.log('No userId provided for authentication');
       socket.emit('authentication-failed', { reason: 'No user ID provided' });
     }
   });
@@ -955,36 +949,26 @@ io.on('connection', async (socket) => {
   // Voice call handlers
   socket.on('call-user', async (data) => {
     try {
-      console.log('=== CALL ATTEMPT ===');
-      console.log('From socket:', socket.id, 'userId:', socket.userId);
-      console.log('To user:', data.recipientId);
-      
       if (!socket.userId || !socket.isAuthenticated) {
-        console.log('Caller not authenticated');
         return socket.emit('call-failed', { reason: 'You must be logged in to make calls' });
       }
       
       const targetUser = await User.findById(data.recipientId).select('firstName lastName connected');
       
       if (!targetUser) {
-        console.log('Target user not found in database');
         return socket.emit('call-failed', { reason: 'User not found' });
       }
-      
-      console.log('Target user:', targetUser.firstName, targetUser.lastName, 'Connected:', targetUser.connected);
       
       // Double-check user connection by looking for active sockets
       const userSockets = Array.from(io.sockets.sockets.values())
         .filter(s => String(s.userId) === String(data.recipientId) && s.isAuthenticated);
       
       if (targetUser.connected !== 'yes' && userSockets.length === 0) {
-        console.log('Target user not connected - DB status:', targetUser.connected, 'Active sockets:', userSockets.length);
         return socket.emit('call-failed', { reason: `${targetUser.firstName} ${targetUser.lastName} is not connected` });
       }
       
       // If DB says not connected but we have active sockets, update DB
       if (targetUser.connected !== 'yes' && userSockets.length > 0) {
-        console.log('Updating user connection status in DB');
         await User.findByIdAndUpdate(data.recipientId, { connected: 'yes' });
       }
       
@@ -996,14 +980,7 @@ io.on('connection', async (socket) => {
         s.connected
       );
       
-      console.log('=== TARGET SOCKETS FOUND ===');
-      console.log('Count:', targetSockets.length);
-      targetSockets.forEach(s => {
-        console.log(`Socket ${s.id}: userId=${s.userId}, auth=${s.isAuthenticated}, connected=${s.connected}`);
-      });
-      
       if (targetSockets.length > 0) {
-        console.log('=== SENDING CALL TO ALL TARGET SOCKETS ===');
         
         // Get caller's counter and service information
         const caller = await User.findById(socket.userId).select('counter');
@@ -1057,18 +1034,12 @@ io.on('connection', async (socket) => {
         
         // Send to all authenticated sockets of the target user
         targetSockets.forEach(targetSocket => {
-          console.log('Sending to socket:', targetSocket.id);
           targetSocket.emit('incoming-call', callData);
         });
-        
-        console.log('incoming-call events sent to', targetSockets.length, 'sockets');
       } else {
-        console.log('=== NO TARGET SOCKETS AVAILABLE ===');
-        console.log('Looking for userId:', data.recipientId);
         socket.emit('call-failed', { reason: `${targetUser.firstName} ${targetUser.lastName} is not available for calls right now` });
       }
     } catch (error) {
-      console.error('Call handler error:', error);
       socket.emit('call-failed', { reason: 'Call failed - please try again' });
     }
   });
@@ -1111,9 +1082,6 @@ io.on('connection', async (socket) => {
   });
   
   socket.on('end-call', async (data) => {
-    console.log('=== CALL END REQUEST ===');
-    console.log('From socket:', socket.id, 'userId:', socket.userId);
-    console.log('Target user:', data.targetId);
     
     // Update call record with end time and duration
     try {
@@ -1151,14 +1119,11 @@ io.on('connection', async (socket) => {
     const targetSockets = Array.from(io.sockets.sockets.values())
       .filter(s => String(s.userId) === String(data.targetId) && s.isAuthenticated && s.connected);
     
-    console.log('Target sockets found:', targetSockets.length);
     targetSockets.forEach(targetSocket => {
-      console.log('Sending call-ended to target socket:', targetSocket.id);
       targetSocket.emit('call-ended');
     });
     
     // Also emit to the caller to confirm call ended
-    console.log('Confirming call-ended to caller');
     socket.emit('call-ended');
   });
   
@@ -1212,9 +1177,7 @@ io.on('connection', async (socket) => {
 app.post('/api/notify-counter-update', async (req, res) => {
   // Mark the current user as connected immediately
   if (req.session && req.session.userId) {
-    console.log('Marking user as connected via counter update:', req.session.userId);
-    const result = await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
-    console.log('Counter update - user marked as connected:', !!result);
+    await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
     
     // Emit user connection event
     io.emit('userConnectionUpdate', { userId: req.session.userId, connected: 'yes' });
@@ -1681,5 +1644,5 @@ server.listen(PORT, async () => {
   // Schedule periodic cleanup every 5 minutes
   setInterval(cleanupOrphanedCounters, 5 * 60 * 1000);
   
-  console.log(`Server started on port ${PORT}`);
+  // Server started
 });

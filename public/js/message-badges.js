@@ -3,7 +3,6 @@ const isInIframe = window.self !== window.top;
 
 // If we're in a new tab, don't run this script
 if (!isInIframe) {
-    console.log('Display screen opened in new tab, not showing message badges');
     // Exit the script early without throwing an error
     document.addEventListener('DOMContentLoaded', function() {
         // Remove any message-related elements
@@ -33,7 +32,6 @@ async function getCurrentUserCounter() {
         const data = await response.json();
         return data.counterId;
     } catch (error) {
-        console.error('Error getting current user counter:', error);
         return null;
     }
 }
@@ -154,7 +152,7 @@ setInterval(async function() {
             }
         });
     } catch (error) {
-        console.error('Error checking unread messages:', error);
+        // Error checking unread messages
     }
 }, 5000);
 
