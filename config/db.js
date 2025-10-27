@@ -2,12 +2,9 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    // Set Node TLS options to fix SSL issues
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-    
     console.log('Connecting to MongoDB...');
     const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue';
-    console.log('MongoDB URI:', mongoUri);
+    console.log('MongoDB URI:', mongoUri.replace(/:[^:@]*@/, ':***@'));
     
     const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 10000,
