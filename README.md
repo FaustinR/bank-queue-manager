@@ -22,6 +22,7 @@ npm start
 ```
 
 3. Access the interfaces:
+- Login page: http://localhost:3000/login
 - Customer Kiosk: http://localhost:3000
 - Display Screen: http://localhost:3000/display
 - Counter 1 (Account Opening): http://localhost:3000/counter/1

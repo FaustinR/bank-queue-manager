@@ -25,9 +25,8 @@ router.get('/', isAdmin, async (req, res) => {
 // Get connected users (authenticated users only)
 router.get('/connected', isAuthenticated, async (req, res) => {
   try {
-    // Always mark the current user as connected
+    // Always mark the current user as connected when they access this endpoint
     if (req.session.userId) {
-      console.log('Marking user as connected:', req.session.userId);
       await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
     }
     
@@ -39,11 +38,8 @@ router.get('/connected', isAuthenticated, async (req, res) => {
     // Include the current user's ID in the response
     const currentUserId = req.session.userId;
     
-    console.log('Connected users found:', connectedUsers.length);
-    
     res.json({ connectedUsers, currentUserId });
   } catch (error) {
-    console.error('Error in /connected endpoint:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

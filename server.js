@@ -18,6 +18,23 @@ const userRoutes = require('./routes/users');
 const messageRoutes = require('./routes/messages');
 const { isAuthenticated, isAdmin, isStaff } = require('./middleware/auth');
 
+// Middleware to mark authenticated users as connected
+const markUserConnected = async (req, res, next) => {
+  if (req.session && req.session.userId) {
+    try {
+      await User.findByIdAndUpdate(req.session.userId, { connected: 'yes' });
+      // Emit user connection update
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('userConnectionUpdate', { userId: req.session.userId, connected: 'yes' });
+      }
+    } catch (error) {
+      // Continue even if update fails
+    }
+  }
+  next();
+};
+
 
 
 // Load environment variables
@@ -249,7 +266,7 @@ app.get('/display', (req, res) => {
 });
 
 // Counter pages require authentication
-app.get('/counter/:id', isAuthenticated, (req, res) => {
+app.get('/counter/:id', isAuthenticated, markUserConnected, (req, res) => {
   // Check if this is an embedded request (from display screen)
   const isEmbedded = req.query.embedded === 'true' || req.headers.referer?.includes('/display');
   
@@ -284,32 +301,36 @@ const isAdminOrSupervisor = (req, res, next) => {
 };
 
 // Admin routes
-app.get('/admin', isAdmin, (req, res) => {
+app.get('/admin', isAdmin, markUserConnected, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.get('/signup', isAdmin, isFullAdmin, (req, res) => {
+app.get('/signup', isAdmin, isFullAdmin, markUserConnected, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
 
-app.get('/users', isAdmin, (req, res) => {
+app.get('/users', isAdmin, markUserConnected, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'users.html'));
 });
 
-app.get('/edit-user/:id', isAdmin, isFullAdmin, (req, res) => {
+app.get('/edit-user/:id', isAdmin, isFullAdmin, markUserConnected, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'edit-user.html'));
 });
 
-app.get('/profile', isAuthenticated, (req, res) => {
+app.get('/profile', isAuthenticated, markUserConnected, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
 
-app.get('/inbox', isAuthenticated, (req, res) => {
+app.get('/inbox', isAuthenticated, markUserConnected, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'inbox.html'));
 });
 
-app.get('/call-logs', isAuthenticated, (req, res) => {
+app.get('/call-logs', isAuthenticated, markUserConnected, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'call-logs.html'));
+});
+
+app.get('/connected-users', isAuthenticated, markUserConnected, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'connected-users.html'));
 });
 
 // API endpoint to get call logs
