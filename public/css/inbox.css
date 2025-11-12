@@ -380,6 +380,7 @@
 }
 
 .btn-primary {
+    margin-top: -20px;
     padding: 10px 20px;
     background-color: #4CAF50;
     color: white;
@@ -389,6 +390,7 @@
 }
 
 .btn-secondary {
+    margin-top: -20px;
     padding: 10px 20px;
     background-color: #f0f0f0;
     color: #333;

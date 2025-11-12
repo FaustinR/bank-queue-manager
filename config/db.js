@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+mongoose.set('strictQuery', false);
 const connectDB = async () => {
   try {
     const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/bankQueue';
