@@ -55,7 +55,8 @@ function loadConnectedUsers() {
                         
                         let counterBadge = '';
                         if (user.counter) {
-                            counterBadge = `<span class="counter-badge">Counter ${user.counter}</span>`;
+                            const serviceName = user.service || '';
+                            counterBadge = `<span class="counter-badge">Counter ${user.counter}${serviceName ? ': ' + serviceName : ''}</span>`;
                         }
                         
                         // Add "You" flag for current user
@@ -77,7 +78,8 @@ function loadConnectedUsers() {
                         
                         // Ensure counter badge has same height
                         if (user.counter) {
-                            counterBadge = `<span class="counter-badge" style="background-color: #007bff; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;">Counter ${user.counter}</span>`;
+                            const serviceName = user.service || '';
+                            counterBadge = `<span class="counter-badge" style="background-color: #007bff; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: auto; min-height: 18px; display: inline-flex; align-items: center; white-space: normal; line-height: 1.2;">Counter ${user.counter}${serviceName ? ': ' + serviceName : ''}</span>`;
                         }
                         
                         userCard.innerHTML = `

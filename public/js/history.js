@@ -655,7 +655,7 @@ function displayTickets(tickets) {
             <td>${createdDate}</td>
             <td>${waitTime}</td>
             <td>${serviceTime}</td>
-            ${isAdmin ? `<td><button class="delete-single-btn" onclick="deleteSingleTicket('${ticket._id}')">✖</button></td>` : ''}
+            ${isAdmin ? `<td><button class="delete-single-btn" onclick="deleteSingleTicket('${ticket._id}')"><i class="fas fa-trash-alt"></i></button></td>` : ''}
         `;
         
         tableBody.appendChild(row);

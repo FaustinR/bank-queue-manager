@@ -35,10 +35,28 @@ router.get('/connected', isAuthenticated, async (req, res) => {
       .select('_id firstName lastName email role counter')
       .sort({ firstName: 1 });
     
+    // Counter services mapping
+    const counterServices = {
+      '1': 'Account Opening',
+      '2': 'Loan Application',
+      '3': 'Money Transfer',
+      '4': 'Card Services',
+      '5': 'General Inquiry'
+    };
+    
+    // Add service information to each user
+    const usersWithService = connectedUsers.map(user => {
+      const userObj = user.toObject();
+      if (userObj.counter) {
+        userObj.service = counterServices[userObj.counter] || 'Unknown Service';
+      }
+      return userObj;
+    });
+    
     // Include the current user's ID in the response
     const currentUserId = req.session.userId;
     
-    res.json({ connectedUsers, currentUserId });
+    res.json({ connectedUsers: usersWithService, currentUserId });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
