@@ -364,6 +364,48 @@ document.addEventListener('DOMContentLoaded', async function() {
     socket.on('authenticated', (data) => {
         window.socketAuthenticated = true;
     });
+    
+    // Listen for messages from parent page
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'sendMessage') {
+            const data = event.data.data;
+            
+            // Send message using existing function logic
+            fetch('/api/messages/display-to-teller', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tellerId: data.tellerId,
+                    senderEmail: data.customerEmail,
+                    senderName: data.customerName,
+                    subject: data.subject,
+                    content: data.content
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.messageId) {
+                    window.parent.postMessage({
+                        type: 'messageSuccess',
+                        message: `Message sent to ${data.tellerName}`
+                    }, '*');
+                } else {
+                    window.parent.postMessage({
+                        type: 'messageError',
+                        message: 'Error sending message'
+                    }, '*');
+                }
+            })
+            .catch(error => {
+                window.parent.postMessage({
+                    type: 'messageError',
+                    message: 'Error sending message'
+                }, '*');
+            });
+        }
+    });
 });
 
 function updateDisplay(data) {
@@ -383,10 +425,24 @@ function updateDisplay(data) {
         counterDiv.className = `counter ${statusClass} ${waitingClass}`.trim();
         
         // Make the counter div clickable but prevent clicks on message button from triggering it
-        counterDiv.addEventListener('click', (e) => {
-            // Don't trigger counter iframe if clicking on message button
-            if (!e.target.closest('.message-btn')) {
-                showCounterIframe(id, counter.name);
+        counterDiv.addEventListener('click', async (e) => {
+            // Don't trigger counter iframe if clicking on message button or other buttons
+            if (!e.target.closest('.message-btn, .call-btn, .voice-note-btn')) {
+                // Check user role before allowing counter access
+                try {
+                    const response = await fetch('/api/auth/me');
+                    if (response.ok) {
+                        const userData = await response.json();
+                        const userRole = userData.user.role;
+                        
+                        if (userRole === 'admin' || userRole === 'supervisor') {
+                            showCounterIframe(id, counter.name);
+                        }
+                        // Do nothing for employees - silently ignore click
+                    }
+                } catch (error) {
+                    // Silently ignore errors
+                }
             }
         });
         
@@ -705,6 +761,12 @@ async function openMessageModal(e) {
     document.getElementById('counterNumber').value = counterId;
     document.getElementById('subject').value = `Message from Display Screen - Counter ${counterId}`;
     
+    // Update modal title with teller name
+    const modalTitle = document.querySelector('#messageModal .modal-header h3');
+    if (modalTitle) {
+        modalTitle.textContent = `Send Message to Teller ${tellerName}`;
+    }
+    
     // Get current user info and populate customer fields
     try {
         const response = await fetch('/api/auth/me');
@@ -734,9 +796,26 @@ async function openMessageModal(e) {
         document.getElementById('tellerDisplayName').value = tellerName || '';
     }
     
-    // Show modal
-    const modal = document.getElementById('messageModal');
-    modal.classList.add('show');
+    // Check if we're in an iframe and send message to parent
+    const isInIframe = window.self !== window.top;
+    if (isInIframe) {
+        // Send message data to parent page to open modal there
+        window.parent.postMessage({
+            type: 'openMessageModal',
+            data: {
+                tellerId,
+                tellerName,
+                counterId,
+                customerEmail: document.getElementById('customerEmail').value,
+                customerName: document.getElementById('customerName').value,
+                subject: document.getElementById('subject').value
+            }
+        }, '*');
+    } else {
+        // Show modal in current page
+        const modal = document.getElementById('messageModal');
+        modal.classList.add('show');
+    }
 }
 
 function closeMessageModal() {

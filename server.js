@@ -530,10 +530,11 @@ app.get('/api/queue', async (req, res) => {
     const ticketCount = await Ticket.countDocuments();
     if (ticketCount === 0) {
       ticketCounter = 0;
+      // Clear all queues
+      Object.keys(queues).forEach(key => {
+        queues[key] = [];
+      });
     }
-    
-    // Get fresh data from MongoDB - this will clear and repopulate queues
-    await initializeFromDB();
     
     // Get counter staff information with IDs
     const staffInfo = await getCounterStaffInfo();

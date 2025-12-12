@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/toast-notifications.css">
     <link rel="stylesheet" href="css/notifications.css">
     <link rel="stylesheet" href="css/confirm-dialog.css">
+    <link rel="stylesheet" href="css/display-message.css">
     <link rel="stylesheet" href="css/mobile.css">
     <style>
         .connected-users-list {
@@ -276,6 +277,51 @@
                         icon.classList.add('fa-chevron-up');
                     }
                 }
+            } else if (event.data.type === 'openMessageModal') {
+                // Remove existing modal if any
+                const existingModal = document.getElementById('parentMessageModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                const data = event.data.data;
+                
+                // Create modal using DOM methods to avoid syntax issues
+                const modal = document.createElement('div');
+                modal.id = 'parentMessageModal';
+                modal.className = 'modal';
+                modal.style.display = 'flex';
+                
+                modal.innerHTML = '<div class="modal-content"><div class="modal-header"><h3>Send Message to Teller ' + (data.tellerName || '') + '</h3><span class="close-modal">&times;</span></div><form><div class="form-group"><label>Subject:</label><input type="text" id="modalSubject" required></div><div class="form-group"><label>Message:</label><textarea id="modalContent" rows="3" required></textarea></div><div class="form-actions"><button type="button" class="btn-cancel">Cancel</button><button type="submit" class="btn-primary">Send Message</button></div></form></div>';
+                
+                document.body.appendChild(modal);
+                
+                // Set values
+                document.getElementById('modalSubject').value = data.subject || '';
+                
+                // Add event listeners
+                modal.querySelector('.close-modal').onclick = function() { modal.remove(); };
+                modal.querySelector('.btn-cancel').onclick = function() { modal.remove(); };
+                modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+                
+                modal.querySelector('form').onsubmit = function(e) {
+                    e.preventDefault();
+                    const iframe = document.getElementById('displayScreenFrame');
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({
+                            type: 'sendMessage',
+                            data: {
+                                tellerId: data.tellerId,
+                                tellerName: data.tellerName,
+                                customerEmail: data.customerEmail,
+                                customerName: data.customerName,
+                                subject: document.getElementById('modalSubject').value,
+                                content: document.getElementById('modalContent').value
+                            }
+                        }, '*');
+                    }
+                    modal.remove();
+                };
             } else if (event.data.type === 'newMessageForBadge') {
                 // This will be handled by display-screen-badge.js
                 // Just pass it along to ensure the badge updates

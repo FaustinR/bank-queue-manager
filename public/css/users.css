@@ -61,16 +61,19 @@
     font-weight: bold;
     vertical-align: middle;
     white-space: nowrap;
+    position: relative;
+    padding-right: 25px;
 }
 
 .users-table th .filter-input {
-    margin-left: 4px;
-    width: 60%;
-    padding: 3px 4px;
-    font-size: 11px;
+    display: block;
+    width: 80%;
+    padding: 2px 3px;
+    font-size: 10px;
     border: 1px solid #ddd;
     border-radius: 3px;
     background: white;
+    margin: 2px 0;
 }
 
 .users-table tbody tr:hover {
@@ -157,9 +160,12 @@
 }
 
 .sort-arrow {
-    margin-left: 5px;
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     color: #666;
     user-select: none;
 }
@@ -267,49 +273,70 @@
 }
 
 /* Responsive */
-@media (max-width: 1024px) and (min-width: 769px) {
-    .users-table th .filter-input {
-        width: 50%;
-        padding: 3px 4px;
-        font-size: 11px;
-    }
+@media (max-width: 1200px) {
+    .users-table th:nth-child(1) { width: 12%; }
+    .users-table th:nth-child(2) { width: 20%; }
+    .users-table th:nth-child(3) { width: 12%; }
+    .users-table th:nth-child(4) { width: 15%; }
+    .users-table th:nth-child(5) { width: 16%; }
+    .users-table th:nth-child(6) { width: 10%; }
+}
+
+@media (max-width: 1024px) {
+    .users-table th:nth-child(1) { width: 10%; }
+    .users-table th:nth-child(2) { width: 18%; }
+    .users-table th:nth-child(3) { width: 10%; }
+    .users-table th:nth-child(4) { width: 12%; }
+    .users-table th:nth-child(5) { width: 14%; }
+    .users-table th:nth-child(6) { width: 8%; }
     
-    .users-table th:nth-child(4) .filter-input {
-        width: 70%;
+    .users-table th .filter-input {
+        width: 80%;
+        padding: 2px 3px;
+        font-size: 10px;
     }
     
     .users-table th {
-        padding: 10px 6px;
-        font-size: 12px;
+        padding: 8px 4px;
+        font-size: 11px;
     }
     
     .users-table td {
+        padding: 8px 4px;
         font-size: 10px;
     }
 }
 
 @media (max-width: 768px) {
-    .users-table th,
-    .users-table td {
-        padding: 8px 5px;
-        font-size: 9px;
+    .users-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
-    .users-table th .filter-input {
-        margin-left: 4px;
-        width: 45%;
-        padding: 2px 4px;
-        font-size: 11px;
-    }
-    
-    .users-table th:nth-child(4) .filter-input {
-        width: 65%;
+    .users-table {
+        min-width: 600px;
+        font-size: 12px;
     }
     
     .users-table th {
-        white-space: nowrap;
+        padding: 6px 3px;
         font-size: 10px;
+        white-space: nowrap;
         background-color: #99ccff;
+        min-width: 80px;
+    }
+    
+    .users-table td {
+        padding: 6px 3px;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+    
+    .users-table th .filter-input {
+        width: 90%;
+        padding: 2px;
+        font-size: 9px;
+        margin-left: 2px;
     }
     
     .users-actions {
@@ -321,25 +348,61 @@
     
     .add-user-btn,
     .clear-filters-btn {
-        padding: 3px 8px;
-        font-size: 11px;
+        padding: 6px 12px;
+        font-size: 12px;
     }
     
     .user-actions {
         flex-direction: row;
-        gap: 3px;
+        gap: 5px;
         align-items: center;
     }
     
     .edit-btn,
     .delete-btn {
-        font-size: 14px;
-        padding: 6px;
+        font-size: 12px;
+        padding: 4px;
     }
     
     .connected-user-card {
         width: 100%;
         min-width: auto;
         margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .users-table {
+        min-width: 500px;
+        font-size: 11px;
+    }
+    
+    .users-table th {
+        padding: 4px 2px;
+        font-size: 9px;
+        min-width: 70px;
+    }
+    
+    .users-table td {
+        padding: 4px 2px;
+        font-size: 9px;
+    }
+    
+    .users-table th .filter-input {
+        width: 95%;
+        padding: 1px;
+        font-size: 8px;
+    }
+    
+    .user-role,
+    .connected-status {
+        padding: 2px 4px;
+        font-size: 8px;
+    }
+    
+    .edit-btn,
+    .delete-btn {
+        font-size: 10px;
+        padding: 3px;
     }
 }
