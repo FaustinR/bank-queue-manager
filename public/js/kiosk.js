@@ -70,6 +70,12 @@ document.getElementById('service').addEventListener('change', function() {
     checkFormCompletion();
 });
 
+document.getElementById('service').addEventListener('blur', function() {
+    if (!this.value) {
+        showFieldError('service', 'Please select a service');
+    }
+});
+
 // Check if form is complete and show/hide button
 function checkFormCompletion() {
     const customerName = document.getElementById('customerName').value.trim();
@@ -100,11 +106,23 @@ document.getElementById('customerName').addEventListener('input', function() {
     checkFormCompletion();
 });
 
+document.getElementById('customerName').addEventListener('blur', function() {
+    if (!this.value.trim()) {
+        showFieldError('customerName', 'Please enter your name');
+    }
+});
+
 document.getElementById('language').addEventListener('change', function() {
     if (this.value) {
         clearFieldError('language');
     }
     checkFormCompletion();
+});
+
+document.getElementById('language').addEventListener('blur', function() {
+    if (!this.value) {
+        showFieldError('language', 'Please select a language');
+    }
 });
 
 document.getElementById('otherService').addEventListener('input', function() {
@@ -203,6 +221,12 @@ document.getElementById('ticketForm').addEventListener('submit', async (e) => {
         document.getElementById('receiptLanguage').textContent = ticket.language || 'Not specified';
         document.getElementById('receiptNumber').textContent = ticket.number;
         document.getElementById('receiptTime').textContent = new Date(ticket.timestamp).toLocaleTimeString();
+        
+        // Update footer text with ticket number
+        const receiptFooter = document.querySelector('.receipt-footer');
+        if (receiptFooter) {
+            receiptFooter.textContent = `Please wait for your number #${ticket.number} to be called on the display screen.`;
+        }
         
 
         

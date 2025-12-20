@@ -428,17 +428,20 @@ function updateDisplay(data) {
         counterDiv.addEventListener('click', async (e) => {
             // Don't trigger counter iframe if clicking on message button or other buttons
             if (!e.target.closest('.message-btn, .call-btn, .voice-note-btn')) {
-                // Check user role before allowing counter access
+                // Check user role and counter assignment before allowing counter access
                 try {
                     const response = await fetch('/api/auth/me');
                     if (response.ok) {
                         const userData = await response.json();
                         const userRole = userData.user.role;
+                        const userCounter = userData.user.counter;
                         
-                        if (userRole === 'admin' || userRole === 'supervisor') {
+                        // Allow admins and supervisors to access any counter
+                        // Allow employees to access only their assigned counter
+                        if (userRole === 'admin' || userRole === 'supervisor' || 
+                            (userRole === 'employee' && userCounter === id.toString())) {
                             showCounterIframe(id, counter.name);
                         }
-                        // Do nothing for employees - silently ignore click
                     }
                 } catch (error) {
                     // Silently ignore errors
@@ -709,10 +712,10 @@ socket.on('customerCalled', (data) => {
         let announcement;
         
         if (customer.language === 'French') {
-            announcement = `Client ${customer.customerName}, veuillez vous rendre au guichet ${counter} pour ${translatedService}.`;
+            announcement = `Client ${customer.customerName}, numéro ${customer.number}, veuillez vous rendre au guichet ${counter} pour ${translatedService}.`;
         } else {
             // Use English for all other languages (English, Kinyarwanda, Swahili, and default)
-            announcement = `Customer ${customer.customerName}, please proceed to counter ${counter} for ${translatedService}.`;
+            announcement = `Customer ${customer.customerName}, number ${customer.number}, please proceed to counter ${counter} for ${translatedService}.`;
         }
         
         // Speak the announcement in the customer's preferred language

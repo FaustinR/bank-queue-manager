@@ -223,7 +223,7 @@ function displayUsers(users) {
                 <td>${createdDate}</td>
                 <td class="user-actions">
                     <button class="edit-btn" data-id="${user._id}" title="Edit User">✏️</button>
-                    <button class="delete-btn" data-id="${user._id}" title="Delete User">🗑️</button>
+                    <button class="delete-btn" data-id="${user._id}" title="Delete User"><i class="fas fa-trash-alt"></i></button>
                 </td>
             `;
         }
@@ -497,7 +497,7 @@ function toggleSort(column) {
             <td>${new Date(user.createdAt).toLocaleDateString()}</td>
             <td class="user-actions">
                 <button class="edit-btn" data-id="${user._id}" title="Edit User">✏️</button>
-                <button class="delete-btn" data-id="${user._id}" title="Delete User">🗑️</button>
+                <button class="delete-btn" data-id="${user._id}" title="Delete User"><i class="fas fa-trash-alt"></i></button>
             </td>
         `;
         tableBody.appendChild(row);

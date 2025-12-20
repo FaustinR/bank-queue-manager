@@ -159,8 +159,8 @@ body::before {
 }
 
 .form-logo {
-    width: 70px;
-    height: 70px;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
     border: 3px solid #2c5aa0;
     box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
@@ -171,7 +171,7 @@ h1 {
     color: #2c5aa0;
     text-align: center;
     margin-bottom: 5px;
-    font-size: clamp(1.2em, 1.5vw + 0.5rem, 2em);
+    font-size: clamp(1.8em, 2vw + 0.8rem, 2.5em);
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -193,22 +193,22 @@ label {
     margin-bottom: 3px;
     font-weight: bold;
     color: #333;
-    font-size: clamp(12px, 0.8vw + 0.2rem, 14px);
+    font-size: clamp(18px, 1.5vw + 0.5rem, 24px);
 }
 
 input, select {
     width: 100%;
-    padding: 10px;
+    padding: 14px;
     border: 2px solid #ddd;
     border-radius: 8px;
-    font-size: clamp(14px, 1vw + 0.3rem, 18px);
+    font-size: clamp(18px, 1.5vw + 0.5rem, 22px);
     box-sizing: border-box;
     transition: border-color 0.3s ease;
 }
 
 select {
     min-height: 50px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     height: auto;
     max-height: 120px;
     overflow-y: auto;
@@ -220,18 +220,28 @@ select:focus {
     position: absolute;
     z-index: 5000;
     background: white;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 30px rgba(44, 90, 160, 0.4);
+    transform: translateY(-3px) scale(1.02);
+    animation: selectPulse 0.5s ease-out;
 }
 
-select:focus {
-    transform: translateY(-2px);
+@keyframes selectPulse {
+    0% {
+        box-shadow: 0 4px 20px rgba(44, 90, 160, 0.3);
+    }
+    50% {
+        box-shadow: 0 8px 35px rgba(44, 90, 160, 0.5);
+    }
+    100% {
+        box-shadow: 0 8px 30px rgba(44, 90, 160, 0.4);
+    }
 }
 
 /* Dropdown animation keyframes */
 @keyframes dropdownSlide {
     from {
         opacity: 0;
-        transform: translateY(-10px) scaleY(0.8);
+        transform: translateY(-15px) scaleY(0.7);
     }
     to {
         opacity: 1;
@@ -239,10 +249,27 @@ select:focus {
     }
 }
 
+@keyframes optionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 select option {
-    animation: dropdownSlide 0.2s ease-out;
+    animation: optionFadeIn 0.3s ease-out;
     padding: 4px 8px;
     line-height: 1.2;
+    transition: all 0.2s ease;
+}
+
+select option:hover {
+    background: linear-gradient(90deg, rgba(44, 90, 160, 0.1), rgba(44, 90, 160, 0.05));
+    transform: translateX(3px);
 }
 
 input:focus, select:focus {
@@ -253,12 +280,12 @@ input:focus, select:focus {
 
 button {
     width: 100%;
-    padding: 14px;
+    padding: 18px;
     background: linear-gradient(135deg, #2c5aa0, #1e3d6f);
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: clamp(14px, 1.2vw + 0.3rem, 20px);
+    font-size: clamp(18px, 1.5vw + 0.5rem, 24px);
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
@@ -354,7 +381,7 @@ button:active {
     color: #2c5aa0;
     margin-top: 0;
     margin-bottom: 20px;
-    font-size: 1.4em;
+    font-size: 1.2em;
 }
 
 .receipt-item {
@@ -370,6 +397,7 @@ button:active {
     color: #2c5aa0;
     margin-right: 10px;
     width: 20px;
+    font-size: 16px;
 }
 
 .receipt-qr-container {

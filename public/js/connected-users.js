@@ -69,23 +69,23 @@ function loadConnectedUsers() {
                         // Add role badge with icons for all roles
                         let roleBadge = '';
                         if (user.role === 'admin') {
-                            roleBadge = '<span class="user-role role-admin" style="background-color: #dc3545; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;"><i class="fas fa-user-shield" style="margin-right: 4px; font-size: 12px;"></i>Admin</span>';
+                            roleBadge = '<span class="user-role role-admin" style="background-color: #dc3545; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; line-height: 18px; display: inline-flex; align-items: center; box-sizing: border-box;"><i class="fas fa-user-shield" style="margin-right: 4px; font-size: 12px;"></i>Admin</span>';
                         } else if (user.role === 'supervisor') {
-                            roleBadge = '<span class="user-role role-supervisor" style="background-color: #fd7e14; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;"><i class="fas fa-star" style="margin-right: 4px; font-size: 12px;"></i>Supervisor</span>';
+                            roleBadge = '<span class="user-role role-supervisor" style="background-color: #fd7e14; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; line-height: 18px; display: inline-flex; align-items: center; box-sizing: border-box;"><i class="fas fa-star" style="margin-right: 4px; font-size: 12px;"></i>Supervisor</span>';
                         } else {
-                            roleBadge = '<span class="user-role role-employee" style="background-color: #20c997; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; display: inline-flex; align-items: center;"><i class="fas fa-user" style="margin-right: 4px; font-size: 12px;"></i>Employee</span>';
+                            roleBadge = '<span class="user-role role-employee" style="background-color: #20c997; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; line-height: 18px; display: inline-flex; align-items: center; box-sizing: border-box;"><i class="fas fa-user" style="margin-right: 4px; font-size: 12px;"></i>Employee</span>';
                         }
                         
                         // Ensure counter badge has same height
                         if (user.counter) {
                             const serviceName = user.service || '';
-                            counterBadge = `<span class="counter-badge" style="background-color: #007bff; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: auto; min-height: 18px; display: inline-flex; align-items: center; white-space: normal; line-height: 1.2;">Counter ${user.counter}${serviceName ? ': ' + serviceName : ''}</span>`;
+                            counterBadge = `<span class="counter-badge" style="background-color: #007bff; color: white; font-weight: bold; font-size: 10px; padding: 3px 6px; border-radius: 3px; height: 18px; line-height: 12px; display: inline-flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; box-sizing: border-box;">Counter ${user.counter}${serviceName ? ': ' + serviceName : ''}</span>`;
                         }
                         
                         userCard.innerHTML = `
-                            <h3 style="text-align: left; margin: 0 0 5px 0;">${user.firstName} ${user.lastName} ${youFlag}</h3>
-                            <p style="text-align: left; margin: 0 0 8px 0;">${user.email}</p>
-                            <div style="display: flex; gap: 10px; align-items: baseline; margin-top: 8px; justify-content: flex-start;">
+                            <h3 style="margin: 0 0 5px 0;">${user.firstName} ${user.lastName} ${youFlag}</h3>
+                            <p style="margin: 0 0 5px 0;">${user.email}</p>
+                            <div style="display: flex; gap: 8px; align-items: center; margin: 0; flex-wrap: wrap;">
                                 ${roleBadge}
                                 ${counterBadge}
                             </div>
