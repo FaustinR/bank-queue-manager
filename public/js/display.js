@@ -311,8 +311,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Error handling without logging
     }
     
-    // Refresh counter staff information every 10 seconds
-    setInterval(fetchCounterStaff, 10000);
+    // Refresh counter staff information every 30 seconds (reduced frequency)
+    setInterval(fetchCounterStaff, 30000);
     
     // Setup message modal event listeners
     setupMessageModal();

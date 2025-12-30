@@ -111,7 +111,7 @@
                     <li><a href="/history"><i class="icon">📜</i><span> Ticket History</span></a></li>
                     <li><a href="/inbox"><i class="icon">✉️</i><span> Inbox</span></a></li>
                     <li><a href="/call-logs"><i class="icon">📞</i><span> Call Logs</span></a></li>
-                    <li><a href="/signup"><i class="icon">👤</i><span> Create User</span></a></li>
+                    <li><a href="#" id="createUserBtn"><i class="icon">👤</i><span> Create User</span></a></li>
                     <li><a href="/users"><i class="icon">👥</i><span> Manage Users</span></a></li>
                     <li><a href="/" target="_blank"><i class="icon">🏠</i><span> Customer Kiosk</span></a></li>
                     <li><a href="/display"><i class="icon">📺</i><span> Display Screen</span></a></li>
@@ -130,6 +130,7 @@
                     <a href="/api/auth/logout" class="header-logout-btn"><img src="images/logout.jpg" alt="Logout" class="logout-icon"> Logout</a>
                 </div>
             </header>
+            
             
             <div class="accordion-section" id="dashboardStatsSection">
                 <div class="accordion-header">
@@ -240,6 +241,67 @@
             
 
         </main>
+    </div>
+    
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>Create New User</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="createUserForm" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modalFirstName">First Name</label>
+                        <input type="text" id="modalFirstName">
+                        <small class="field-error" id="firstNameError" style="display: block; color: #e74c3c; font-size: 13px; margin-top: 5px; min-height: 18px; font-weight: bold;"></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalLastName">Last Name</label>
+                        <input type="text" id="modalLastName">
+                        <small class="field-error" id="lastNameError" style="display: block; color: #e74c3c; font-size: 13px; margin-top: 5px; min-height: 18px; font-weight: bold;"></small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="modalEmail">Email Address</label>
+                    <input type="email" id="modalEmail" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modalPassword">Password</label>
+                        <input type="password" id="modalPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalConfirmPassword">Confirm Password</label>
+                        <input type="password" id="modalConfirmPassword" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="modalRole">Role</label>
+                    <select id="modalRole" required>
+                        <option value="employee">Employee</option>
+                        <option value="supervisor">Supervisor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modalBranch">Branch</label>
+                    <select id="modalBranch" required>
+                        <option value="">Select Branch</option>
+                        <option value="Downtown">Downtown</option>
+                        <option value="Giporoso">Giporoso</option>
+                        <option value="Kimironko">Kimironko</option>
+                        <option value="RDB branch">RDB branch</option>
+                    </select>
+                </div>
+                <div class="error-message" id="modalError" style="display: none; color: #e74c3c; margin: 10px 0;"></div>
+                <div class="form-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">Create User</button>
+                    <button type="button" class="btn-cancel" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
     
     <script src="/socket.io/socket.io.js"></script>

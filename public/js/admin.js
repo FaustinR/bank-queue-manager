@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup display screen badge
     setupDisplayScreenBadge();
+    
+    // Setup create user modal
+    setupCreateUserModal();
 });
 
 // Handle logout button click
@@ -431,5 +434,107 @@ function setupDisplayScreenBadge() {
     // Listen for window resize to handle mobile responsiveness
     window.addEventListener('resize', function() {
         setTimeout(checkUnreadMessages, 100);
+    });
+}
+
+// Setup create user modal
+function setupCreateUserModal() {
+    const createUserBtn = document.getElementById('createUserBtn');
+    const modal = document.getElementById('createUserModal');
+    const closeBtn = modal.querySelector('.close-modal');
+    const cancelBtn = modal.querySelector('.btn-cancel');
+    const form = document.getElementById('createUserForm');
+    const errorDiv = document.getElementById('modalError');
+    
+    createUserBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.style.display = 'flex';
+    });
+    
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        form.reset();
+        errorDiv.style.display = 'none';
+        document.getElementById('firstNameError').textContent = '';
+        document.getElementById('lastNameError').textContent = '';
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        form.reset();
+        errorDiv.style.display = 'none';
+        document.getElementById('firstNameError').textContent = '';
+        document.getElementById('lastNameError').textContent = '';
+    });
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+            form.reset();
+            errorDiv.style.display = 'none';
+            document.getElementById('firstNameError').textContent = '';
+            document.getElementById('lastNameError').textContent = '';
+        }
+    });
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const firstName = document.getElementById('modalFirstName').value.trim();
+        const lastName = document.getElementById('modalLastName').value.trim();
+        const email = document.getElementById('modalEmail').value;
+        const password = document.getElementById('modalPassword').value;
+        const confirmPassword = document.getElementById('modalConfirmPassword').value;
+        const role = document.getElementById('modalRole').value;
+        const branch = document.getElementById('modalBranch').value;
+        
+        const firstNameError = document.getElementById('firstNameError');
+        const lastNameError = document.getElementById('lastNameError');
+        
+        errorDiv.style.display = 'none';
+        firstNameError.textContent = '';
+        lastNameError.textContent = '';
+        
+        let hasError = false;
+        
+        if (!firstName) {
+            firstNameError.textContent = 'Please enter first name';
+            hasError = true;
+        }
+        
+        if (!lastName) {
+            lastNameError.textContent = 'Please enter last name';
+            hasError = true;
+        }
+        
+        if (hasError) return;
+        
+        if (password !== confirmPassword) {
+            errorDiv.textContent = 'Passwords do not match';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName, email, password, role, branch })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                window.notifications.success('User Created', `${firstName} ${lastName} has been successfully created!`, 3000);
+                modal.style.display = 'none';
+                form.reset();
+            } else {
+                errorDiv.textContent = data.message || 'Error creating user';
+                errorDiv.style.display = 'block';
+            }
+        } catch (error) {
+            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.style.display = 'block';
+        }
     });
 }
