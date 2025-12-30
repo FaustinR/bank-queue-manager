@@ -64,37 +64,36 @@ html::-webkit-scrollbar {
 
 .signup-card {
     max-width: 550px;
-    max-height: 95vh; /* Limit height to prevent scrollbar */
-    transform: scale(1.1); /* 10% zoom in for signup page */
-    /* transform-origin: center top;  */
-    margin-bottom: 30px; /* Add some margin to account for increased size */
+    max-height: 96vh;
+    transform: scale(1.1);
+    margin-bottom: 30px;
 }
 
 .auth-header {
     text-align: center;
-    padding: 20px 30px 15px;
+    padding: 10px 30px 8px;
     background: linear-gradient(135deg, #2c5aa0, #1e3d6f);
     color: white;
 }
 
 .auth-logo {
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    border: 3px solid white;
-    margin-bottom: 10px;
+    border: 2px solid white;
+    margin-bottom: 5px;
 }
 
 .auth-header h1 {
     margin: 0;
-    font-size: 1.8em;
+    font-size: 1.4em;
     color: white;
 }
 
 .auth-header p {
-    margin: 10px 0 0;
+    margin: 4px 0 0;
     opacity: 0.8;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .auth-body {
@@ -103,12 +102,12 @@ html::-webkit-scrollbar {
 
 /* Reduce spacing for login form */
 .auth-card #loginForm .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 /* Reduce space before the login button and make it more compact */
 .auth-card #loginForm .auth-button {
-    margin-top: 15px;
+    margin-top: 12px;
     padding: 12px;
     font-size: 16px;
 }
@@ -214,19 +213,36 @@ input:focus, select:focus {
 .cancel-button {
     display: block;
     text-align: center;
-    margin-top: 10px;
     color: #666;
     text-decoration: none;
     font-size: 14px;
     transition: color 0.3s;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
 }
 
 .cancel-button:hover {
     color: #2c5aa0;
+    border-color: #2c5aa0;
+    background: #f8f9fa;
 }
 
 .form-buttons {
-    margin-top: 30px;
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.form-buttons .auth-button {
+    flex: 1;
+    margin: 0;
+}
+
+.form-buttons .cancel-button {
+    flex: 1;
+    margin: 0;
 }
 
 .auth-footer {
@@ -358,7 +374,7 @@ input:focus, select:focus {
     }
     
     .form-group {
-        margin-bottom: 25px;
+        margin-bottom: 15px;
     }
     
     input, select {
@@ -375,7 +391,18 @@ input:focus, select:focus {
         font-size: 12px;
         height: 32px;
         max-width: 100%;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .signup-page .form-group {
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .signup-page .auth-body {
+        padding: 15px;
         box-sizing: border-box;
     }
     
@@ -385,7 +412,22 @@ input:focus, select:focus {
     }
     
     .signup-page .auth-header {
-        padding: 10px 15px 5px;
+        padding: 8px 15px 5px;
+    }
+
+    .signup-page .auth-logo {
+        width: 35px;
+        height: 35px;
+        margin-bottom: 4px;
+    }
+
+    .signup-page .auth-header h1 {
+        font-size: 1.2em;
+    }
+
+    .signup-page .auth-header p {
+        margin: 3px 0 0;
+        font-size: 11px;
     }
 
     .signup-page .form-buttons {
@@ -463,7 +505,7 @@ input:focus, select:focus {
     }
     
     .form-group {
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
     
     label {

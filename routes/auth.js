@@ -6,7 +6,7 @@ const { isAdmin } = require('../middleware/auth');
 // Login route
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, counter } = req.body;
+    const { email, password, branch, counter } = req.body;
     
     // Find user by email
     const user = await User.findOne({ email });
@@ -25,6 +25,12 @@ router.post('/login', async (req, res) => {
     
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    // Update user's branch
+    if (branch) {
+      user.branch = branch;
+      await user.save();
     }
     
     // Counter is optional for all users
@@ -202,7 +208,7 @@ const isFullAdmin = (req, res, next) => {
 // Signup route (admin only, not supervisor)
 router.post('/signup', isAdmin, isFullAdmin, async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, password, role, branch } = req.body;
     
     // Validate required fields
     if (!firstName || !lastName || !email || !password || !role) {
@@ -221,8 +227,10 @@ router.post('/signup', isAdmin, isFullAdmin, async (req, res) => {
       firstName,
       lastName,
       email,
-      password, // Will be hashed by pre-save middleware
-      role
+      password,
+      role,
+      branch,
+      createdBy: req.session.userId
     });
     
     await user.save();
@@ -276,6 +284,7 @@ router.get('/me', async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      branch: user.branch,
       counter: userCounter,
       connected: user.connected || 'no'
     };
@@ -403,13 +412,24 @@ router.get('/logout', async (req, res) => {
       }
     }
     
-    // Destroy the session
+    // Destroy session and clear all cookies
     req.session.destroy((err) => {
+      // Clear session cookie regardless of error
+      res.clearCookie('connect.sid', { path: '/' });
+      res.clearCookie('connect.sid');
+      
+      // Set cache control headers to prevent caching
+      res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       if (err) {
-        return res.status(500).json({ message: 'Error logging out' });
+        return res.redirect('/login');
       }
       
-      res.redirect('/login?restart=true');
+      res.redirect('/login');
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error during logout' });

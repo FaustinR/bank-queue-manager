@@ -28,13 +28,23 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'supervisor', 'employee', 'temporary'],
     default: 'employee'
   },
+  branch: {
+    type: String,
+    enum: ['Downtown', 'Giporoso', 'Kimironko', 'RDB branch'],
+    default: null
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   counter: {
     type: String,
     default: null
   },
   sessions: {
     type: Map,
-    of: String,  // Maps session ID to counter ID
+    of: String,
     default: () => new Map()
   },
   connected: {

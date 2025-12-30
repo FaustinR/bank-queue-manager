@@ -6,10 +6,11 @@ const { isAdmin, isAuthenticated } = require('../middleware/auth');
 // Get all users (admin only)
 router.get('/', isAdmin, async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    const users = await User.find()
+      .select('-password')
+      .populate('createdBy', 'firstName lastName')
+      .sort({ createdAt: -1 });
     
-    // Make sure connected field is included in the response
-    // If any user doesn't have the connected field, set it to 'no' by default
     users.forEach(user => {
       if (!user.connected) {
         user.connected = 'no';

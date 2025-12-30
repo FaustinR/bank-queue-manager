@@ -1,18 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Clear all client-side data on login page load
+    localStorage.clear();
+    sessionStorage.clear();
+    
     const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError');
     const emailInput = document.getElementById('email');
     const counterSelect = document.getElementById('counter');
-    const systemNotification = document.getElementById('systemNotification');
     
     const counterOptionalText = document.getElementById('counterOptionalText');
-    
-    // Check URL parameters to see if we need to show the system restart notification
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('restart') || sessionStorage.getItem('systemRestarted')) {
-        systemNotification.style.display = 'block';
-        sessionStorage.setItem('systemRestarted', 'true');
-    }
     
     // Make counter optional for all users
     counterSelect.removeAttribute('required');
@@ -53,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const email = emailInput.value;
         const password = document.getElementById('password').value;
+        const branch = document.getElementById('branch').value;
         const counter = counterSelect.value;
         const loginButton = document.getElementById('loginButton');
         
@@ -93,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, password, counter })
+                body: JSON.stringify({ email, password, branch, counter })
             });
             
             const data = await response.json();

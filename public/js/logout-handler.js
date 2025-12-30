@@ -1,19 +1,28 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Find all logout links
-    const logoutLinks = document.querySelectorAll('a[href="/api/auth/logout"]');
+    const logoutLinks = document.querySelectorAll('a[href="/api/auth/logout"], a[href="../api/auth/logout"]');
     
     logoutLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            // Clear socket authentication
-            if (typeof clearSocketAuthentication === 'function') {
-                console.log('Clearing socket authentication');
-                clearSocketAuthentication();
-            } else {
-                console.error('clearSocketAuthentication function not found');
-            }
+        link.addEventListener('click', async function(e) {
+            e.preventDefault();
             
-            // Continue with normal logout
-            // No need to prevent default as we want the normal logout to proceed
+            // Clear all client-side data
+            if (typeof clearSocketAuthentication === 'function') {
+                clearSocketAuthentication();
+            }
+            if (typeof socket !== 'undefined' && socket) {
+                socket.disconnect();
+            }
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Call logout endpoint
+            try {
+                await fetch(link.href, { method: 'GET', credentials: 'include' });
+            } catch (e) {}
+            
+            // Force redirect and clear cache
+            window.location.replace('/login');
+            window.location.href = '/login';
         });
     });
 });

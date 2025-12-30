@@ -164,7 +164,7 @@ function displayUsers(users) {
     tableBody.innerHTML = '';
     
     if (users.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6">No users found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8">No users found</td></tr>';
         return;
     }
     
@@ -207,18 +207,28 @@ function displayUsers(users) {
         
         // Check if in read-only mode (supervisor)
         if (window.isReadOnly) {
+            const branchText = user.branch ? (user.branch === 'RDB branch' ? user.branch : `${user.branch} branch`) : 'N/A';
+            const createdByText = user.createdBy ? `${user.createdBy.firstName} ${user.createdBy.lastName}` : 'System';
+            
             row.innerHTML = `
                 <td>${youFlag}${user.firstName} ${user.lastName}</td>
                 <td>${user.email}</td>
                 <td><span class="user-role ${roleClass}">${user.role}</span></td>
+                <td>${branchText}</td>
+                <td>${createdByText}</td>
                 <td><span class="connected-status ${connectedClass}">${connectedText}</span></td>
                 <td>${createdDate}</td>
             `;
         } else {
+            const branchText = user.branch ? (user.branch === 'RDB branch' ? user.branch : `${user.branch} branch`) : 'N/A';
+            const createdByText = user.createdBy ? `${user.createdBy.firstName} ${user.createdBy.lastName}` : 'System';
+            
             row.innerHTML = `
                 <td>${youFlag}${user.firstName} ${user.lastName}</td>
                 <td>${user.email}</td>
                 <td><span class="user-role ${roleClass}">${user.role}</span></td>
+                <td>${branchText}</td>
+                <td>${createdByText}</td>
                 <td><span class="connected-status ${connectedClass}">${connectedText}</span></td>
                 <td>${createdDate}</td>
                 <td class="user-actions">

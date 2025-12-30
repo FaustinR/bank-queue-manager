@@ -81,6 +81,16 @@
                                     <option value="employee">Employee</option>
                                 </select><span class="sort-arrow" onclick="toggleSort('role')" id="roleSort">↕</span>
                             </th>
+                            <th>Branch: 
+                                <select class="filter-input" id="branchFilter">
+                                    <option value="">All branches</option>
+                                    <option value="Downtown">Downtown</option>
+                                    <option value="Giporoso">Giporoso</option>
+                                    <option value="Kimironko">Kimironko</option>
+                                    <option value="RDB branch">RDB branch</option>
+                                </select><span class="sort-arrow" onclick="toggleSort('branch')" id="branchSort">↕</span>
+                            </th>
+                            <th>Created By<span class="sort-arrow" onclick="toggleSort('createdBy')" id="createdBySort">↕</span></th>
                             <th>Connected: 
                                 <select class="filter-input" id="connectedFilter">
                                     <option value="">All</option>
@@ -94,7 +104,7 @@
                     </thead>
                     <tbody id="usersTableBody">
                         <tr>
-                            <td colspan="6">Loading users...</td>
+                            <td colspan="8">Loading users...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -120,8 +130,6 @@
     <script src="js/sidebar.js"></script>
     <script src="js/user-profile-link.js"></script>
     <script src="js/tooltip.js"></script>
-    <script src="js/session-timeout.js"></script>
-    <script src="js/restart-check.js"></script>
     <script src="js/logout-handler.js"></script>
     <script src="js/connected-users.js"></script>
     <script src="js/update-inbox-badge.js"></script>

@@ -150,6 +150,14 @@ async function fetchUserInfo() {
         if (response.ok && data.user) {
             const userNameElement = document.getElementById('userName');
             userNameElement.textContent = `${data.user.firstName} ${data.user.lastName}`;
+            
+            // Display branch if available
+            const userBranchElement = document.getElementById('userBranch');
+            if (userBranchElement && data.user.branch) {
+                const branchText = data.user.branch === 'RDB branch' ? data.user.branch : `${data.user.branch} branch`;
+                userBranchElement.textContent = `📍 ${branchText}`;
+            }
+            
             document.getElementById('userRole').textContent = data.user.role;
             
             // No longer displaying counter information in the header

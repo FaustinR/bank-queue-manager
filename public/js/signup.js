@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         const role = document.getElementById('role').value;
+        const branch = document.getElementById('branch').value;
         
         // Reset error message
         signupError.style.display = 'none';
@@ -64,15 +65,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ firstName, lastName, email, password, role })
+                body: JSON.stringify({ firstName, lastName, email, password, role, branch })
             });
             
             const data = await response.json();
             
             if (response.ok) {
-                // Show success and redirect
-                alert('User created successfully!');
-                window.location.href = '/admin';
+                // Show success notification and redirect
+                window.notifications.success('User Created', `${firstName} ${lastName} has been successfully created!`, 3000);
+                setTimeout(() => {
+                    window.location.href = '/admin';
+                }, 3000);
             } else {
                 // Show error message
                 signupError.textContent = data.message || 'Error creating user';

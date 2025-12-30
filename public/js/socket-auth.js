@@ -105,7 +105,16 @@ function authenticateSocket(userId) {
 
 // Call this function when user logs out
 function clearSocketAuthentication() {
-  localStorage.removeItem('userId');
+    // Clear localStorage
+    localStorage.removeItem('userId');
+    
+    // Disconnect socket
+    if (socket && socket.connected) {
+        socket.disconnect();
+    }
+    
+    // Clear socket reference
+    socket = null;
 }
 
 // Initialize socket when page loads
