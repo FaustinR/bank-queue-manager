@@ -1631,6 +1631,11 @@ async function cleanupOrphanedCounters() {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, async () => {
+  console.log(`Bank Queue Manager running at http://localhost:${PORT}`);
+  console.log(`Kiosk: http://localhost:${PORT}/`);
+  console.log(`Login: http://localhost:${PORT}/login`);
+  console.log(`Display: http://localhost:${PORT}/display`);
+  console.log(`Counter 1: http://localhost:${PORT}/counter/1`);
 
 
   // Create default admin user
